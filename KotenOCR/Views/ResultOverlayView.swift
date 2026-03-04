@@ -4,6 +4,9 @@ struct ResultOverlayView: View {
     let image: CGImage
     @Binding var detections: [Detection]
     @Binding var selectedIndex: Int?
+    var historyItemID: UUID?
+    @Binding var translatedText: String?
+    var onOpenSettings: (() -> Void)?
     @State private var showBoxes = true
     @State private var showCopied = false
     @State private var showShareSheet = false
@@ -15,6 +18,15 @@ struct ResultOverlayView: View {
     @State private var editText: String = ""
     @State private var exportFileURL: URL?
     @State private var showExportShare = false
+    @State private var isTranslating = false
+    @State private var translationError: String?
+    @State private var showAPIKeyAlert = false
+    @State private var selectedTab: ResultTab = .ocr
+
+    enum ResultTab {
+        case ocr
+        case translation
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -202,61 +214,39 @@ struct ResultOverlayView: View {
                 }
             }
 
+            // Tab picker
+            Picker("", selection: $selectedTab) {
+                Text(String(localized: "tab_ocr", defaultValue: "OCR結果"))
+                    .tag(ResultTab.ocr)
+                Text(String(localized: "tab_translation", defaultValue: "現代語訳"))
+                    .tag(ResultTab.translation)
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal)
+            .padding(.vertical, 6)
+
             Divider().background(Color.secondary.opacity(0.3))
 
-            // Text list with highlighting
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 2) {
-                        ForEach(Array(detections.enumerated()), id: \.offset) { index, det in
-                            let isSelected = selectedIndex == index
-                            let color = boxColor(for: index)
-
-                            HStack(alignment: .top, spacing: 8) {
-                                Text("\(index + 1)")
-                                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                                    .foregroundColor(isSelected ? color : .secondary)
-                                    .frame(width: 24, alignment: .trailing)
-
-                                Text(det.text.isEmpty ? "---" : det.text)
-                                    .font(.system(.body, design: .serif))
-                                    .foregroundColor(det.text.isEmpty ? .secondary : .primary)
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(isSelected ? color.opacity(0.2) : Color.clear)
-                            )
-                            .id(index)
-                            .onTapGesture {
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    selectedIndex = selectedIndex == index ? nil : index
-                                }
-                            }
-                            .onLongPressGesture {
-                                editingIndex = index
-                                editText = det.text
-                            }
-                            .accessibilityLabel(Text("\(index + 1): \(det.text)"))
-                            .accessibilityHint(Text("edit_text"))
-                        }
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                }
-                .onChange(of: selectedIndex) { newValue in
-                    if let idx = newValue {
-                        withAnimation {
-                            proxy.scrollTo(idx, anchor: .center)
-                        }
-                    }
-                }
+            // Tab content
+            switch selectedTab {
+            case .ocr:
+                ocrTextList
+            case .translation:
+                translationPanel
             }
         }
         .sheet(item: $editingIndex) { index in
             editSheet(for: index)
+        }
+        .alert(String(localized: "translation_no_key_title", defaultValue: "APIキーが必要です"),
+               isPresented: $showAPIKeyAlert) {
+            Button(String(localized: "translation_open_settings", defaultValue: "設定を開く")) {
+                showAPIKeyAlert = false
+                onOpenSettings?()
+            }
+            Button(String(localized: "cancel", defaultValue: "キャンセル"), role: .cancel) {}
+        } message: {
+            Text(String(localized: "translation_no_key_message", defaultValue: "設定画面でOpenAI互換APIキーを登録してください。"))
         }
     }
 
@@ -284,6 +274,182 @@ struct ResultOverlayView: View {
                         }
                         editingIndex = nil
                     }
+                }
+            }
+        }
+    }
+
+    // MARK: - OCR Text List
+
+    private var ocrTextList: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 2) {
+                    ForEach(Array(detections.enumerated()), id: \.offset) { index, det in
+                        let isSelected = selectedIndex == index
+                        let color = boxColor(for: index)
+
+                        HStack(alignment: .top, spacing: 8) {
+                            Text("\(index + 1)")
+                                .font(.system(size: 12, weight: .medium, design: .monospaced))
+                                .foregroundColor(isSelected ? color : .secondary)
+                                .frame(width: 24, alignment: .trailing)
+
+                            Text(det.text.isEmpty ? "---" : det.text)
+                                .font(.system(.body, design: .serif))
+                                .foregroundColor(det.text.isEmpty ? .secondary : .primary)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(isSelected ? color.opacity(0.2) : Color.clear)
+                        )
+                        .id(index)
+                        .onTapGesture {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                selectedIndex = selectedIndex == index ? nil : index
+                            }
+                        }
+                        .onLongPressGesture {
+                            editingIndex = index
+                            editText = det.text
+                        }
+                        .accessibilityLabel(Text("\(index + 1): \(det.text)"))
+                        .accessibilityHint(Text("edit_text"))
+                    }
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+            }
+            .onChange(of: selectedIndex) { newValue in
+                if let idx = newValue {
+                    withAnimation {
+                        proxy.scrollTo(idx, anchor: .center)
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Translation Panel
+
+    private var translationPanel: some View {
+        ScrollView {
+            VStack(spacing: 12) {
+                if let translated = translatedText, !translated.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Button(action: startTranslation) {
+                                Label(String(localized: "retranslate_button", defaultValue: "再翻訳"),
+                                      systemImage: "arrow.clockwise")
+                                    .font(.caption)
+                            }
+                            .buttonStyle(.bordered)
+                            .tint(.orange)
+                            .disabled(isTranslating)
+
+                            Spacer()
+
+                            Button {
+                                #if canImport(UIKit)
+                                UIPasteboard.general.string = translated
+                                #endif
+                            } label: {
+                                Label(String(localized: "copy", defaultValue: "Copy"), systemImage: "doc.on.doc")
+                                    .font(.caption)
+                            }
+                            .buttonStyle(.bordered)
+                            .tint(.blue)
+                        }
+                        Text(translated)
+                            .font(.system(.body, design: .serif))
+                            .textSelection(.enabled)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                }
+
+                if isTranslating {
+                    VStack(spacing: 12) {
+                        ProgressView()
+                        Text(String(localized: "translating", defaultValue: "翻訳中..."))
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 40)
+                }
+
+                if let error = translationError {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                        .padding(.horizontal, 12)
+                }
+
+                if translatedText == nil && !isTranslating {
+                    VStack(spacing: 16) {
+                        Image(systemName: "text.book.closed")
+                            .font(.system(size: 36))
+                            .foregroundColor(.secondary)
+                        Text(String(localized: "translation_empty", defaultValue: "現代語訳がまだありません"))
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Button(action: startTranslation) {
+                            HStack {
+                                Image(systemName: "sparkles")
+                                Text(String(localized: "translate_button", defaultValue: "現代語訳"))
+                            }
+                            .font(.subheadline)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 10)
+                            .background(Color.blue)
+                            .cornerRadius(8)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 40)
+                }
+            }
+        }
+    }
+
+    // MARK: - Translation Logic
+
+    private func startTranslation() {
+        Task {
+            let provider = await TranslationService.shared.loadProvider()
+            let hasKey = await TranslationService.shared.hasAPIKey
+            await MainActor.run {
+                if !provider.requiresAPIKey || hasKey {
+                    performTranslation()
+                } else {
+                    showAPIKeyAlert = true
+                }
+            }
+        }
+    }
+
+    private func performTranslation() {
+        isTranslating = true
+        translationError = nil
+        Task {
+            do {
+                let result = try await TranslationService.shared.translate(text: combinedText)
+                await MainActor.run {
+                    translatedText = result
+                    isTranslating = false
+                    if let id = historyItemID {
+                        HistoryManager.shared.updateTranslation(for: id, translatedText: result)
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    translationError = error.localizedDescription
+                    isTranslating = false
                 }
             }
         }

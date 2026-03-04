@@ -49,9 +49,20 @@ struct HistoryListView: View {
                                         Text(item.date, style: .date)
                                             .font(.caption)
                                             .foregroundColor(.secondary)
-                                        Text("\(item.detections.count) " + String(localized: "history_regions", defaultValue: "regions"))
-                                            .font(.caption2)
-                                            .foregroundColor(.secondary)
+                                        HStack(spacing: 6) {
+                                            Text("\(item.detections.count) " + String(localized: "history_regions", defaultValue: "regions"))
+                                                .font(.caption2)
+                                                .foregroundColor(.secondary)
+                                            if item.translatedText != nil {
+                                                Text(String(localized: "history_translated_badge", defaultValue: "翻訳済"))
+                                                    .font(.caption2)
+                                                    .foregroundColor(.blue)
+                                                    .padding(.horizontal, 4)
+                                                    .padding(.vertical, 1)
+                                                    .background(Color.blue.opacity(0.1))
+                                                    .cornerRadius(3)
+                                            }
+                                        }
                                     }
 
                                     Spacer()

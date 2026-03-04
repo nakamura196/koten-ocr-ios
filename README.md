@@ -15,6 +15,9 @@
 - **テーマ切替** — ダーク / ライト / システム準拠
 - **多言語対応** — 日本語 / English / システム設定
 - **アクセシビリティ** — VoiceOver対応
+- **現代語訳** — 古文を現代語に翻訳（日本語/英語、3段階の解説レベル）
+  - **ローカルAI（Apple Foundation Models）** — iOS 26+対応デバイスでオンデバイス翻訳（インターネット不要）
+  - **クラウドAPI** — OpenAI互換API（OpenRouter / OpenAI / カスタム）
 - **応援（Tip Jar）** — StoreKit 2によるアプリ内課金
 
 ## 要件
@@ -63,7 +66,8 @@ KotenOCR/
 │   ├── OnboardingView.swift   # オンボーディング
 │   ├── SettingsView.swift     # 設定
 │   ├── HistoryListView.swift  # 履歴一覧
-│   └── TipJarView.swift       # 投げ銭
+│   ├── TipJarView.swift       # 投げ銭
+│   └── TranslationSettingsView.swift # 現代語訳設定
 ├── OCR/
 │   ├── OCREngine.swift        # OCRパイプライン
 │   ├── RTMDetector.swift      # テキスト検出
@@ -75,7 +79,10 @@ KotenOCR/
 │   ├── HistoryItem.swift      # 履歴データモデル
 │   └── HistoryManager.swift   # 履歴の保存/読込/削除
 ├── Store/
+│   ├── KeychainHelper.swift   # Keychain読み書きヘルパー
 │   └── TipJarManager.swift    # StoreKit 2購入管理
+├── Translation/
+│   └── TranslationService.swift # 現代語訳（ローカルAI / クラウドAPI、actor）
 ├── Models/                    # ONNXモデル（gitignore）
 ├── en.lproj/Localizable.strings
 └── ja.lproj/Localizable.strings

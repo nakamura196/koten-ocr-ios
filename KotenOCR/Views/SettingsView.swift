@@ -20,6 +20,7 @@ struct SettingsView: View {
         NavigationView {
             List {
                 aboutSection
+                translationAPISection
                 themeSection
                 languageSection
                 tipJarSection
@@ -65,6 +66,22 @@ struct SettingsView: View {
                 }
             }
             .padding(.vertical, 4)
+        }
+    }
+
+    // MARK: - Translation
+
+    private var translationAPISection: some View {
+        Section(header: Text(String(localized: "settings_translation_api", defaultValue: "現代語訳"))) {
+            NavigationLink {
+                TranslationSettingsView()
+            } label: {
+                HStack {
+                    Image(systemName: "text.book.closed")
+                        .foregroundColor(.blue)
+                    Text(String(localized: "settings_translation_nav", defaultValue: "現代語訳"))
+                }
+            }
         }
     }
 

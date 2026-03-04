@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KotenOCR — 古典籍OCRアプリ</title>
+<style>
+  :root {
+    --bg: #fafaf8;
+    --text: #2c2c2c;
+    --muted: #666;
+    --accent: #1a6bc4;
+    --card-bg: #fff;
+    --border: #e0ddd8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a1a;
+      --text: #e8e8e8;
+      --muted: #999;
+      --accent: #5ba3e6;
+      --card-bg: #252525;
+      --border: #3a3a3a;
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Hiragino Sans", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    padding: 80px 20px 60px;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  .hero-icon {
+    width: 120px;
+    height: 120px;
+    border-radius: 26px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  }
+  .hero h1 {
+    font-size: 2em;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+  .hero .tagline {
+    font-size: 1.1em;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+  .badge-appstore {
+    display: inline-block;
+    height: 48px;
+    margin-top: 8px;
+  }
+
+  /* Features */
+  .features {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 520px) {
+    .features { grid-template-columns: 1fr; }
+  }
+  .feature {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+  }
+  .feature-icon {
+    font-size: 1.8em;
+    margin-bottom: 10px;
+  }
+  .feature h3 {
+    font-size: 1em;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .feature p {
+    font-size: 0.9em;
+    color: var(--muted);
+  }
+
+  /* How it works */
+  .how {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+    text-align: center;
+  }
+  .how h2 {
+    font-size: 1.4em;
+    margin-bottom: 32px;
+  }
+  .steps {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+  .step {
+    flex: 0 0 160px;
+    text-align: center;
+  }
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.1em;
+    margin-bottom: 12px;
+  }
+  .step h4 {
+    font-size: 0.95em;
+    margin-bottom: 4px;
+  }
+  .step p {
+    font-size: 0.85em;
+    color: var(--muted);
+  }
+
+  /* Credits */
+  .credits {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 20px 40px;
+  }
+  .credits h2 {
+    font-size: 1.2em;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .credit-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 520px) {
+    .credit-list { grid-template-columns: 1fr; }
+  }
+  .credit {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .credit h4 { font-size: 0.95em; margin-bottom: 4px; }
+  .credit p { font-size: 0.8em; color: var(--muted); }
+  .credit a { color: var(--accent); text-decoration: none; font-size: 0.8em; }
+  .credit a:hover { text-decoration: underline; }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 32px 20px;
+    border-top: 1px solid var(--border);
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  footer p {
+    font-size: 0.85em;
+    color: var(--muted);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* Language toggle */
+  .lang-toggle {
+    text-align: center;
+    padding: 16px 20px 0;
+  }
+  .lang-toggle a {
+    font-size: 0.85em;
+    color: var(--accent);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .lang-toggle a:hover { text-decoration: underline; }
+  .en { display: none; }
+</style>
+</head>
+<body>
+
+<div class="lang-toggle">
+  <a onclick="toggleLang()"><span class="ja">English</span><span class="en">日本語</span></a>
+</div>
+
+<!-- Hero -->
+<section class="hero">
+  <img src="icon.png" alt="KotenOCR" class="hero-icon" onerror="this.style.display='none'">
+  <h1>KotenOCR</h1>
+  <p class="tagline">
+    <span class="ja">古典籍・くずし字を、スマホで読む。</span>
+    <span class="en">Read classical Japanese texts on your phone.</span>
+  </p>
+  <p style="color:var(--muted);font-size:0.95em;">
+    <span class="ja">国立国会図書館のAIモデルを活用した、完全オフラインの古典籍OCRアプリ。</span>
+    <span class="en">Fully offline OCR app powered by the National Diet Library's AI models.</span>
+  </p>
+</section>
+
+<!-- Features -->
+<section class="features">
+  <div class="feature">
+    <div class="feature-icon">📷</div>
+    <h3>
+      <span class="ja">撮って認識</span>
+      <span class="en">Snap & Recognize</span>
+    </h3>
+    <p>
+      <span class="ja">カメラで古典籍を撮影するだけ。くずし字を自動で検出・認識します。</span>
+      <span class="en">Just photograph a classical text. Kuzushiji characters are automatically detected and recognized.</span>
+    </p>
+  </div>
+  <div class="feature">
+    <div class="feature-icon">🔒</div>
+    <h3>
+      <span class="ja">完全オフライン</span>
+      <span class="en">Fully Offline</span>
+    </h3>
+    <p>
+      <span class="ja">すべての処理はデバイス上で完結。画像やデータが外部に送信されることはありません。</span>
+      <span class="en">All processing happens on-device. No images or data are ever sent externally.</span>
+    </p>
+  </div>
+  <div class="feature">
+    <div class="feature-icon">⚡</div>
+    <h3>
+      <span class="ja">高速処理</span>
+      <span class="en">Fast Processing</span>
+    </h3>
+    <p>
+      <span class="ja">ONNX Runtimeによる高速推論。撮影から数秒で認識結果を表示します。</span>
+      <span class="en">Fast inference via ONNX Runtime. Results appear within seconds of capture.</span>
+    </p>
+  </div>
+  <div class="feature">
+    <div class="feature-icon">📋</div>
+    <h3>
+      <span class="ja">テキストコピー</span>
+      <span class="en">Copy Text</span>
+    </h3>
+    <p>
+      <span class="ja">認識結果はワンタップでコピー。研究や学習にすぐ活用できます。</span>
+      <span class="en">Copy results with one tap. Ready for your research and studies.</span>
+    </p>
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="how">
+  <h2>
+    <span class="ja">使い方</span>
+    <span class="en">How It Works</span>
+  </h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h4>
+        <span class="ja">撮影</span>
+        <span class="en">Capture</span>
+      </h4>
+      <p>
+        <span class="ja">カメラまたはフォトライブラリから画像を選択</span>
+        <span class="en">Take a photo or select from library</span>
+      </p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h4>
+        <span class="ja">認識</span>
+        <span class="en">Recognize</span>
+      </h4>
+      <p>
+        <span class="ja">AIが文字の位置を検出し、くずし字を翻字</span>
+        <span class="en">AI detects characters and transcribes kuzushiji</span>
+      </p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h4>
+        <span class="ja">活用</span>
+        <span class="en">Use</span>
+      </h4>
+      <p>
+        <span class="ja">結果をコピー・エクスポートして研究に活用</span>
+        <span class="en">Copy or export results for your research</span>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Credits -->
+<section class="credits">
+  <h2>
+    <span class="ja">利用技術</span>
+    <span class="en">Technology</span>
+  </h2>
+  <div class="credit-list">
+    <div class="credit">
+      <h4>NDL古典籍OCR-Lite</h4>
+      <p>CC-BY-4.0 — 国立国会図書館</p>
+      <a href="https://github.com/ndl-lab/ndlkotenocr-lite">GitHub</a>
+    </div>
+    <div class="credit">
+      <h4>ONNX Runtime</h4>
+      <p>MIT License — Microsoft</p>
+      <a href="https://github.com/microsoft/onnxruntime">GitHub</a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <p>
+    <a href="privacy-policy.html">
+      <span class="ja">プライバシーポリシー</span>
+      <span class="en">Privacy Policy</span>
+    </a>
+    &nbsp;·&nbsp;
+    <a href="https://github.com/nakamura196/koten-ocr-ios">GitHub</a>
+  </p>
+  <p style="margin-top:8px;">&copy; 2026 Satoru Nakamura</p>
+</footer>
+
+<script>
+function toggleLang() {
+  document.querySelectorAll('.ja').forEach(e => {
+    e.style.display = e.style.display === 'none' ? '' : 'none';
+  });
+  document.querySelectorAll('.en').forEach(e => {
+    e.style.display = e.style.display === 'none' ? '' : 'none';
+  });
+}
+</script>
+
+</body>
+</html>

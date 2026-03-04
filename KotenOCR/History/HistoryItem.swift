@@ -6,6 +6,7 @@ struct HistoryItem: Codable, Identifiable {
     let text: String
     let detections: [Detection]
     let imageFileName: String
+    var translatedText: String?
 
     var imagePath: URL {
         HistoryManager.historyDirectory.appendingPathComponent(imageFileName)

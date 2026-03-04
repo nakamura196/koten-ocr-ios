@@ -19,6 +19,9 @@ struct ContentView: View {
     @State private var showSettings = false
     @State private var showHistory = false
     @State private var processingTask: Task<Void, Never>?
+    @State private var currentHistoryItemID: UUID?
+    @State private var translatedText: String?
+    @State private var cameFromHistory = false
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @AppStorage("appTheme") private var appThemeRaw: String = AppTheme.system.rawValue
 
@@ -207,10 +210,19 @@ struct ContentView: View {
         VStack(spacing: 0) {
             // Top bar
             HStack {
-                Button(action: { resetToCamera() }) {
+                Button(action: {
+                    if cameFromHistory {
+                        resetToCamera()
+                        showHistory = true
+                    } else {
+                        resetToCamera()
+                    }
+                }) {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.left")
-                        Text(String(localized: "back", defaultValue: "Back"))
+                        Text(cameFromHistory
+                             ? String(localized: "history_title", defaultValue: "履歴")
+                             : String(localized: "back", defaultValue: "Back"))
                     }
                     .foregroundColor(.primary)
                 }
@@ -224,7 +236,10 @@ struct ContentView: View {
                 ResultOverlayView(
                     image: image,
                     detections: $editableDetections,
-                    selectedIndex: $selectedDetectionIndex
+                    selectedIndex: $selectedDetectionIndex,
+                    historyItemID: currentHistoryItemID,
+                    translatedText: $translatedText,
+                    onOpenSettings: { showSettings = true }
                 )
             }
 
@@ -243,6 +258,7 @@ struct ContentView: View {
         capturedImage = cgImage
         appState = .processing
         errorMessage = nil
+        cameFromHistory = false
 
         processingTask = Task {
             do {
@@ -250,6 +266,7 @@ struct ContentView: View {
                 await MainActor.run {
                     self.ocrResult = result
                     self.editableDetections = result.detections
+                    self.translatedText = nil
                     self.appState = .result
 
                     // Auto-save to history
@@ -258,6 +275,7 @@ struct ContentView: View {
                         detections: result.detections,
                         text: result.text
                     )
+                    self.currentHistoryItemID = HistoryManager.shared.items.first?.id
                 }
             } catch is CancellationError {
                 await MainActor.run {
@@ -317,6 +335,9 @@ struct ContentView: View {
         )
         selectedDetectionIndex = nil
         errorMessage = nil
+        currentHistoryItemID = item.id
+        translatedText = item.translatedText
+        cameFromHistory = true
         appState = .result
     }
 
@@ -329,6 +350,9 @@ struct ContentView: View {
         selectedPhotoItem = nil
         selectedDetectionIndex = nil
         processingTask = nil
+        currentHistoryItemID = nil
+        translatedText = nil
+        cameFromHistory = false
     }
 
 }

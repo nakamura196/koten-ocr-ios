@@ -27,6 +27,9 @@ App Store Connect でアプリを作成する際に入力する情報。
 ・国立国会図書館のAIモデル（NDL古典籍OCR-Lite）を搭載
 ・すべての処理をデバイス上で完結（インターネット接続不要）
 ・認識結果をテキストとしてコピー・共有
+・古文を現代語訳（日本語/英語対応、一般・学生・研究者向けの3段階解説）
+・ローカルAI翻訳（iOS 26+対応デバイスで完全オフライン動作）
+・クラウドAPI翻訳にも対応（OpenAI、OpenRouter等）
 
 【使い方】
 1. カメラで古典籍のページを撮影、またはフォトライブラリから選択
@@ -51,6 +54,9 @@ Features:
 • Powered by the National Diet Library's AI model (NDL Koten OCR-Lite)
 • All processing runs on-device (no internet connection required)
 • Copy and share recognized text
+• Translate classical text into modern Japanese or English (3 detail levels: general, student, researcher)
+• On-device AI translation with Apple Foundation Models (iOS 26+, fully offline)
+• Also supports cloud APIs (OpenAI, OpenRouter, etc.)
 
 How to Use:
 1. Capture a page with the camera or select from your photo library
@@ -67,19 +73,19 @@ Licenses:
 ## キーワード（日本語、最大100文字）
 
 ```
-OCR,くずし字,古典籍,文字認識,古文書,和本,国立国会図書館,NDL,変体仮名,漢字
+OCR,くずし字,古典籍,文字認識,古文書,和本,国立国会図書館,NDL,現代語訳,翻訳
 ```
 
 ## キーワード（英語）
 
 ```
-OCR,kuzushiji,classical,Japanese,manuscript,recognition,NDL,calligraphy,kanji,text
+OCR,kuzushiji,classical,Japanese,manuscript,recognition,NDL,translation,kanji,text
 ```
 
 ## プロモーションテキスト（日本語、170文字以内）
 
 ```
-古典籍のくずし字をAIが読み取ります。国立国会図書館のOCRモデルを搭載し、すべての処理をデバイス上で完結。インターネット接続不要で、いつでもどこでもくずし字をテキストに変換できます。
+古典籍のくずし字をAIが読み取ります。国立国会図書館のOCRモデルを搭載し、オフラインでテキスト変換。現代語訳機能でAIが古文の意味・背景も解説します。
 ```
 
 ## サポートURL
@@ -116,7 +122,8 @@ https://nakamura196.github.io/koten-ocr-ios/privacy-policy.html
 ```
 This app performs OCR on classical Japanese texts (kuzushiji) using on-device AI models.
 No account or login is required.
-To test: point the camera at any printed text or select an image from the photo library.
+To test OCR: point the camera at any printed text or select an image from the photo library.
 The app will detect text regions and attempt recognition.
+To test translation: go to Settings > Translation Settings and enter an OpenAI-compatible API key (e.g., OpenRouter). Then tap "Modern Translation" on any OCR result.
 Sample images of classical Japanese texts can be found at: https://dl.ndl.go.jp/
 ```

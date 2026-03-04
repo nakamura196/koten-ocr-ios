@@ -79,3 +79,48 @@
 "tipjar_thanks" = "Thank you for your support!";
 "tipjar_error_unverified" = "Purchase verification failed";
 "settings_tipjar" = "Support Us";
+
+/* Translation API */
+"settings_translation_api" = "Translation API";
+"settings_api_key" = "API Key";
+"settings_api_endpoint" = "Endpoint";
+"settings_api_model" = "Model";
+"settings_api_save" = "Save";
+"settings_api_footer" = "Supports OpenAI-compatible APIs (OpenAI, OpenRouter, etc.). API key is securely stored in Keychain.";
+"api_key_saved_title" = "Saved";
+
+/* Translation */
+"translate_button" = "Modern Translation";
+"retranslate_button" = "Retranslate";
+"translation_title" = "Modern Translation";
+"translating" = "Translating...";
+"translation_error_no_key" = "API key is not configured";
+"translation_error_too_long" = "Text is too long";
+"translation_error_server" = "Server error";
+"translation_error_invalid" = "Failed to parse response";
+"translation_no_key_title" = "API Key Required";
+"translation_no_key_message" = "Please register an OpenAI-compatible API key in Settings.";
+"translation_open_settings" = "Open Settings";
+"translation_empty" = "No translation yet";
+"tab_ocr" = "OCR Result";
+"tab_translation" = "Translation";
+
+/* Translation Settings */
+"settings_translation_nav" = "Translation Settings";
+"settings_translation_options" = "Translation Options";
+"settings_api_config" = "API Configuration";
+"settings_api_provider" = "API Provider";
+"provider_custom" = "Custom";
+"settings_target_language" = "Target Language";
+"target_lang_ja" = "Japanese (Modern)";
+"target_lang_en" = "English";
+"settings_translation_level" = "Detail Level";
+"level_general" = "General";
+"level_student" = "Student";
+"level_researcher" = "Researcher";
+"level_general_desc" = "Easy-to-read translation with brief explanation";
+"level_student_desc" = "Accurate translation with vocabulary notes and grammar";
+"level_researcher_desc" = "Literal translation with detailed annotations";
+
+/* History - translated badge */
+"history_translated_badge" = "Translated";

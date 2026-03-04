@@ -79,3 +79,48 @@
 "tipjar_thanks" = "ご支援ありがとうございます！";
 "tipjar_error_unverified" = "購入の検証に失敗しました";
 "settings_tipjar" = "開発を応援";
+
+/* Translation API */
+"settings_translation_api" = "現代語訳 API";
+"settings_api_key" = "APIキー";
+"settings_api_endpoint" = "エンドポイント";
+"settings_api_model" = "モデル";
+"settings_api_save" = "保存";
+"settings_api_footer" = "OpenAI互換APIに対応（OpenAI、OpenRouter等）。APIキーはKeychainに安全に保存されます。";
+"api_key_saved_title" = "保存しました";
+
+/* Translation */
+"translate_button" = "現代語訳";
+"retranslate_button" = "再翻訳";
+"translation_title" = "現代語訳";
+"translating" = "翻訳中...";
+"translation_error_no_key" = "APIキーが設定されていません";
+"translation_error_too_long" = "テキストが長すぎます";
+"translation_error_server" = "サーバーエラー";
+"translation_error_invalid" = "応答の解析に失敗しました";
+"translation_no_key_title" = "APIキーが必要です";
+"translation_no_key_message" = "設定画面でOpenAI互換APIキーを登録してください。";
+"translation_open_settings" = "設定を開く";
+"translation_empty" = "現代語訳がまだありません";
+"tab_ocr" = "OCR結果";
+"tab_translation" = "現代語訳";
+
+/* Translation Settings */
+"settings_translation_nav" = "現代語訳設定";
+"settings_translation_options" = "翻訳オプション";
+"settings_api_config" = "API設定";
+"settings_api_provider" = "APIプロバイダー";
+"provider_custom" = "カスタム";
+"settings_target_language" = "翻訳先言語";
+"target_lang_ja" = "日本語（現代語）";
+"target_lang_en" = "English";
+"settings_translation_level" = "解説レベル";
+"level_general" = "一般向け";
+"level_student" = "学生向け";
+"level_researcher" = "研究者向け";
+"level_general_desc" = "わかりやすい現代語訳と簡単な解説";
+"level_student_desc" = "正確な訳と語注・文法解説";
+"level_researcher_desc" = "原文に忠実な直訳と詳細な注釈";
+
+/* History - translated badge */
+"history_translated_badge" = "翻訳済";

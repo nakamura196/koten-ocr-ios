@@ -73,6 +73,17 @@ class HistoryManager: ObservableObject {
         items.removeAll { $0.id == item.id }
     }
 
+    func updateTranslation(for itemID: UUID, translatedText: String) {
+        guard let index = items.firstIndex(where: { $0.id == itemID }) else { return }
+        items[index].translatedText = translatedText
+
+        // Re-save JSON
+        let jsonPath = Self.historyDirectory.appendingPathComponent("\(itemID.uuidString).json")
+        if let data = try? JSONEncoder().encode(items[index]) {
+            try? data.write(to: jsonPath)
+        }
+    }
+
     func deleteAll() {
         for item in items {
             let jsonPath = Self.historyDirectory.appendingPathComponent("\(item.id.uuidString).json")

@@ -23,6 +23,9 @@
 		B6268A1DEF5C02AC116B13D9 /* onnxruntime in Frameworks */ = {isa = PBXBuildFile; productRef = CEBA04EDE9D84A4D05C1D2FC /* onnxruntime */; };
 		B774EF502B536678D39CBC6D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6CFDE78282D74C1F90DD69F /* SettingsView.swift */; };
 		BCEC5A7E7C54907F9F6DEAB0 /* TipJarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43761597E39AC3C62D31C9E8 /* TipJarView.swift */; };
+		C1A2B3C4D5E6F7081234AAAA /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A2B3C4D5E6F7081234BBBB /* KeychainHelper.swift */; };
+		C1A2B3C4D5E6F7081234CCCC /* TranslationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A2B3C4D5E6F7081234DDDD /* TranslationService.swift */; };
+		C1A2B3C4D5E6F7081234FF01 /* TranslationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A2B3C4D5E6F7081234FF02 /* TranslationSettingsView.swift */; };
 		D2ADA4E7EFCF4A35211E3ACF /* KotenOCRApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 270641011EB727A6FC52AD0B /* KotenOCRApp.swift */; };
 		D2B4248805F9613D9461AE45 /* Models in Resources */ = {isa = PBXBuildFile; fileRef = CBDF15C34D6661310197B75E /* Models */; };
 		D3EEE12E67663C8EA0799D33 /* TipJar.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 75D337ED66BD4C54B44E5CD9 /* TipJar.storekit */; };
@@ -55,6 +58,9 @@
 		CBDF15C34D6661310197B75E /* Models */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Models; path = KotenOCR/Models; sourceTree = SOURCE_ROOT; };
 		D1D04E8E36E0873A6D94D661 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		D6CFDE78282D74C1F90DD69F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		C1A2B3C4D5E6F7081234BBBB /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		C1A2B3C4D5E6F7081234DDDD /* TranslationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationService.swift; sourceTree = "<group>"; };
+		C1A2B3C4D5E6F7081234FF02 /* TranslationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationSettingsView.swift; sourceTree = "<group>"; };
 		E1C71D29B2E05CAE6C27D498 /* PARSEQRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PARSEQRecognizer.swift; sourceTree = "<group>"; };
 		E42BA653965C493A22A7F003 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -109,6 +115,7 @@
 				5B4379D31980B50B6E4167FC /* ResultOverlayView.swift */,
 				D6CFDE78282D74C1F90DD69F /* SettingsView.swift */,
 				43761597E39AC3C62D31C9E8 /* TipJarView.swift */,
+				C1A2B3C4D5E6F7081234FF02 /* TranslationSettingsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -116,9 +123,18 @@
 		9CAA0F69467B09C305F308AC /* Store */ = {
 			isa = PBXGroup;
 			children = (
+				C1A2B3C4D5E6F7081234BBBB /* KeychainHelper.swift */,
 				12D6ADEDDD0734CA628912DE /* TipJarManager.swift */,
 			);
 			path = Store;
+			sourceTree = "<group>";
+		};
+		C1A2B3C4D5E6F7081234EEEE /* Translation */ = {
+			isa = PBXGroup;
+			children = (
+				C1A2B3C4D5E6F7081234DDDD /* TranslationService.swift */,
+			);
+			path = Translation;
 			sourceTree = "<group>";
 		};
 		C04A52F2439420B5D6FE7915 /* History */ = {
@@ -160,6 +176,7 @@
 				43006EC1C4978FB667780FD7 /* OCR */,
 				9CAA0F69467B09C305F308AC /* Store */,
 				3C3717CD90B874E689D1BD0F /* Theme */,
+				C1A2B3C4D5E6F7081234EEEE /* Translation */,
 				832D36786C1FB097CB49B5B1 /* Views */,
 			);
 			path = KotenOCR;
@@ -272,6 +289,8 @@
 				309188DFD1D2448CEE895A92 /* ContentView.swift in Sources */,
 				728E5483FE3AADF2413203FA /* ExportManager.swift in Sources */,
 				1E257D31C55F486C70B827A7 /* HistoryItem.swift in Sources */,
+				C1A2B3C4D5E6F7081234AAAA /* KeychainHelper.swift in Sources */,
+				C1A2B3C4D5E6F7081234CCCC /* TranslationService.swift in Sources */,
 				D6709D356E1F7B2EB7FFB166 /* HistoryListView.swift in Sources */,
 				1BE4FE0AC063CE4218405FBB /* HistoryManager.swift in Sources */,
 				D2ADA4E7EFCF4A35211E3ACF /* KotenOCRApp.swift in Sources */,
@@ -284,6 +303,7 @@
 				B774EF502B536678D39CBC6D /* SettingsView.swift in Sources */,
 				74099E2D688F864C84A74B4A /* TipJarManager.swift in Sources */,
 				BCEC5A7E7C54907F9F6DEAB0 /* TipJarView.swift in Sources */,
+				C1A2B3C4D5E6F7081234FF01 /* TranslationSettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
