@@ -15,6 +15,8 @@ struct ContentView: View {
     @State private var errorMessage: String?
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var selectedDetectionIndex: Int?
+    @State private var showSettings = false
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
     var body: some View {
         ZStack {
@@ -28,6 +30,15 @@ struct ContentView: View {
             case .ready:
                 mainContent
             }
+        }
+        .fullScreenCover(isPresented: Binding(
+            get: { !hasCompletedOnboarding },
+            set: { if $0 { hasCompletedOnboarding = false } }
+        )) {
+            OnboardingView(hasCompletedOnboarding: $hasCompletedOnboarding)
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
         }
     }
 
@@ -94,6 +105,20 @@ struct ContentView: View {
             .ignoresSafeArea()
 
             VStack {
+                HStack {
+                    Spacer()
+                    Button(action: { showSettings = true }) {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(Color.white.opacity(0.2))
+                            .clipShape(Circle())
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+
                 Spacer()
                 HStack(spacing: 40) {
                     // Gallery button

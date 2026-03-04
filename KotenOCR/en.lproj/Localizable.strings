@@ -1,0 +1,20 @@
+/* Onboarding */
+"onboarding_intro" = "OCR app for classical Japanese texts.\nJust take a photo to convert kuzushiji to text.";
+"onboarding_camera_title" = "Camera Access";
+"onboarding_camera_description" = "Please allow camera access\nto recognize characters in classical texts.";
+"onboarding_allow_camera" = "Allow Camera";
+"onboarding_howto_title" = "How to Use";
+"onboarding_step1_title" = "Capture";
+"onboarding_step1_desc" = "Take a photo of a classical text page";
+"onboarding_step2_title" = "Recognize";
+"onboarding_step2_desc" = "AI automatically recognizes kuzushiji";
+"onboarding_step3_title" = "Copy";
+"onboarding_step3_desc" = "Copy recognized text to clipboard";
+"onboarding_start" = "Get Started";
+
+/* Settings */
+"settings_title" = "Settings";
+"settings_about" = "About";
+"settings_version" = "Version";
+"settings_licenses" = "Licenses";
+"settings_links" = "Links";

@@ -14,10 +14,11 @@ struct ResultOverlayView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Image with tappable boxes + pinch-to-zoom
+            // Image with boxes + pinch-to-zoom
             Image(decorative: image, scale: 1.0)
                 .resizable()
                 .scaledToFit()
+                // Visual-only box overlay (non-interactive)
                 .overlay {
                     GeometryReader { geometry in
                         let scaleX = geometry.size.width / CGFloat(image.width)
@@ -47,18 +48,63 @@ struct ResultOverlayView: View {
                                             .background(color.opacity(0.85))
                                     }
                                     .position(x: rect.midX, y: rect.midY)
-                                    .onTapGesture {
-                                        withAnimation(.easeInOut(duration: 0.2)) {
-                                            selectedIndex = selectedIndex == index ? nil : index
-                                        }
-                                    }
                             }
                         }
+                    }
+                    .allowsHitTesting(false)
+                }
+                // Tap overlay for box selection (single gesture, no conflict)
+                .overlay {
+                    GeometryReader { geometry in
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .gesture(
+                                ExclusiveGesture(
+                                    SpatialTapGesture(count: 2),
+                                    SpatialTapGesture(count: 1)
+                                )
+                                .onEnded { value in
+                                    switch value {
+                                    case .first:
+                                        withAnimation(.easeInOut(duration: 0.3)) {
+                                            if zoom > 1.0 {
+                                                zoom = 1.0; steadyZoom = 1.0
+                                                offset = .zero; steadyOffset = .zero
+                                            } else {
+                                                zoom = 3.0; steadyZoom = 3.0
+                                            }
+                                        }
+                                    case .second(let tap):
+                                        guard showBoxes else { return }
+                                        let scaleX = geometry.size.width / CGFloat(image.width)
+                                        let scaleY = geometry.size.height / CGFloat(image.height)
+                                        for (index, det) in detections.enumerated() {
+                                            let rect = CGRect(
+                                                x: CGFloat(det.box[0]) * scaleX,
+                                                y: CGFloat(det.box[1]) * scaleY,
+                                                width: CGFloat(det.box[2] - det.box[0]) * scaleX,
+                                                height: CGFloat(det.box[3] - det.box[1]) * scaleY
+                                            )
+                                            if rect.contains(tap.location) {
+                                                withAnimation(.easeInOut(duration: 0.2)) {
+                                                    selectedIndex = selectedIndex == index ? nil : index
+                                                }
+                                                return
+                                            }
+                                        }
+                                        withAnimation(.easeInOut(duration: 0.2)) {
+                                            selectedIndex = nil
+                                        }
+                                    }
+                                }
+                            )
                     }
                 }
                 .scaleEffect(zoom)
                 .offset(offset)
-                .gesture(
+                .clipped()
+                .contentShape(Rectangle())
+                .highPriorityGesture(
                     MagnificationGesture()
                         .onChanged { value in
                             zoom = steadyZoom * value
@@ -84,17 +130,6 @@ struct ResultOverlayView: View {
                             steadyOffset = offset
                         }
                 )
-                .onTapGesture(count: 2) {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        if zoom > 1.0 {
-                            zoom = 1.0; steadyZoom = 1.0
-                            offset = .zero; steadyOffset = .zero
-                        } else {
-                            zoom = 3.0; steadyZoom = 3.0
-                        }
-                    }
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 8))
 
             // Controls
             HStack(spacing: 12) {

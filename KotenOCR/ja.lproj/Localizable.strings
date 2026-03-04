@@ -1,0 +1,20 @@
+/* Onboarding */
+"onboarding_intro" = "古典籍・くずし字の文字認識アプリ。\nカメラで撮影するだけで、くずし字をテキストに変換します。";
+"onboarding_camera_title" = "カメラへのアクセス";
+"onboarding_camera_description" = "古典籍の文字を認識するために、\nカメラへのアクセスを許可してください。";
+"onboarding_allow_camera" = "カメラを許可する";
+"onboarding_howto_title" = "使い方";
+"onboarding_step1_title" = "撮影する";
+"onboarding_step1_desc" = "古典籍のページをカメラで撮影";
+"onboarding_step2_title" = "認識する";
+"onboarding_step2_desc" = "AIが自動でくずし字を認識";
+"onboarding_step3_title" = "コピーする";
+"onboarding_step3_desc" = "認識結果をテキストとしてコピー";
+"onboarding_start" = "はじめる";
+
+/* Settings */
+"settings_title" = "設定";
+"settings_about" = "About";
+"settings_version" = "バージョン";
+"settings_licenses" = "ライセンス";
+"settings_links" = "リンク";
