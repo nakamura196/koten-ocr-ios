@@ -1,0 +1,38 @@
+name: KotenOCR
+options:
+  bundleIdPrefix: com.nakamura196
+  deploymentTarget:
+    iOS: "16.0"
+  xcodeVersion: "15.0"
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+
+targets:
+  KotenOCR:
+    type: application
+    platform: iOS
+    sources:
+      - path: KotenOCR
+        excludes:
+          - "Models/**"
+      - path: KotenOCR/Models
+        type: folder
+        buildPhase: resources
+    settings:
+      base:
+        INFOPLIST_FILE: KotenOCR/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: com.nakamura196.kotenocr
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        DEVELOPMENT_TEAM: ""
+        TARGETED_DEVICE_FAMILY: "1,2"
+    dependencies:
+      - package: onnxruntime-swift-package-manager
+        product: onnxruntime
+
+packages:
+  onnxruntime-swift-package-manager:
+    url: https://github.com/microsoft/onnxruntime-swift-package-manager
+    from: "1.20.0"

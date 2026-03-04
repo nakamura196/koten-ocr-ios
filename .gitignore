@@ -1,0 +1,24 @@
+# Xcode
+DerivedData/
+build/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+
+# macOS
+.DS_Store
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Archives & builds
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# CoreML generated
+*.mlmodelc
+
+# ONNX models (download via setup.sh)
+KotenOCR/Models/*.onnx
