@@ -31,7 +31,7 @@ git clone https://github.com/nakamura196/koten-ocr-ios.git
 cd koten-ocr-ios
 
 # ONNXモデルをダウンロード（約80MB）
-./scripts/setup.sh
+./setup.sh
 
 # Xcodeプロジェクトを生成
 xcodegen generate
