@@ -18,3 +18,64 @@
 "settings_version" = "Version";
 "settings_licenses" = "Licenses";
 "settings_links" = "Links";
+
+/* Theme */
+"settings_theme" = "Appearance";
+"theme_system" = "System";
+"theme_light" = "Light";
+"theme_dark" = "Dark";
+
+/* Language */
+"settings_language" = "Language";
+"language_system" = "System";
+"language_ja" = "Japanese";
+"language_en" = "English";
+"language_restart_message" = "Please restart the app to apply the language change.";
+"language_restart_title" = "Restart Required";
+"ok" = "OK";
+
+/* Camera */
+"camera_no_camera" = "Camera not available\nUse the photo picker to select an image";
+"flash_on" = "Flash On";
+"flash_off" = "Flash Off";
+"capture_button" = "Take Photo";
+"gallery_button" = "Photo Library";
+"settings_button" = "Settings";
+
+/* Processing */
+"loading_models" = "Loading OCR Models...";
+"recognizing_text" = "Recognizing text...";
+"cancel" = "Cancel";
+"init_error" = "Initialization Error";
+
+/* Result */
+"back" = "Back";
+"boxes_toggle" = "Boxes";
+"regions_count" = "%d regions";
+"copy" = "Copy";
+"copied" = "Copied";
+"share" = "Share";
+"share_text" = "Share Text";
+"export_txt" = "Export TXT";
+"export_pdf" = "Export PDF";
+"edit_text" = "Edit Text";
+"edit_detection_title" = "Edit Text";
+"edit_save" = "Save";
+"edit_cancel" = "Cancel";
+
+/* History */
+"history_title" = "History";
+"history_button" = "History";
+"history_empty" = "No scan history yet";
+"history_delete_all" = "Delete All";
+"history_regions" = "regions";
+"history_item_label" = "Scan result";
+"close" = "Close";
+
+/* Tip Jar */
+"tipjar_title" = "Support KotenOCR";
+"tipjar_description" = "If you enjoy using KotenOCR, consider leaving a tip to support development.";
+"tipjar_nav_title" = "Tip Jar";
+"tipjar_thanks" = "Thank you for your support!";
+"tipjar_error_unverified" = "Purchase verification failed";
+"settings_tipjar" = "Support Us";

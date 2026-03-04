@@ -20,12 +20,17 @@ class CameraViewController: UIViewController {
     private var previewLayer: AVCaptureVideoPreviewLayer?
     private let photoOutput = AVCapturePhotoOutput()
     private var shutterButton: UIButton?
+    private var flashButton: UIButton?
+    private var focusIndicator: UIView?
+    private var isFlashOn = false
+    private var captureDevice: AVCaptureDevice?
 
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
         setupCamera()
         setupUI()
+        setupTapFocus()
     }
 
     override func viewDidLayoutSubviews() {
@@ -45,6 +50,10 @@ class CameraViewController: UIViewController {
         super.viewWillDisappear(animated)
         guard cameraAvailable else { return }
         captureSession.stopRunning()
+        // Turn off torch when leaving
+        if isFlashOn {
+            toggleTorch(on: false)
+        }
     }
 
     private var cameraAvailable = false
@@ -58,6 +67,7 @@ class CameraViewController: UIViewController {
             return
         }
 
+        self.captureDevice = device
         captureSession.sessionPreset = .photo
 
         if captureSession.canAddInput(input) {
@@ -78,7 +88,7 @@ class CameraViewController: UIViewController {
 
     private func showNoCameraLabel() {
         let label = UILabel()
-        label.text = "Camera not available\nUse the photo picker to select an image"
+        label.text = NSLocalizedString("camera_no_camera", comment: "")
         label.textColor = .gray
         label.textAlignment = .center
         label.numberOfLines = 0
@@ -95,6 +105,7 @@ class CameraViewController: UIViewController {
     // MARK: - UI
 
     private func setupUI() {
+        // Shutter button
         let button = UIButton(type: .system)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.backgroundColor = .white
@@ -102,6 +113,7 @@ class CameraViewController: UIViewController {
         button.layer.borderWidth = 4
         button.layer.borderColor = UIColor.white.withAlphaComponent(0.5).cgColor
         button.addTarget(self, action: #selector(capturePhoto), for: .touchUpInside)
+        button.accessibilityLabel = NSLocalizedString("capture_button", comment: "")
         view.addSubview(button)
 
         NSLayoutConstraint.activate([
@@ -112,6 +124,112 @@ class CameraViewController: UIViewController {
         ])
 
         self.shutterButton = button
+
+        // Flash button
+        let flash = UIButton(type: .system)
+        flash.translatesAutoresizingMaskIntoConstraints = false
+        flash.setImage(UIImage(systemName: "bolt.slash.fill"), for: .normal)
+        flash.tintColor = .white
+        flash.backgroundColor = UIColor.white.withAlphaComponent(0.2)
+        flash.layer.cornerRadius = 22
+        flash.addTarget(self, action: #selector(toggleFlash), for: .touchUpInside)
+        flash.accessibilityLabel = NSLocalizedString("flash_off", comment: "")
+        view.addSubview(flash)
+
+        NSLayoutConstraint.activate([
+            flash.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+            flash.bottomAnchor.constraint(equalTo: button.topAnchor, constant: -20),
+            flash.widthAnchor.constraint(equalToConstant: 44),
+            flash.heightAnchor.constraint(equalToConstant: 44)
+        ])
+
+        self.flashButton = flash
+
+        // Focus indicator
+        let indicator = UIView(frame: CGRect(x: 0, y: 0, width: 70, height: 70))
+        indicator.layer.borderColor = UIColor.yellow.cgColor
+        indicator.layer.borderWidth = 2
+        indicator.backgroundColor = .clear
+        indicator.isHidden = true
+        indicator.isUserInteractionEnabled = false
+        view.addSubview(indicator)
+        self.focusIndicator = indicator
+    }
+
+    // MARK: - Tap to Focus
+
+    private func setupTapFocus() {
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTapFocus(_:)))
+        tapGesture.numberOfTapsRequired = 1
+        view.addGestureRecognizer(tapGesture)
+    }
+
+    @objc private func handleTapFocus(_ gesture: UITapGestureRecognizer) {
+        guard cameraAvailable,
+              let device = captureDevice,
+              let previewLayer = previewLayer else { return }
+
+        let point = gesture.location(in: view)
+
+        // Don't focus if tapping on buttons
+        if let shutter = shutterButton, shutter.frame.contains(point) { return }
+        if let flash = flashButton, flash.frame.contains(point) { return }
+
+        let focusPoint = previewLayer.captureDevicePointConverted(fromLayerPoint: point)
+
+        do {
+            try device.lockForConfiguration()
+            if device.isFocusPointOfInterestSupported {
+                device.focusPointOfInterest = focusPoint
+                device.focusMode = .autoFocus
+            }
+            if device.isExposurePointOfInterestSupported {
+                device.exposurePointOfInterest = focusPoint
+                device.exposureMode = .autoExpose
+            }
+            device.unlockForConfiguration()
+        } catch {}
+
+        // Show focus indicator
+        showFocusIndicator(at: point)
+    }
+
+    private func showFocusIndicator(at point: CGPoint) {
+        guard let indicator = focusIndicator else { return }
+        indicator.center = point
+        indicator.isHidden = false
+        indicator.alpha = 1.0
+        indicator.transform = CGAffineTransform(scaleX: 1.3, y: 1.3)
+
+        UIView.animate(withDuration: 0.3, animations: {
+            indicator.transform = .identity
+        }) { _ in
+            UIView.animate(withDuration: 0.5, delay: 0.5, options: [], animations: {
+                indicator.alpha = 0
+            }) { _ in
+                indicator.isHidden = true
+            }
+        }
+    }
+
+    // MARK: - Flash
+
+    @objc private func toggleFlash() {
+        isFlashOn.toggle()
+        toggleTorch(on: isFlashOn)
+        let imageName = isFlashOn ? "bolt.fill" : "bolt.slash.fill"
+        flashButton?.setImage(UIImage(systemName: imageName), for: .normal)
+        flashButton?.tintColor = isFlashOn ? .yellow : .white
+        flashButton?.accessibilityLabel = NSLocalizedString(isFlashOn ? "flash_on" : "flash_off", comment: "")
+    }
+
+    private func toggleTorch(on: Bool) {
+        guard let device = captureDevice, device.hasTorch else { return }
+        do {
+            try device.lockForConfiguration()
+            device.torchMode = on ? .on : .off
+            device.unlockForConfiguration()
+        } catch {}
     }
 
     @objc private func capturePhoto() {

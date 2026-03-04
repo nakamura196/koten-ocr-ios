@@ -26,11 +26,33 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.nakamura196.kotenocr
         MARKETING_VERSION: "1.0.0"
         CURRENT_PROJECT_VERSION: "1"
-        DEVELOPMENT_TEAM: ""
+        DEVELOPMENT_TEAM: "Q6S8JS6GWV"
+        CODE_SIGN_STYLE: "Automatic"
         TARGETED_DEVICE_FAMILY: "1,2"
+    entitlements:
+      path: KotenOCR/KotenOCR.entitlements
+    postBuildScripts:
+      - script: |
+          # Fix ONNX Runtime MinimumOSVersion mismatch and re-sign
+          FW_DIR="${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/onnxruntime.framework"
+          FW_PLIST="${FW_DIR}/Info.plist"
+          if [ -f "$FW_PLIST" ]; then
+            /usr/libexec/PlistBuddy -c "Set :MinimumOSVersion ${IPHONEOS_DEPLOYMENT_TARGET}" "$FW_PLIST"
+            codesign --force --sign "${EXPANDED_CODE_SIGN_IDENTITY}" --timestamp=none --preserve-metadata=identifier,entitlements "${FW_DIR}"
+          fi
+        name: Fix ONNX Runtime and re-sign
     dependencies:
       - package: onnxruntime-swift-package-manager
         product: onnxruntime
+
+schemes:
+  KotenOCR:
+    build:
+      targets:
+        KotenOCR: all
+    run:
+      config: Debug
+      storeKitConfiguration: KotenOCR/TipJar.storekit
 
 packages:
   onnxruntime-swift-package-manager:

@@ -129,43 +129,45 @@ class OCREngine: ObservableObject {
             throw NSError(domain: "OCR", code: 20, userInfo: [NSLocalizedDescriptionKey: "Engine not initialized"])
         }
 
-        return try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                do {
-                    // Step 1: Layout detection
-                    var detections = try detector.detect(image: image)
+        // Step 1: Layout detection
+        let detections = try await Task.detached(priority: .userInitiated) {
+            try detector.detect(image: image)
+        }.value
 
-                    // Step 2: Text recognition for each detection
-                    for i in 0..<detections.count {
-                        let box = detections[i].box
-                        let cropRect = CGRect(
-                            x: max(0, box[0]),
-                            y: max(0, box[1]),
-                            width: max(1, box[2] - box[0]),
-                            height: max(1, box[3] - box[1])
-                        )
+        try Task.checkCancellation()
 
-                        if let cropped = image.cropping(to: cropRect) {
-                            let text = try recognizer.recognize(image: cropped)
-                            detections[i].text = text
-                        }
-                    }
+        // Step 2: Text recognition for each detection
+        var recognized = detections
+        for i in 0..<recognized.count {
+            try Task.checkCancellation()
 
-                    // Step 3: Reading order
-                    let ordered = readingOrderProcessor.process(
-                        detections: detections,
-                        imageWidth: image.width,
-                        imageHeight: image.height
-                    )
+            let box = recognized[i].box
+            let cropRect = CGRect(
+                x: max(0, box[0]),
+                y: max(0, box[1]),
+                width: max(1, box[2] - box[0]),
+                height: max(1, box[3] - box[1])
+            )
 
-                    // Step 4: Combine text
-                    let combinedText = ordered.map(\.text).joined(separator: "\n")
-                    let result = OCRResult(detections: ordered, text: combinedText)
-                    continuation.resume(returning: result)
-                } catch {
-                    continuation.resume(throwing: error)
-                }
+            if let cropped = image.cropping(to: cropRect) {
+                let text = try await Task.detached(priority: .userInitiated) {
+                    try recognizer.recognize(image: cropped)
+                }.value
+                recognized[i].text = text
             }
         }
+
+        try Task.checkCancellation()
+
+        // Step 3: Reading order
+        let ordered = readingOrderProcessor.process(
+            detections: recognized,
+            imageWidth: image.width,
+            imageHeight: image.height
+        )
+
+        // Step 4: Combine text
+        let combinedText = ordered.map(\.text).joined(separator: "\n")
+        return OCRResult(detections: ordered, text: combinedText)
     }
 }

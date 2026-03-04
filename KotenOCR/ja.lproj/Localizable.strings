@@ -14,7 +14,68 @@
 
 /* Settings */
 "settings_title" = "設定";
-"settings_about" = "About";
+"settings_about" = "このアプリについて";
 "settings_version" = "バージョン";
 "settings_licenses" = "ライセンス";
 "settings_links" = "リンク";
+
+/* Theme */
+"settings_theme" = "外観";
+"theme_system" = "システム";
+"theme_light" = "ライト";
+"theme_dark" = "ダーク";
+
+/* Language */
+"settings_language" = "言語";
+"language_system" = "システム";
+"language_ja" = "日本語";
+"language_en" = "English";
+"language_restart_message" = "言語の変更を適用するにはアプリを再起動してください。";
+"language_restart_title" = "再起動が必要";
+"ok" = "OK";
+
+/* Camera */
+"camera_no_camera" = "カメラが利用できません\n写真ピッカーから画像を選択してください";
+"flash_on" = "フラッシュ オン";
+"flash_off" = "フラッシュ オフ";
+"capture_button" = "撮影";
+"gallery_button" = "フォトライブラリ";
+"settings_button" = "設定";
+
+/* Processing */
+"loading_models" = "OCRモデルを読み込み中...";
+"recognizing_text" = "テキストを認識中...";
+"cancel" = "キャンセル";
+"init_error" = "初期化エラー";
+
+/* Result */
+"back" = "戻る";
+"boxes_toggle" = "枠";
+"regions_count" = "%d 領域";
+"copy" = "コピー";
+"copied" = "コピー済み";
+"share" = "共有";
+"share_text" = "テキストを共有";
+"export_txt" = "TXTで書き出す";
+"export_pdf" = "PDFで書き出す";
+"edit_text" = "テキスト編集";
+"edit_detection_title" = "テキストを編集";
+"edit_save" = "保存";
+"edit_cancel" = "キャンセル";
+
+/* History */
+"history_title" = "履歴";
+"history_button" = "履歴";
+"history_empty" = "スキャン履歴はまだありません";
+"history_delete_all" = "すべて削除";
+"history_regions" = "領域";
+"history_item_label" = "スキャン結果";
+"close" = "閉じる";
+
+/* Tip Jar */
+"tipjar_title" = "KotenOCRを応援";
+"tipjar_description" = "KotenOCRをお楽しみいただけましたら、\n開発を支援するためにチップをお願いします。";
+"tipjar_nav_title" = "応援する";
+"tipjar_thanks" = "ご支援ありがとうございます！";
+"tipjar_error_unverified" = "購入の検証に失敗しました";
+"settings_tipjar" = "開発を応援";

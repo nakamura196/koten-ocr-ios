@@ -3,10 +3,12 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 63;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1BE4FE0AC063CE4218405FBB /* HistoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82EE586A4C199D4AD67ED1AE /* HistoryManager.swift */; };
+		1E257D31C55F486C70B827A7 /* HistoryItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DE94F4988B24C1250C6F20D /* HistoryItem.swift */; };
 		2756B08073121E03C17F3366 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00CDB764CCF8F80C1ACBEA35 /* CameraView.swift */; };
 		309188DFD1D2448CEE895A92 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D5CD36F65D4B7D385BBCA9C /* ContentView.swift */; };
 		3771321C98AE0D170C397897 /* RTMDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56AB805A57FC795B0DC85FF4 /* RTMDetector.swift */; };
@@ -14,26 +16,41 @@
 		543D92C50A84D38DCFC78C4E /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0C02138D36BD4637583CC4 /* OnboardingView.swift */; };
 		5611919E371D5CA2CC2675B8 /* PARSEQRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C71D29B2E05CAE6C27D498 /* PARSEQRecognizer.swift */; };
 		59FE9F6100B0045A383CA90C /* ResultOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B4379D31980B50B6E4167FC /* ResultOverlayView.swift */; };
+		728E5483FE3AADF2413203FA /* ExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A229657613D69582B3F74B4D /* ExportManager.swift */; };
+		74099E2D688F864C84A74B4A /* TipJarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12D6ADEDDD0734CA628912DE /* TipJarManager.swift */; };
+		A3AC83B11BD87194218B7E04 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 042CA1185DB0ADB541DECC16 /* AppTheme.swift */; };
 		A812012515F81DD1710B8FF8 /* ReadingOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33E0D72EA37B2FC8AEAAB9C3 /* ReadingOrder.swift */; };
 		B6268A1DEF5C02AC116B13D9 /* onnxruntime in Frameworks */ = {isa = PBXBuildFile; productRef = CEBA04EDE9D84A4D05C1D2FC /* onnxruntime */; };
 		B774EF502B536678D39CBC6D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6CFDE78282D74C1F90DD69F /* SettingsView.swift */; };
+		BCEC5A7E7C54907F9F6DEAB0 /* TipJarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43761597E39AC3C62D31C9E8 /* TipJarView.swift */; };
 		D2ADA4E7EFCF4A35211E3ACF /* KotenOCRApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 270641011EB727A6FC52AD0B /* KotenOCRApp.swift */; };
 		D2B4248805F9613D9461AE45 /* Models in Resources */ = {isa = PBXBuildFile; fileRef = CBDF15C34D6661310197B75E /* Models */; };
+		D3EEE12E67663C8EA0799D33 /* TipJar.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 75D337ED66BD4C54B44E5CD9 /* TipJar.storekit */; };
+		D6709D356E1F7B2EB7FFB166 /* HistoryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A139A6962601902EBDFB6DD /* HistoryListView.swift */; };
 		E08D99583FA14352749CCF1A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 76A6BD467DEA7229DFCBB191 /* Assets.xcassets */; };
 		F90AF6B5F88C2159FED81F00 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 7078A6C58B9E131D0C86B41E /* Localizable.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		00CDB764CCF8F80C1ACBEA35 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
+		042CA1185DB0ADB541DECC16 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
+		12D6ADEDDD0734CA628912DE /* TipJarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJarManager.swift; sourceTree = "<group>"; };
+		1A4629A0F5DA8EE91C6DB6D6 /* KotenOCR.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = KotenOCR.entitlements; sourceTree = "<group>"; };
 		1FD6672AFFCFE2471102B652 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		270641011EB727A6FC52AD0B /* KotenOCRApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KotenOCRApp.swift; sourceTree = "<group>"; };
 		33E0D72EA37B2FC8AEAAB9C3 /* ReadingOrder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingOrder.swift; sourceTree = "<group>"; };
-		413F9EA8A3AF49B4FC18AF1C /* KotenOCR.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KotenOCR.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		413F9EA8A3AF49B4FC18AF1C /* KotenOCR.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = KotenOCR.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		43761597E39AC3C62D31C9E8 /* TipJarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJarView.swift; sourceTree = "<group>"; };
+		4DE94F4988B24C1250C6F20D /* HistoryItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryItem.swift; sourceTree = "<group>"; };
 		56AB805A57FC795B0DC85FF4 /* RTMDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTMDetector.swift; sourceTree = "<group>"; };
 		5B4379D31980B50B6E4167FC /* ResultOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultOverlayView.swift; sourceTree = "<group>"; };
+		75D337ED66BD4C54B44E5CD9 /* TipJar.storekit */ = {isa = PBXFileReference; path = TipJar.storekit; sourceTree = "<group>"; };
 		76A6BD467DEA7229DFCBB191 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		7D5CD36F65D4B7D385BBCA9C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		82EE586A4C199D4AD67ED1AE /* HistoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryManager.swift; sourceTree = "<group>"; };
+		9A139A6962601902EBDFB6DD /* HistoryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryListView.swift; sourceTree = "<group>"; };
 		9F0C02138D36BD4637583CC4 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		A229657613D69582B3F74B4D /* ExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportManager.swift; sourceTree = "<group>"; };
 		B375ECB40C38D777102F59BC /* OCREngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCREngine.swift; sourceTree = "<group>"; };
 		CBDF15C34D6661310197B75E /* Models */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Models; path = KotenOCR/Models; sourceTree = SOURCE_ROOT; };
 		D1D04E8E36E0873A6D94D661 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -63,6 +80,14 @@
 			);
 			sourceTree = "<group>";
 		};
+		3C3717CD90B874E689D1BD0F /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				042CA1185DB0ADB541DECC16 /* AppTheme.swift */,
+			);
+			path = Theme;
+			sourceTree = "<group>";
+		};
 		43006EC1C4978FB667780FD7 /* OCR */ = {
 			isa = PBXGroup;
 			children = (
@@ -79,11 +104,30 @@
 			children = (
 				00CDB764CCF8F80C1ACBEA35 /* CameraView.swift */,
 				7D5CD36F65D4B7D385BBCA9C /* ContentView.swift */,
+				9A139A6962601902EBDFB6DD /* HistoryListView.swift */,
 				9F0C02138D36BD4637583CC4 /* OnboardingView.swift */,
 				5B4379D31980B50B6E4167FC /* ResultOverlayView.swift */,
 				D6CFDE78282D74C1F90DD69F /* SettingsView.swift */,
+				43761597E39AC3C62D31C9E8 /* TipJarView.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		9CAA0F69467B09C305F308AC /* Store */ = {
+			isa = PBXGroup;
+			children = (
+				12D6ADEDDD0734CA628912DE /* TipJarManager.swift */,
+			);
+			path = Store;
+			sourceTree = "<group>";
+		};
+		C04A52F2439420B5D6FE7915 /* History */ = {
+			isa = PBXGroup;
+			children = (
+				4DE94F4988B24C1250C6F20D /* HistoryItem.swift */,
+				82EE586A4C199D4AD67ED1AE /* HistoryManager.swift */,
+			);
+			path = History;
 			sourceTree = "<group>";
 		};
 		D89E6EE8CC27C141DD22E6D2 /* Products */ = {
@@ -94,14 +138,28 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		E412F87D82C0E2D914BD5700 /* Export */ = {
+			isa = PBXGroup;
+			children = (
+				A229657613D69582B3F74B4D /* ExportManager.swift */,
+			);
+			path = Export;
+			sourceTree = "<group>";
+		};
 		FC7F597AFF10926DBDCA153A /* KotenOCR */ = {
 			isa = PBXGroup;
 			children = (
 				76A6BD467DEA7229DFCBB191 /* Assets.xcassets */,
 				D1D04E8E36E0873A6D94D661 /* Info.plist */,
+				1A4629A0F5DA8EE91C6DB6D6 /* KotenOCR.entitlements */,
 				270641011EB727A6FC52AD0B /* KotenOCRApp.swift */,
 				7078A6C58B9E131D0C86B41E /* Localizable.strings */,
+				75D337ED66BD4C54B44E5CD9 /* TipJar.storekit */,
+				E412F87D82C0E2D914BD5700 /* Export */,
+				C04A52F2439420B5D6FE7915 /* History */,
 				43006EC1C4978FB667780FD7 /* OCR */,
+				9CAA0F69467B09C305F308AC /* Store */,
+				3C3717CD90B874E689D1BD0F /* Theme */,
 				832D36786C1FB097CB49B5B1 /* Views */,
 			);
 			path = KotenOCR;
@@ -117,6 +175,7 @@
 				2F9CD6649B02EAC925429891 /* Sources */,
 				65C3ED91009C59445E13B9FC /* Resources */,
 				D2F0153F16DC0998F1F9BE97 /* Frameworks */,
+				B0C04CAD5BED1C2D33CDD25D /* Fix ONNX Runtime and re-sign */,
 			);
 			buildRules = (
 			);
@@ -138,6 +197,12 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					01F2268617CB02B3495831DA = {
+						DevelopmentTeam = Q6S8JS6GWV;
+						ProvisioningStyle = Automatic;
+					};
+				};
 			};
 			buildConfigurationList = A3563DD321028D285386D206 /* Build configuration list for PBXProject "KotenOCR" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -153,6 +218,7 @@
 			packageReferences = (
 				8C9729CC4BDCFD1550F0FF2D /* XCRemoteSwiftPackageReference "onnxruntime-swift-package-manager" */,
 			);
+			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -169,18 +235,45 @@
 				E08D99583FA14352749CCF1A /* Assets.xcassets in Resources */,
 				F90AF6B5F88C2159FED81F00 /* Localizable.strings in Resources */,
 				D2B4248805F9613D9461AE45 /* Models in Resources */,
+				D3EEE12E67663C8EA0799D33 /* TipJar.storekit in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		B0C04CAD5BED1C2D33CDD25D /* Fix ONNX Runtime and re-sign */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Fix ONNX Runtime and re-sign";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Fix ONNX Runtime MinimumOSVersion mismatch and re-sign\nFW_DIR=\"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/onnxruntime.framework\"\nFW_PLIST=\"${FW_DIR}/Info.plist\"\nif [ -f \"$FW_PLIST\" ]; then\n  /usr/libexec/PlistBuddy -c \"Set :MinimumOSVersion ${IPHONEOS_DEPLOYMENT_TARGET}\" \"$FW_PLIST\"\n  codesign --force --sign \"${EXPANDED_CODE_SIGN_IDENTITY}\" --timestamp=none --preserve-metadata=identifier,entitlements \"${FW_DIR}\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		2F9CD6649B02EAC925429891 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A3AC83B11BD87194218B7E04 /* AppTheme.swift in Sources */,
 				2756B08073121E03C17F3366 /* CameraView.swift in Sources */,
 				309188DFD1D2448CEE895A92 /* ContentView.swift in Sources */,
+				728E5483FE3AADF2413203FA /* ExportManager.swift in Sources */,
+				1E257D31C55F486C70B827A7 /* HistoryItem.swift in Sources */,
+				D6709D356E1F7B2EB7FFB166 /* HistoryListView.swift in Sources */,
+				1BE4FE0AC063CE4218405FBB /* HistoryManager.swift in Sources */,
 				D2ADA4E7EFCF4A35211E3ACF /* KotenOCRApp.swift in Sources */,
 				51D3D846E8BD58665B59A081 /* OCREngine.swift in Sources */,
 				543D92C50A84D38DCFC78C4E /* OnboardingView.swift in Sources */,
@@ -189,6 +282,8 @@
 				A812012515F81DD1710B8FF8 /* ReadingOrder.swift in Sources */,
 				59FE9F6100B0045A383CA90C /* ResultOverlayView.swift in Sources */,
 				B774EF502B536678D39CBC6D /* SettingsView.swift in Sources */,
+				74099E2D688F864C84A74B4A /* TipJarManager.swift in Sources */,
+				BCEC5A7E7C54907F9F6DEAB0 /* TipJarView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -267,7 +362,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = KotenOCR/KotenOCR.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = Q6S8JS6GWV;
 				INFOPLIST_FILE = KotenOCR/Info.plist;
@@ -349,7 +446,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = KotenOCR/KotenOCR.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = Q6S8JS6GWV;
 				INFOPLIST_FILE = KotenOCR/Info.plist;

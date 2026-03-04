@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ResultOverlayView: View {
     let image: CGImage
-    let detections: [Detection]
+    @Binding var detections: [Detection]
     @Binding var selectedIndex: Int?
     @State private var showBoxes = true
     @State private var showCopied = false
@@ -11,6 +11,10 @@ struct ResultOverlayView: View {
     @State private var steadyZoom: CGFloat = 1.0
     @State private var offset: CGSize = .zero
     @State private var steadyOffset: CGSize = .zero
+    @State private var editingIndex: Int?
+    @State private var editText: String = ""
+    @State private var exportFileURL: URL?
+    @State private var showExportShare = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -134,39 +138,71 @@ struct ResultOverlayView: View {
             // Controls
             HStack(spacing: 12) {
                 Toggle(isOn: $showBoxes) {
-                    Label("Boxes", systemImage: "rectangle.dashed")
+                    Label(String(localized: "boxes_toggle", defaultValue: "Boxes"), systemImage: "rectangle.dashed")
                         .font(.caption)
                 }
                 .toggleStyle(.button)
                 .tint(showBoxes ? .blue : .gray)
+                .accessibilityLabel(Text("boxes_toggle"))
 
                 Spacer()
 
-                Text("\(detections.count) regions")
+                Text("\(detections.count) " + String(localized: "history_regions", defaultValue: "regions"))
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundColor(.secondary)
 
                 Button(action: copyAllText) {
-                    Label(showCopied ? "Copied" : "Copy", systemImage: showCopied ? "checkmark" : "doc.on.doc")
+                    Label(showCopied ? String(localized: "copied", defaultValue: "Copied") : String(localized: "copy", defaultValue: "Copy"),
+                          systemImage: showCopied ? "checkmark" : "doc.on.doc")
                         .font(.caption)
                 }
                 .buttonStyle(.bordered)
                 .tint(showCopied ? .green : .blue)
+                .accessibilityLabel(Text(showCopied ? "copied" : "copy"))
 
-                Button(action: { showShareSheet = true }) {
+                // Export menu
+                Menu {
+                    Button {
+                        showShareSheet = true
+                    } label: {
+                        Label(String(localized: "share_text", defaultValue: "Share Text"), systemImage: "text.bubble")
+                    }
+                    Button {
+                        if let url = ExportManager.exportAsTXT(text: combinedText) {
+                            exportFileURL = url
+                            showExportShare = true
+                        }
+                    } label: {
+                        Label(String(localized: "export_txt", defaultValue: "Export TXT"), systemImage: "doc.text")
+                    }
+                    Button {
+                        if let url = ExportManager.exportAsPDF(text: combinedText, image: image) {
+                            exportFileURL = url
+                            showExportShare = true
+                        }
+                    } label: {
+                        Label(String(localized: "export_pdf", defaultValue: "Export PDF"), systemImage: "doc.richtext")
+                    }
+                } label: {
                     Image(systemName: "square.and.arrow.up")
                         .font(.caption)
                 }
                 .buttonStyle(.bordered)
                 .tint(.blue)
+                .accessibilityLabel(Text("share"))
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
             .sheet(isPresented: $showShareSheet) {
                 ShareSheet(text: combinedText)
             }
+            .sheet(isPresented: $showExportShare) {
+                if let url = exportFileURL {
+                    ShareSheet(text: url.path, url: url)
+                }
+            }
 
-            Divider().background(Color.gray.opacity(0.3))
+            Divider().background(Color.secondary.opacity(0.3))
 
             // Text list with highlighting
             ScrollViewReader { proxy in
@@ -179,12 +215,12 @@ struct ResultOverlayView: View {
                             HStack(alignment: .top, spacing: 8) {
                                 Text("\(index + 1)")
                                     .font(.system(size: 12, weight: .medium, design: .monospaced))
-                                    .foregroundColor(isSelected ? color : .gray)
+                                    .foregroundColor(isSelected ? color : .secondary)
                                     .frame(width: 24, alignment: .trailing)
 
                                 Text(det.text.isEmpty ? "---" : det.text)
                                     .font(.system(.body, design: .serif))
-                                    .foregroundColor(det.text.isEmpty ? .gray : .white)
+                                    .foregroundColor(det.text.isEmpty ? .secondary : .primary)
                             }
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
@@ -199,6 +235,12 @@ struct ResultOverlayView: View {
                                     selectedIndex = selectedIndex == index ? nil : index
                                 }
                             }
+                            .onLongPressGesture {
+                                editingIndex = index
+                                editText = det.text
+                            }
+                            .accessibilityLabel(Text("\(index + 1): \(det.text)"))
+                            .accessibilityHint(Text("edit_text"))
                         }
                     }
                     .padding(.horizontal, 8)
@@ -209,6 +251,38 @@ struct ResultOverlayView: View {
                         withAnimation {
                             proxy.scrollTo(idx, anchor: .center)
                         }
+                    }
+                }
+            }
+        }
+        .sheet(item: $editingIndex) { index in
+            editSheet(for: index)
+        }
+    }
+
+    // MARK: - Edit Sheet
+
+    private func editSheet(for index: Int) -> some View {
+        NavigationView {
+            VStack {
+                TextEditor(text: $editText)
+                    .font(.system(.body, design: .serif))
+                    .padding()
+            }
+            .navigationTitle(String(localized: "edit_detection_title", defaultValue: "Edit Text"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(String(localized: "edit_cancel", defaultValue: "Cancel")) {
+                        editingIndex = nil
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(String(localized: "edit_save", defaultValue: "Save")) {
+                        if let idx = editingIndex, idx < detections.count {
+                            detections[idx].text = editText
+                        }
+                        editingIndex = nil
                     }
                 }
             }
@@ -235,13 +309,25 @@ struct ResultOverlayView: View {
     }
 }
 
+// Make Int conform to Identifiable for .sheet(item:)
+extension Int: @retroactive Identifiable {
+    public var id: Int { self }
+}
+
 // MARK: - Share Sheet
 
 struct ShareSheet: UIViewControllerRepresentable {
     let text: String
+    var url: URL? = nil
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: [text], applicationActivities: nil)
+        var items: [Any] = []
+        if let url = url {
+            items.append(url)
+        } else {
+            items.append(text)
+        }
+        return UIActivityViewController(activityItems: items, applicationActivities: nil)
     }
 
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}

@@ -2,6 +2,9 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("appTheme") private var appThemeRaw: String = AppTheme.system.rawValue
+    @AppStorage("appLanguage") private var appLanguage: String = "system"
+    @State private var showRestartAlert = false
 
     private var appVersion: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -9,10 +12,17 @@ struct SettingsView: View {
         return "\(version) (\(build))"
     }
 
+    private var appTheme: AppTheme {
+        AppTheme(rawValue: appThemeRaw) ?? .system
+    }
+
     var body: some View {
         NavigationView {
             List {
                 aboutSection
+                themeSection
+                languageSection
+                tipJarSection
                 licenseSection
                 linkSection
             }
@@ -22,11 +32,18 @@ struct SettingsView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                     }
+                    .accessibilityLabel(Text("close"))
                 }
             }
+            .alert(String(localized: "language_restart_title", defaultValue: "Restart Required"), isPresented: $showRestartAlert) {
+                Button(String(localized: "ok", defaultValue: "OK")) {}
+            } message: {
+                Text(String(localized: "language_restart_message", defaultValue: "Please restart the app to apply the language change."))
+            }
         }
+        .preferredColorScheme(appTheme.colorScheme)
     }
 
     // MARK: - About
@@ -48,6 +65,54 @@ struct SettingsView: View {
                 }
             }
             .padding(.vertical, 4)
+        }
+    }
+
+    // MARK: - Theme
+
+    private var themeSection: some View {
+        Section(header: Text(String(localized: "settings_theme", defaultValue: "Appearance"))) {
+            Picker(String(localized: "settings_theme", defaultValue: "Appearance"), selection: $appThemeRaw) {
+                ForEach(AppTheme.allCases, id: \.rawValue) { theme in
+                    Text(theme.displayName).tag(theme.rawValue)
+                }
+            }
+            .pickerStyle(.segmented)
+            .accessibilityLabel(Text("settings_theme"))
+        }
+    }
+
+    // MARK: - Language
+
+    private var languageSection: some View {
+        Section(header: Text(String(localized: "settings_language", defaultValue: "Language"))) {
+            Picker(String(localized: "settings_language", defaultValue: "Language"), selection: $appLanguage) {
+                Text(String(localized: "language_system", defaultValue: "System")).tag("system")
+                Text(String(localized: "language_ja", defaultValue: "Japanese")).tag("ja")
+                Text(String(localized: "language_en", defaultValue: "English")).tag("en")
+            }
+            .onChange(of: appLanguage) { newValue in
+                applyLanguage(newValue)
+                showRestartAlert = true
+            }
+            .accessibilityLabel(Text("settings_language"))
+        }
+    }
+
+    // MARK: - Tip Jar
+
+    private var tipJarSection: some View {
+        Section(header: Text(String(localized: "settings_tipjar", defaultValue: "Support Us"))) {
+            NavigationLink {
+                TipJarView()
+            } label: {
+                HStack {
+                    Image(systemName: "heart.fill")
+                        .foregroundColor(.pink)
+                    Text(String(localized: "tipjar_nav_title", defaultValue: "Tip Jar"))
+                }
+            }
+            .accessibilityLabel(Text("tipjar_nav_title"))
         }
     }
 
@@ -93,6 +158,17 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Language
+
+    private func applyLanguage(_ language: String) {
+        if language == "system" {
+            UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+        } else {
+            UserDefaults.standard.set([language], forKey: "AppleLanguages")
+        }
+        UserDefaults.standard.synchronize()
     }
 
     // MARK: - License Details

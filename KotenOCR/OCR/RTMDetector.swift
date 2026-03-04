@@ -3,7 +3,7 @@ import CoreGraphics
 import Accelerate
 import OnnxRuntimeBindings
 
-struct Detection {
+struct Detection: Codable {
     let box: [Int]       // [x1, y1, x2, y2]
     let score: Float
     let classId: Int

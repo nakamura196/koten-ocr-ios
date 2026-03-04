@@ -7,7 +7,7 @@ struct OnboardingView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Color(.systemBackground).ignoresSafeArea()
 
             VStack {
                 TabView(selection: $currentPage) {
@@ -24,14 +24,15 @@ struct OnboardingView: View {
                     }) {
                         Text(String(localized: "onboarding_start", defaultValue: "はじめる"))
                             .font(.headline)
-                            .foregroundColor(.black)
+                            .foregroundColor(Color(.systemBackground))
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.white)
+                            .background(Color.primary)
                             .cornerRadius(12)
                     }
                     .padding(.horizontal, 40)
                     .padding(.bottom, 40)
+                    .accessibilityLabel(Text("onboarding_start"))
                 }
             }
         }
@@ -50,10 +51,10 @@ struct OnboardingView: View {
             Text("KotenOCR")
                 .font(.largeTitle)
                 .bold()
-                .foregroundColor(.white)
+                .foregroundColor(.primary)
             Text(String(localized: "onboarding_intro", defaultValue: "古典籍・くずし字の文字認識アプリ。\nカメラで撮影するだけで、くずし字をテキストに変換します。"))
                 .font(.body)
-                .foregroundColor(.gray)
+                .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
             Spacer()
@@ -68,25 +69,27 @@ struct OnboardingView: View {
             Spacer()
             Image(systemName: "camera.fill")
                 .font(.system(size: 60))
-                .foregroundColor(.white)
+                .foregroundColor(.primary)
+                .accessibilityHidden(true)
             Text(String(localized: "onboarding_camera_title", defaultValue: "カメラへのアクセス"))
                 .font(.title2)
                 .bold()
-                .foregroundColor(.white)
+                .foregroundColor(.primary)
             Text(String(localized: "onboarding_camera_description", defaultValue: "古典籍の文字を認識するために、\nカメラへのアクセスを許可してください。"))
                 .font(.body)
-                .foregroundColor(.gray)
+                .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
             Button(action: requestCameraPermission) {
                 Text(String(localized: "onboarding_allow_camera", defaultValue: "カメラを許可する"))
                     .font(.headline)
-                    .foregroundColor(.black)
+                    .foregroundColor(Color(.systemBackground))
                     .padding(.horizontal, 32)
                     .padding(.vertical, 12)
-                    .background(Color.white)
+                    .background(Color.primary)
                     .cornerRadius(10)
             }
+            .accessibilityLabel(Text("onboarding_allow_camera"))
             Spacer()
             Spacer()
         }
@@ -100,7 +103,7 @@ struct OnboardingView: View {
             Text(String(localized: "onboarding_howto_title", defaultValue: "使い方"))
                 .font(.title2)
                 .bold()
-                .foregroundColor(.white)
+                .foregroundColor(.primary)
             VStack(alignment: .leading, spacing: 20) {
                 howToStep(
                     icon: "camera.viewfinder",
@@ -130,15 +133,17 @@ struct OnboardingView: View {
                 .font(.system(size: 28))
                 .foregroundColor(.blue)
                 .frame(width: 44)
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(.primary)
                 Text(description)
                     .font(.subheadline)
-                    .foregroundColor(.gray)
+                    .foregroundColor(.secondary)
             }
         }
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Actions
