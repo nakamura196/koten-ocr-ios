@@ -27,6 +27,8 @@
 		C1A2B3C4D5E6F7081234CCCC /* TranslationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A2B3C4D5E6F7081234DDDD /* TranslationService.swift */; };
 		C1A2B3C4D5E6F7081234FF01 /* TranslationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A2B3C4D5E6F7081234FF02 /* TranslationSettingsView.swift */; };
 		D2ADA4E7EFCF4A35211E3ACF /* KotenOCRApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 270641011EB727A6FC52AD0B /* KotenOCRApp.swift */; };
+		AA11BB22CC33DD44EE550001 /* UIImage+Orientation.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE550002 /* UIImage+Orientation.swift */; };
+		AA11BB22CC33DD44EE550003 /* CropView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE550004 /* CropView.swift */; };
 		D2B4248805F9613D9461AE45 /* Models in Resources */ = {isa = PBXBuildFile; fileRef = CBDF15C34D6661310197B75E /* Models */; };
 		D3EEE12E67663C8EA0799D33 /* TipJar.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 75D337ED66BD4C54B44E5CD9 /* TipJar.storekit */; };
 		D6709D356E1F7B2EB7FFB166 /* HistoryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A139A6962601902EBDFB6DD /* HistoryListView.swift */; };
@@ -63,6 +65,8 @@
 		C1A2B3C4D5E6F7081234FF02 /* TranslationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationSettingsView.swift; sourceTree = "<group>"; };
 		E1C71D29B2E05CAE6C27D498 /* PARSEQRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PARSEQRecognizer.swift; sourceTree = "<group>"; };
 		E42BA653965C493A22A7F003 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
+		AA11BB22CC33DD44EE550002 /* UIImage+Orientation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIImage+Orientation.swift"; sourceTree = "<group>"; };
+		AA11BB22CC33DD44EE550004 /* CropView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CropView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -110,6 +114,7 @@
 			children = (
 				00CDB764CCF8F80C1ACBEA35 /* CameraView.swift */,
 				7D5CD36F65D4B7D385BBCA9C /* ContentView.swift */,
+				AA11BB22CC33DD44EE550004 /* CropView.swift */,
 				9A139A6962601902EBDFB6DD /* HistoryListView.swift */,
 				9F0C02138D36BD4637583CC4 /* OnboardingView.swift */,
 				5B4379D31980B50B6E4167FC /* ResultOverlayView.swift */,
@@ -162,6 +167,14 @@
 			path = Export;
 			sourceTree = "<group>";
 		};
+		AA11BB22CC33DD44EE550005 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				AA11BB22CC33DD44EE550002 /* UIImage+Orientation.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
 		FC7F597AFF10926DBDCA153A /* KotenOCR */ = {
 			isa = PBXGroup;
 			children = (
@@ -172,6 +185,7 @@
 				7078A6C58B9E131D0C86B41E /* Localizable.strings */,
 				75D337ED66BD4C54B44E5CD9 /* TipJar.storekit */,
 				E412F87D82C0E2D914BD5700 /* Export */,
+				AA11BB22CC33DD44EE550005 /* Extensions */,
 				C04A52F2439420B5D6FE7915 /* History */,
 				43006EC1C4978FB667780FD7 /* OCR */,
 				9CAA0F69467B09C305F308AC /* Store */,
@@ -304,6 +318,8 @@
 				74099E2D688F864C84A74B4A /* TipJarManager.swift in Sources */,
 				BCEC5A7E7C54907F9F6DEAB0 /* TipJarView.swift in Sources */,
 				C1A2B3C4D5E6F7081234FF01 /* TranslationSettingsView.swift in Sources */,
+				AA11BB22CC33DD44EE550001 /* UIImage+Orientation.swift in Sources */,
+				AA11BB22CC33DD44EE550003 /* CropView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

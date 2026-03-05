@@ -73,7 +73,7 @@ Licenses:
 ## キーワード（日本語、最大100文字）
 
 ```
-OCR,くずし字,古典籍,文字認識,古文書,和本,国立国会図書館,NDL,現代語訳,翻訳
+OCR,くずし字,古典籍,文字認識,古文書,和本,国立国会図書館,NDL,現代語訳,オフライン
 ```
 
 ## キーワード（英語）
@@ -85,7 +85,7 @@ OCR,kuzushiji,classical,Japanese,manuscript,recognition,NDL,translation,kanji,te
 ## プロモーションテキスト（日本語、170文字以内）
 
 ```
-古典籍のくずし字をAIが読み取ります。国立国会図書館のOCRモデルを搭載し、オフラインでテキスト変換。現代語訳機能でAIが古文の意味・背景も解説します。
+古典籍のくずし字をAIが読み取り、現代語訳まで完全オフラインで。国立国会図書館のOCRモデルとApple Foundation Modelsを搭載し、古文の意味・背景もAIが解説します。
 ```
 
 ## サポートURL
@@ -124,6 +124,6 @@ This app performs OCR on classical Japanese texts (kuzushiji) using on-device AI
 No account or login is required.
 To test OCR: point the camera at any printed text or select an image from the photo library.
 The app will detect text regions and attempt recognition.
-To test translation: go to Settings > Translation Settings and enter an OpenAI-compatible API key (e.g., OpenRouter). Then tap "Modern Translation" on any OCR result.
+To test translation: go to Settings > Translation Settings. On iOS 26+ devices, "Local AI (Apple)" is available by default with no API key needed. For cloud API translation, select OpenRouter or OpenAI and enter an API key. Then tap "Modern Translation" on any OCR result.
 Sample images of classical Japanese texts can be found at: https://dl.ndl.go.jp/
 ```

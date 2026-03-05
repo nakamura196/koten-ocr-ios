@@ -1,8 +1,10 @@
 import SwiftUI
 import PhotosUI
+import Photos
 
 enum AppState {
     case camera
+    case cropping
     case processing
     case result
 }
@@ -22,8 +24,10 @@ struct ContentView: View {
     @State private var currentHistoryItemID: UUID?
     @State private var translatedText: String?
     @State private var cameFromHistory = false
+    @State private var preCropImage: CGImage?
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @AppStorage("appTheme") private var appThemeRaw: String = AppTheme.system.rawValue
+    @AppStorage("saveToLibrary") private var saveToLibrary = false
 
     private var appTheme: AppTheme {
         AppTheme(rawValue: appThemeRaw) ?? .system
@@ -105,6 +109,8 @@ struct ContentView: View {
             switch appState {
             case .camera:
                 cameraView
+            case .cropping:
+                croppingView
             case .processing:
                 processingView
             case .result:
@@ -118,7 +124,7 @@ struct ContentView: View {
     private var cameraView: some View {
         ZStack {
             CameraView(onCapture: { cgImage in
-                processImage(cgImage)
+                showCropping(cgImage, fromCamera: true)
             })
             .ignoresSafeArea()
 
@@ -169,6 +175,31 @@ struct ContentView: View {
                 }
                 .padding(.horizontal, 30)
                 .padding(.bottom, 40)
+            }
+        }
+    }
+
+    // MARK: - Cropping View
+
+    private var croppingView: some View {
+        Group {
+            if let img = preCropImage {
+                CropView(
+                    image: img,
+                    onCrop: { cropped in
+                        preCropImage = nil
+                        processImage(cropped)
+                    },
+                    onSkip: {
+                        let original = img
+                        preCropImage = nil
+                        processImage(original)
+                    },
+                    onCancel: {
+                        preCropImage = nil
+                        appState = .camera
+                    }
+                )
             }
         }
     }
@@ -254,6 +285,26 @@ struct ContentView: View {
 
     // MARK: - Actions
 
+    private func showCropping(_ cgImage: CGImage, fromCamera: Bool = false) {
+        preCropImage = cgImage
+        appState = .cropping
+
+        // Save original capture to photo library if enabled (only for camera captures)
+        if fromCamera && saveToLibrary {
+            saveImageToLibrary(cgImage)
+        }
+    }
+
+    private func saveImageToLibrary(_ cgImage: CGImage) {
+        let uiImage = UIImage(cgImage: cgImage)
+        PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+            guard status == .authorized else { return }
+            PHPhotoLibrary.shared().performChanges {
+                PHAssetChangeRequest.creationRequestForAsset(from: uiImage)
+            }
+        }
+    }
+
     private func processImage(_ cgImage: CGImage) {
         capturedImage = cgImage
         appState = .processing
@@ -300,24 +351,9 @@ struct ContentView: View {
         guard let item = item else { return }
         Task {
             if let data = try? await item.loadTransferable(type: Data.self),
-               let provider = CGDataProvider(data: data as CFData),
-               let cgImage = CGImage(
-                   jpegDataProviderSource: provider,
-                   decode: nil, shouldInterpolate: true,
-                   intent: .defaultIntent
-               ) ?? CGImage(
-                   pngDataProviderSource: provider,
-                   decode: nil, shouldInterpolate: true,
-                   intent: .defaultIntent
-               ) {
-                await MainActor.run { processImage(cgImage) }
-            } else if let data = try? await item.loadTransferable(type: Data.self) {
-                // Fallback: use UIImage
-                #if canImport(UIKit)
-                if let uiImage = UIImage(data: data), let cgImage = uiImage.cgImage {
-                    await MainActor.run { processImage(cgImage) }
-                }
-                #endif
+               let uiImage = UIImage(data: data),
+               let cgImage = uiImage.normalizedCGImage {
+                await MainActor.run { showCropping(cgImage) }
             }
         }
     }
@@ -325,7 +361,7 @@ struct ContentView: View {
     private func loadHistoryItem(_ item: HistoryItem) {
         guard let data = try? Data(contentsOf: item.imagePath),
               let uiImage = UIImage(data: data),
-              let cgImage = uiImage.cgImage else { return }
+              let cgImage = uiImage.normalizedCGImage else { return }
 
         capturedImage = cgImage
         editableDetections = item.detections
@@ -353,6 +389,7 @@ struct ContentView: View {
         currentHistoryItemID = nil
         translatedText = nil
         cameFromHistory = false
+        preCropImage = nil
     }
 
 }

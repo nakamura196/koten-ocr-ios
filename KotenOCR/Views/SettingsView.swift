@@ -4,6 +4,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("appTheme") private var appThemeRaw: String = AppTheme.system.rawValue
     @AppStorage("appLanguage") private var appLanguage: String = "system"
+    @AppStorage("saveToLibrary") private var saveToLibrary = false
     @State private var showRestartAlert = false
 
     private var appVersion: String {
@@ -21,6 +22,7 @@ struct SettingsView: View {
             List {
                 aboutSection
                 translationAPISection
+                cameraSection
                 themeSection
                 languageSection
                 tipJarSection
@@ -82,6 +84,15 @@ struct SettingsView: View {
                     Text(String(localized: "settings_translation_nav", defaultValue: "現代語訳"))
                 }
             }
+        }
+    }
+
+    // MARK: - Camera
+
+    private var cameraSection: some View {
+        Section(header: Text(String(localized: "settings_camera", defaultValue: "Camera"))) {
+            Toggle(String(localized: "settings_save_to_library", defaultValue: "Save to Photo Library"),
+                   isOn: $saveToLibrary)
         }
     }
 

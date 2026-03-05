@@ -3,6 +3,7 @@ import SwiftUI
 struct HistoryListView: View {
     @ObservedObject var historyManager = HistoryManager.shared
     @Environment(\.dismiss) private var dismiss
+    @State private var showDeleteAllConfirm = false
     var onSelect: (HistoryItem) -> Void
 
     var body: some View {
@@ -95,7 +96,7 @@ struct HistoryListView: View {
                 ToolbarItem(placement: .navigationBarLeading) {
                     if !historyManager.items.isEmpty {
                         Button(role: .destructive) {
-                            historyManager.deleteAll()
+                            showDeleteAllConfirm = true
                         } label: {
                             Text(String(localized: "history_delete_all", defaultValue: "Delete All"))
                         }
@@ -110,6 +111,15 @@ struct HistoryListView: View {
                     .accessibilityLabel(Text("close"))
                 }
             }
+        }
+        .alert(String(localized: "history_delete_all_title", defaultValue: "Delete All History"),
+               isPresented: $showDeleteAllConfirm) {
+            Button(String(localized: "history_delete_all", defaultValue: "Delete All"), role: .destructive) {
+                historyManager.deleteAll()
+            }
+            Button(String(localized: "cancel", defaultValue: "Cancel"), role: .cancel) {}
+        } message: {
+            Text(String(localized: "history_delete_all_message", defaultValue: "Are you sure you want to delete all scan history? This cannot be undone."))
         }
     }
 

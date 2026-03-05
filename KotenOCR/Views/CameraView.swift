@@ -22,8 +22,10 @@ class CameraViewController: UIViewController {
     private var shutterButton: UIButton?
     private var flashButton: UIButton?
     private var focusIndicator: UIView?
+    private var zoomLabel: UILabel?
     private var isFlashOn = false
     private var captureDevice: AVCaptureDevice?
+    private var currentDeviceOrientation: UIDeviceOrientation = .portrait
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -31,6 +33,7 @@ class CameraViewController: UIViewController {
         setupCamera()
         setupUI()
         setupTapFocus()
+        setupPinchZoom()
     }
 
     override func viewDidLayoutSubviews() {
@@ -44,19 +47,51 @@ class CameraViewController: UIViewController {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             self?.captureSession.startRunning()
         }
+        UIDevice.current.beginGeneratingDeviceOrientationNotifications()
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(deviceOrientationChanged),
+            name: UIDevice.orientationDidChangeNotification, object: nil
+        )
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         guard cameraAvailable else { return }
         captureSession.stopRunning()
-        // Turn off torch when leaving
         if isFlashOn {
             toggleTorch(on: false)
         }
+        NotificationCenter.default.removeObserver(self, name: UIDevice.orientationDidChangeNotification, object: nil)
+        UIDevice.current.endGeneratingDeviceOrientationNotifications()
     }
 
     private var cameraAvailable = false
+
+    // MARK: - Device Orientation
+
+    @objc private func deviceOrientationChanged() {
+        let orientation = UIDevice.current.orientation
+        // Only track portrait/landscape orientations, ignore faceUp/faceDown
+        switch orientation {
+        case .portrait, .portraitUpsideDown, .landscapeLeft, .landscapeRight:
+            currentDeviceOrientation = orientation
+        default:
+            break
+        }
+    }
+
+    private func videoOrientation(for deviceOrientation: UIDeviceOrientation) -> AVCaptureVideoOrientation {
+        switch deviceOrientation {
+        case .landscapeLeft:
+            return .landscapeRight  // UIDevice and AVCapture use opposite conventions
+        case .landscapeRight:
+            return .landscapeLeft
+        case .portraitUpsideDown:
+            return .portraitUpsideDown
+        default:
+            return .portrait
+        }
+    }
 
     // MARK: - Camera Setup
 
@@ -145,6 +180,27 @@ class CameraViewController: UIViewController {
 
         self.flashButton = flash
 
+        // Zoom label
+        let zl = UILabel()
+        zl.translatesAutoresizingMaskIntoConstraints = false
+        zl.text = "1.0x"
+        zl.textColor = .white
+        zl.font = .systemFont(ofSize: 13, weight: .medium)
+        zl.textAlignment = .center
+        zl.backgroundColor = UIColor.black.withAlphaComponent(0.4)
+        zl.layer.cornerRadius = 14
+        zl.clipsToBounds = true
+        zl.isHidden = true
+        view.addSubview(zl)
+
+        NSLayoutConstraint.activate([
+            zl.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            zl.bottomAnchor.constraint(equalTo: button.topAnchor, constant: -16),
+            zl.widthAnchor.constraint(equalToConstant: 56),
+            zl.heightAnchor.constraint(equalToConstant: 28)
+        ])
+        self.zoomLabel = zl
+
         // Focus indicator
         let indicator = UIView(frame: CGRect(x: 0, y: 0, width: 70, height: 70))
         indicator.layer.borderColor = UIColor.yellow.cgColor
@@ -190,7 +246,6 @@ class CameraViewController: UIViewController {
             device.unlockForConfiguration()
         } catch {}
 
-        // Show focus indicator
         showFocusIndicator(at: point)
     }
 
@@ -209,6 +264,51 @@ class CameraViewController: UIViewController {
             }) { _ in
                 indicator.isHidden = true
             }
+        }
+    }
+
+    // MARK: - Pinch to Zoom
+
+    private var initialZoomFactor: CGFloat = 1.0
+
+    private func setupPinchZoom() {
+        let pinch = UIPinchGestureRecognizer(target: self, action: #selector(handlePinchZoom(_:)))
+        view.addGestureRecognizer(pinch)
+    }
+
+    @objc private func handlePinchZoom(_ gesture: UIPinchGestureRecognizer) {
+        guard let device = captureDevice else { return }
+
+        switch gesture.state {
+        case .began:
+            initialZoomFactor = device.videoZoomFactor
+        case .changed:
+            let maxZoom = min(device.activeFormat.videoMaxZoomFactor, 10.0)
+            let newZoom = min(max(initialZoomFactor * gesture.scale, 1.0), maxZoom)
+            do {
+                try device.lockForConfiguration()
+                device.videoZoomFactor = newZoom
+                device.unlockForConfiguration()
+            } catch {}
+            updateZoomLabel(newZoom)
+        case .ended, .cancelled:
+            hideZoomLabelAfterDelay()
+        default:
+            break
+        }
+    }
+
+    private func updateZoomLabel(_ factor: CGFloat) {
+        zoomLabel?.text = String(format: "%.1fx", factor)
+        zoomLabel?.isHidden = false
+        zoomLabel?.alpha = 1.0
+    }
+
+    private func hideZoomLabelAfterDelay() {
+        UIView.animate(withDuration: 0.3, delay: 1.5, options: [], animations: { [weak self] in
+            self?.zoomLabel?.alpha = 0
+        }) { [weak self] _ in
+            self?.zoomLabel?.isHidden = true
         }
     }
 
@@ -234,6 +334,10 @@ class CameraViewController: UIViewController {
 
     @objc private func capturePhoto() {
         guard cameraAvailable else { return }
+        // Set video orientation based on current device orientation
+        if let connection = photoOutput.connection(with: .video) {
+            connection.videoOrientation = videoOrientation(for: currentDeviceOrientation)
+        }
         let settings = AVCapturePhotoSettings()
         photoOutput.capturePhoto(with: settings, delegate: self)
     }
@@ -247,23 +351,7 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
               let data = photo.fileDataRepresentation(),
               let uiImage = UIImage(data: data) else { return }
 
-        // Apply the image orientation to get correctly oriented CGImage
-        let correctedImage = correctOrientation(uiImage)
+        let correctedImage = uiImage.normalizedCGImage ?? uiImage.cgImage!
         onCapture?(correctedImage)
-    }
-
-    private func correctOrientation(_ image: UIImage) -> CGImage {
-        // If already up, return as-is
-        if image.imageOrientation == .up, let cg = image.cgImage {
-            return cg
-        }
-
-        // Redraw with correct orientation
-        UIGraphicsBeginImageContextWithOptions(image.size, false, image.scale)
-        image.draw(in: CGRect(origin: .zero, size: image.size))
-        let normalized = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-
-        return normalized?.cgImage ?? image.cgImage!
     }
 }

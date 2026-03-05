@@ -70,6 +70,8 @@
 "history_delete_all" = "Delete All";
 "history_regions" = "regions";
 "history_item_label" = "Scan result";
+"history_delete_all_title" = "Delete All History";
+"history_delete_all_message" = "Are you sure you want to delete all scan history? This cannot be undone.";
 "close" = "Close";
 
 /* Tip Jar */
@@ -124,3 +126,13 @@
 
 /* History - translated badge */
 "history_translated_badge" = "Translated";
+
+/* Crop */
+"crop_title" = "Crop";
+"crop_apply" = "Crop";
+"crop_skip" = "Skip";
+"crop_rotate" = "Rotate";
+
+/* Camera Settings */
+"settings_camera" = "Camera";
+"settings_save_to_library" = "Save to Photo Library";

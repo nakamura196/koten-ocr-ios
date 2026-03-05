@@ -70,6 +70,8 @@
 "history_delete_all" = "すべて削除";
 "history_regions" = "領域";
 "history_item_label" = "スキャン結果";
+"history_delete_all_title" = "すべての履歴を削除";
+"history_delete_all_message" = "すべてのスキャン履歴を削除しますか？この操作は元に戻せません。";
 "close" = "閉じる";
 
 /* Tip Jar */
@@ -124,3 +126,13 @@
 
 /* History - translated badge */
 "history_translated_badge" = "翻訳済";
+
+/* Crop */
+"crop_title" = "切り取り";
+"crop_apply" = "切り取り";
+"crop_skip" = "スキップ";
+"crop_rotate" = "回転";
+
+/* Camera Settings */
+"settings_camera" = "カメラ";
+"settings_save_to_library" = "フォトライブラリに保存";
