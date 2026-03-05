@@ -132,6 +132,9 @@
 "crop_apply" = "Crop";
 "crop_skip" = "Skip";
 "crop_rotate" = "Rotate";
+"confirm_crop_title" = "Confirm";
+"retrim" = "Re-crop";
+"run_ocr" = "Run OCR";
 
 /* Camera Settings */
 "settings_camera" = "Camera";

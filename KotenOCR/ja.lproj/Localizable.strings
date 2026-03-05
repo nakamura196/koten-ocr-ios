@@ -132,6 +132,9 @@
 "crop_apply" = "切り取り";
 "crop_skip" = "スキップ";
 "crop_rotate" = "回転";
+"confirm_crop_title" = "確認";
+"retrim" = "再切り取り";
+"run_ocr" = "OCR実行";
 
 /* Camera Settings */
 "settings_camera" = "カメラ";

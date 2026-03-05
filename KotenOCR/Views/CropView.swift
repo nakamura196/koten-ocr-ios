@@ -223,8 +223,7 @@ struct CropView: View {
     private func initializeCrop(baseRect: CGRect) {
         guard !initializedCrop, baseRect.width > 0 else { return }
         imageFrame = baseRect
-        let inset = min(baseRect.width, baseRect.height) * 0.05
-        cropRect = baseRect.insetBy(dx: inset, dy: inset)
+        cropRect = baseRect
         initializedCrop = true
     }
 

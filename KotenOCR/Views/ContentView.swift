@@ -5,6 +5,7 @@ import Photos
 enum AppState {
     case camera
     case cropping
+    case confirmCrop
     case processing
     case result
 }
@@ -25,6 +26,8 @@ struct ContentView: View {
     @State private var translatedText: String?
     @State private var cameFromHistory = false
     @State private var preCropImage: CGImage?
+    @State private var croppedPreview: CGImage?
+    @State private var cropSessionID = UUID()
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @AppStorage("appTheme") private var appThemeRaw: String = AppTheme.system.rawValue
     @AppStorage("saveToLibrary") private var saveToLibrary = false
@@ -111,6 +114,8 @@ struct ContentView: View {
                 cameraView
             case .cropping:
                 croppingView
+            case .confirmCrop:
+                confirmCropView
             case .processing:
                 processingView
             case .result:
@@ -187,19 +192,108 @@ struct ContentView: View {
                 CropView(
                     image: img,
                     onCrop: { cropped in
-                        preCropImage = nil
-                        processImage(cropped)
+                        croppedPreview = cropped
+                        appState = .confirmCrop
                     },
                     onSkip: {
-                        let original = img
-                        preCropImage = nil
-                        processImage(original)
+                        croppedPreview = img
+                        appState = .confirmCrop
                     },
                     onCancel: {
                         preCropImage = nil
+                        croppedPreview = nil
                         appState = .camera
                     }
                 )
+                .id(cropSessionID)
+            }
+        }
+    }
+
+    // MARK: - Confirm Crop View
+
+    private var confirmCropView: some View {
+        ZStack {
+            Color(.systemBackground).ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                // Top bar
+                HStack {
+                    Button(action: {
+                        croppedPreview = nil
+                        cropSessionID = UUID()
+                        appState = .cropping
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                            Text(String(localized: "retrim", defaultValue: "Re-crop"))
+                        }
+                        .foregroundColor(.primary)
+                    }
+                    Spacer()
+                    Text(String(localized: "confirm_crop_title", defaultValue: "Confirm"))
+                        .font(.headline)
+                    Spacer()
+                    Button(action: {
+                        croppedPreview = nil
+                        preCropImage = nil
+                        appState = .camera
+                    }) {
+                        Text(String(localized: "cancel", defaultValue: "Cancel"))
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding()
+
+                Spacer()
+
+                if let preview = croppedPreview {
+                    Image(decorative: preview, scale: 1.0)
+                        .resizable()
+                        .scaledToFit()
+                        .cornerRadius(12)
+                        .padding(.horizontal, 20)
+                }
+
+                Spacer()
+
+                // Action buttons
+                HStack(spacing: 20) {
+                    Button(action: {
+                        croppedPreview = nil
+                        cropSessionID = UUID()
+                        appState = .cropping
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "crop")
+                            Text(String(localized: "retrim", defaultValue: "Re-crop"))
+                        }
+                        .foregroundColor(.primary)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .background(Color(.systemGray5))
+                        .cornerRadius(8)
+                    }
+
+                    Button(action: {
+                        if let img = croppedPreview {
+                            croppedPreview = nil
+                            processImage(img)
+                        }
+                    }) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "text.viewfinder")
+                            Text(String(localized: "run_ocr", defaultValue: "Run OCR"))
+                        }
+                        .foregroundColor(.white)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .background(Color.blue)
+                        .cornerRadius(8)
+                    }
+                }
+                .padding(.bottom, 40)
             }
         }
     }
@@ -259,6 +353,16 @@ struct ContentView: View {
                 }
                 .accessibilityLabel(Text("back"))
                 Spacer()
+                if preCropImage != nil && !cameFromHistory {
+                    Button(action: retrimImage) {
+                        HStack(spacing: 6) {
+                            Image(systemName: "crop")
+                            Text(String(localized: "retrim", defaultValue: "Re-crop"))
+                        }
+                        .foregroundColor(.primary)
+                    }
+                    .accessibilityLabel(Text("retrim"))
+                }
             }
             .padding()
             .background(Color(.systemBackground).opacity(0.8))
@@ -341,6 +445,17 @@ struct ContentView: View {
         }
     }
 
+    private func retrimImage() {
+        capturedImage = nil
+        ocrResult = nil
+        editableDetections = []
+        errorMessage = nil
+        selectedDetectionIndex = nil
+        translatedText = nil
+        cropSessionID = UUID()
+        appState = .cropping
+    }
+
     private func cancelProcessing() {
         processingTask?.cancel()
         processingTask = nil
@@ -349,6 +464,7 @@ struct ContentView: View {
 
     private func loadPhotoItem(_ item: PhotosPickerItem?) {
         guard let item = item else { return }
+        selectedPhotoItem = nil
         Task {
             if let data = try? await item.loadTransferable(type: Data.self),
                let uiImage = UIImage(data: data),
@@ -390,6 +506,7 @@ struct ContentView: View {
         translatedText = nil
         cameFromHistory = false
         preCropImage = nil
+        croppedPreview = nil
     }
 
 }
