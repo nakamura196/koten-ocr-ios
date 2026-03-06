@@ -45,14 +45,32 @@ targets:
       - package: onnxruntime-swift-package-manager
         product: onnxruntime
 
+  KotenOCRTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: KotenOCRTests
+    dependencies:
+      - target: KotenOCR
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.nakamura196.kotenocr.tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/KotenOCR.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/KotenOCR"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+
 schemes:
   KotenOCR:
     build:
       targets:
         KotenOCR: all
+        KotenOCRTests: [test]
     run:
       config: Debug
       storeKitConfiguration: KotenOCR/TipJar.storekit
+    test:
+      targets:
+        - KotenOCRTests
 
 packages:
   onnxruntime-swift-package-manager:
