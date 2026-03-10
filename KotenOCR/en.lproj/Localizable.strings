@@ -138,4 +138,11 @@
 
 /* Camera Settings */
 "settings_camera" = "Camera";
+"settings_camera_permission" = "Camera Permission";
+"camera_status_authorized" = "Authorized";
+"camera_status_denied" = "Not Authorized";
+"camera_status_not_set" = "Not Set";
+"camera_open_settings" = "Open Settings";
+"onboarding_camera_granted" = "Camera access is authorized";
+"onboarding_camera_denied" = "Camera access is not authorized";
 "settings_save_to_library" = "Save to Photo Library";

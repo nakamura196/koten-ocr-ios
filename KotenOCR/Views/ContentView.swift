@@ -40,13 +40,17 @@ struct ContentView: View {
         ZStack {
             Color(.systemBackground).ignoresSafeArea()
 
-            switch ocrEngine.state {
-            case .uninitialized, .loading:
+            if !hasCompletedOnboarding {
                 loadingView
-            case .error(let msg):
-                errorView(msg)
-            case .ready:
-                mainContent
+            } else {
+                switch ocrEngine.state {
+                case .uninitialized, .loading:
+                    loadingView
+                case .error(let msg):
+                    errorView(msg)
+                case .ready:
+                    mainContent
+                }
             }
         }
         .preferredColorScheme(appTheme.colorScheme)

@@ -4,6 +4,7 @@ import AVFoundation
 struct OnboardingView: View {
     @Binding var hasCompletedOnboarding: Bool
     @State private var currentPage = 0
+    @State private var cameraStatus: AVAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)
 
     var body: some View {
         ZStack {
@@ -67,9 +68,9 @@ struct OnboardingView: View {
     private var cameraPermissionPage: some View {
         VStack(spacing: 24) {
             Spacer()
-            Image(systemName: "camera.fill")
+            Image(systemName: cameraStatus == .authorized ? "checkmark.circle.fill" : "camera.fill")
                 .font(.system(size: 60))
-                .foregroundColor(.primary)
+                .foregroundColor(cameraStatus == .authorized ? .green : .primary)
                 .accessibilityHidden(true)
             Text(String(localized: "onboarding_camera_title", defaultValue: "カメラへのアクセス"))
                 .font(.title2)
@@ -80,18 +81,45 @@ struct OnboardingView: View {
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
-            Button(action: requestCameraPermission) {
-                Text(String(localized: "onboarding_allow_camera", defaultValue: "カメラを許可する"))
-                    .font(.headline)
-                    .foregroundColor(Color(.systemBackground))
-                    .padding(.horizontal, 32)
-                    .padding(.vertical, 12)
-                    .background(Color.primary)
-                    .cornerRadius(10)
+
+            switch cameraStatus {
+            case .authorized:
+                Text(String(localized: "onboarding_camera_granted", defaultValue: "カメラは許可済みです"))
+                    .font(.subheadline)
+                    .foregroundColor(.green)
+            case .denied, .restricted:
+                VStack(spacing: 12) {
+                    Text(String(localized: "onboarding_camera_denied", defaultValue: "カメラが許可されていません"))
+                        .font(.subheadline)
+                        .foregroundColor(.red)
+                    Button(action: openSettings) {
+                        Text(String(localized: "camera_open_settings", defaultValue: "設定を開く"))
+                            .font(.headline)
+                            .foregroundColor(Color(.systemBackground))
+                            .padding(.horizontal, 32)
+                            .padding(.vertical, 12)
+                            .background(Color.primary)
+                            .cornerRadius(10)
+                    }
+                    .accessibilityLabel(Text("camera_open_settings"))
+                }
+            default:
+                Button(action: requestCameraPermission) {
+                    Text(String(localized: "onboarding_allow_camera", defaultValue: "カメラを許可する"))
+                        .font(.headline)
+                        .foregroundColor(Color(.systemBackground))
+                        .padding(.horizontal, 32)
+                        .padding(.vertical, 12)
+                        .background(Color.primary)
+                        .cornerRadius(10)
+                }
+                .accessibilityLabel(Text("onboarding_allow_camera"))
             }
-            .accessibilityLabel(Text("onboarding_allow_camera"))
             Spacer()
             Spacer()
+        }
+        .onAppear {
+            cameraStatus = AVCaptureDevice.authorizationStatus(for: .video)
         }
     }
 
@@ -149,6 +177,16 @@ struct OnboardingView: View {
     // MARK: - Actions
 
     private func requestCameraPermission() {
-        AVCaptureDevice.requestAccess(for: .video) { _ in }
+        AVCaptureDevice.requestAccess(for: .video) { granted in
+            DispatchQueue.main.async {
+                cameraStatus = AVCaptureDevice.authorizationStatus(for: .video)
+            }
+        }
+    }
+
+    private func openSettings() {
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(url)
+        }
     }
 }

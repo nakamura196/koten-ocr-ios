@@ -66,6 +66,7 @@
     }
   ],
   "settings" : {
+    "_defaultLocalization" : "ja",
     "_applicationInternalID" : "app_001",
     "_developerTeamID" : "Q6S8JS6GWV",
     "_lastSynchronizedDate" : 0,

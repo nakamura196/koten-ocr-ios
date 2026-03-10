@@ -138,4 +138,11 @@
 
 /* Camera Settings */
 "settings_camera" = "カメラ";
+"settings_camera_permission" = "カメラの許可";
+"camera_status_authorized" = "許可済み";
+"camera_status_denied" = "許可されていません";
+"camera_status_not_set" = "未設定";
+"camera_open_settings" = "設定を開く";
+"onboarding_camera_granted" = "カメラは許可済みです";
+"onboarding_camera_denied" = "カメラが許可されていません";
 "settings_save_to_library" = "フォトライブラリに保存";

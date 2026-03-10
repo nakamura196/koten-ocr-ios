@@ -1,4 +1,5 @@
 import SwiftUI
+import AVFoundation
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
@@ -6,6 +7,7 @@ struct SettingsView: View {
     @AppStorage("appLanguage") private var appLanguage: String = "system"
     @AppStorage("saveToLibrary") private var saveToLibrary = false
     @State private var showRestartAlert = false
+    @State private var cameraStatus: AVAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)
 
     private var appVersion: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -91,6 +93,40 @@ struct SettingsView: View {
 
     private var cameraSection: some View {
         Section(header: Text(String(localized: "settings_camera", defaultValue: "Camera"))) {
+            HStack {
+                Text(String(localized: "settings_camera_permission", defaultValue: "カメラの許可"))
+                Spacer()
+                switch cameraStatus {
+                case .authorized:
+                    Text(String(localized: "camera_status_authorized", defaultValue: "許可済み"))
+                        .foregroundColor(.green)
+                case .denied, .restricted:
+                    Button(action: openSettings) {
+                        Text(String(localized: "camera_status_denied", defaultValue: "許可されていません"))
+                            .foregroundColor(.red)
+                    }
+                case .notDetermined:
+                    Text(String(localized: "camera_status_not_set", defaultValue: "未設定"))
+                        .foregroundColor(.secondary)
+                @unknown default:
+                    EmptyView()
+                }
+            }
+            .onAppear {
+                cameraStatus = AVCaptureDevice.authorizationStatus(for: .video)
+            }
+
+            if cameraStatus == .denied || cameraStatus == .restricted {
+                Button(action: openSettings) {
+                    HStack {
+                        Image(systemName: "gear")
+                            .foregroundColor(.blue)
+                        Text(String(localized: "camera_open_settings", defaultValue: "設定を開く"))
+                            .foregroundColor(.blue)
+                    }
+                }
+            }
+
             Toggle(String(localized: "settings_save_to_library", defaultValue: "Save to Photo Library"),
                    isOn: $saveToLibrary)
         }
@@ -185,6 +221,14 @@ struct SettingsView: View {
                         .foregroundColor(.secondary)
                 }
             }
+        }
+    }
+
+    // MARK: - Camera Permission
+
+    private func openSettings() {
+        if let url = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(url)
         }
     }
 
