@@ -100,6 +100,59 @@ Credentials stored in `.env` (gitignored). API key `.p8` file at `~/.private_key
 - **StoreKit 2** — In-app purchases (TipJar.storekit)
 - Post-build script fixes MinimumOSVersion in onnxruntime.framework and re-signs
 
+## Screenshot Automation
+
+UIテスト (`KotenOCRUITests/ScreenshotTests.swift`) でiPhone・iPad両方のApp Storeスクリーンショットを自動撮影し、マーケティング画像を生成してアップロードする。
+
+テストメソッド:
+- `testCaptureOCRResult` — OCR結果、現代語訳、カメラ、設定画面を撮影
+- `testDemoVideoFlow` — デモ動画用フロー（OCR結果→スクロール→翻訳→設定）
+
+ダミー翻訳テキストは `TEST_TRANSLATION_TEXT` 環境変数で注入（`ScreenshotTests.swift` で設定）。
+レビューダイアログ抑制: 起動引数 `-ocrSuccessCount 999`。
+言語切替: `-testLanguage ja/en` + アプリ側 `-AppleLanguages` で日英UIを切替。
+
+```bash
+# 全自動（JA/EN撮影→マーケティング画像生成→デモ動画録画）
+./scripts/capture_screenshots.sh
+
+# アップロードも含む
+./scripts/capture_screenshots.sh --upload
+
+# マーケティング画像のみ再生成（言語別）
+python3 scripts/generate_marketing_screenshots.py \
+    --input-iphone DIR --input-ipad DIR --output DIR --lang ja
+python3 scripts/generate_marketing_screenshots.py \
+    --input-iphone DIR --input-ipad DIR --output DIR --lang en
+
+# App Store Connectへアップロードのみ（ja/, en/ サブディレクトリ対応）
+python3 scripts/upload_screenshots.py --dir screenshots/marketing
+python3 scripts/upload_screenshots.py --dir screenshots/marketing --dry-run
+```
+
+### マーケティング画像の仕様
+
+- iPhone 6.7": 1290x2796、iPad 12.9": 2048x2732（Apple必須サイズ）
+- 3テーマ × 2デバイス × 2言語 = 12枚生成（`screenshots/marketing/{ja,en}/`）
+- デバイスフレーム（ダークベゼル）付き、下部見切れレイアウト
+- iPhone/iPadで幅・フォントサイズ等のパラメータを分離
+- 英語版は英語UIスクリーンショット + 英語見出し
+
+### デモ動画
+
+- `xcrun simctl io recordVideo` でシミュレータ画面を録画
+- JA/EN各1本（iPhone）、`/tmp/kotenocr_screenshots/videos/` に出力
+- App Storeプレビュー動画として使用可能（最大30秒）
+
+### テスト用サンプル画像
+
+OCRテスト・スクリーンショット撮影用のサンプル古典籍画像（東京大学IIIF）:
+```
+https://iiif.dl.itc.u-tokyo.ac.jp/iiif/genji/TIFF/A00_6587/01/01_0004.tif/full/full/0/default.jpg
+```
+
+ローカルコピー: `KotenOCRUITests/Resources/test_koten_sample.jpg`
+
 ## Project Generation
 
 Uses **XcodeGen** (`project.yml`). After modifying project settings, run `xcodegen generate` to regenerate `KotenOCR.xcodeproj`.

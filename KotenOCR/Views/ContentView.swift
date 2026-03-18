@@ -1,6 +1,7 @@
 import SwiftUI
 import PhotosUI
 import Photos
+import StoreKit
 
 enum AppState {
     case camera
@@ -31,6 +32,8 @@ struct ContentView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @AppStorage("appTheme") private var appThemeRaw: String = AppTheme.system.rawValue
     @AppStorage("saveToLibrary") private var saveToLibrary = false
+    @AppStorage("ocrSuccessCount") private var ocrSuccessCount = 0
+    @Environment(\.requestReview) private var requestReview
 
     private var appTheme: AppTheme {
         AppTheme(rawValue: appThemeRaw) ?? .system
@@ -50,6 +53,7 @@ struct ContentView: View {
                     errorView(msg)
                 case .ready:
                     mainContent
+                        .onAppear { loadTestImageIfNeeded() }
                 }
             }
         }
@@ -147,6 +151,7 @@ struct ContentView: View {
                             .background(Color.white.opacity(0.2))
                             .clipShape(Circle())
                     }
+                    .accessibilityIdentifier("history_button")
                     .accessibilityLabel(Text("history_button"))
 
                     Spacer()
@@ -159,6 +164,7 @@ struct ContentView: View {
                             .background(Color.white.opacity(0.2))
                             .clipShape(Circle())
                     }
+                    .accessibilityIdentifier("settings_button")
                     .accessibilityLabel(Text("settings_button"))
                 }
                 .padding(.horizontal, 16)
@@ -175,6 +181,7 @@ struct ContentView: View {
                             .background(Color.white.opacity(0.2))
                             .clipShape(Circle())
                     }
+                    .accessibilityIdentifier("gallery_button")
                     .accessibilityLabel(Text("gallery_button"))
                     .onChange(of: selectedPhotoItem) { newItem in
                         loadPhotoItem(newItem)
@@ -355,6 +362,7 @@ struct ContentView: View {
                     }
                     .foregroundColor(.primary)
                 }
+                .accessibilityIdentifier("back_button")
                 .accessibilityLabel(Text("back"))
                 Spacer()
                 if preCropImage != nil && !cameFromHistory {
@@ -425,7 +433,13 @@ struct ContentView: View {
                 await MainActor.run {
                     self.ocrResult = result
                     self.editableDetections = result.detections
-                    self.translatedText = nil
+                    // Inject dummy translation for screenshot automation
+                    if let dummyTranslation = ProcessInfo.processInfo.environment["TEST_TRANSLATION_TEXT"],
+                       !dummyTranslation.isEmpty {
+                        self.translatedText = dummyTranslation
+                    } else {
+                        self.translatedText = nil
+                    }
                     self.appState = .result
 
                     // Auto-save to history
@@ -435,6 +449,12 @@ struct ContentView: View {
                         text: result.text
                     )
                     self.currentHistoryItemID = HistoryManager.shared.items.first?.id
+
+                    // Request review after 3rd and 10th successful OCR
+                    self.ocrSuccessCount += 1
+                    if self.ocrSuccessCount == 3 || self.ocrSuccessCount == 10 {
+                        requestReview()
+                    }
                 }
             } catch is CancellationError {
                 await MainActor.run {
@@ -495,6 +515,20 @@ struct ContentView: View {
         translatedText = item.translatedText
         cameFromHistory = true
         appState = .result
+    }
+
+    /// Load a test image from path specified via launch argument (for UI test screenshot automation)
+    private func loadTestImageIfNeeded() {
+        guard appState == .camera,
+              let testImagePath = ProcessInfo.processInfo.environment["TEST_IMAGE_PATH"],
+              !testImagePath.isEmpty else { return }
+
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: testImagePath)),
+              let uiImage = UIImage(data: data),
+              let cgImage = uiImage.normalizedCGImage else { return }
+
+        // Directly start processing (skip crop for automation)
+        processImage(cgImage)
     }
 
     private func resetToCamera() {

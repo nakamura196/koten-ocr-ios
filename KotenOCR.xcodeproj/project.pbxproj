@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		01F5F77297B4C5ED26DB2004 /* ScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D02D5F325A2BFEFF88F7A6EA /* ScreenshotTests.swift */; };
 		08940BF57F1C78A284A499E9 /* ExportManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CAD2DC2969703CFCAA54EA1 /* ExportManagerTests.swift */; };
 		196601FE2D346E7C50A06190 /* TranslationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA814C03E81A0F5068CB0AB1 /* TranslationService.swift */; };
 		1BE4FE0AC063CE4218405FBB /* HistoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82EE586A4C199D4AD67ED1AE /* HistoryManager.swift */; };
@@ -51,6 +52,13 @@
 			remoteGlobalIDString = 01F2268617CB02B3495831DA;
 			remoteInfo = KotenOCR;
 		};
+		B6D8C697C8C0791D0D4351CC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1F9168A382454FDB4F617AE4 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 01F2268617CB02B3495831DA;
+			remoteInfo = KotenOCR;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
@@ -85,7 +93,9 @@
 		A229657613D69582B3F74B4D /* ExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportManager.swift; sourceTree = "<group>"; };
 		B375ECB40C38D777102F59BC /* OCREngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCREngine.swift; sourceTree = "<group>"; };
 		BA814C03E81A0F5068CB0AB1 /* TranslationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationService.swift; sourceTree = "<group>"; };
+		CB2B82B10DC4DA4582D96186 /* KotenOCRUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = KotenOCRUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CBDF15C34D6661310197B75E /* Models */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Models; path = KotenOCR/Models; sourceTree = SOURCE_ROOT; };
+		D02D5F325A2BFEFF88F7A6EA /* ScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotTests.swift; sourceTree = "<group>"; };
 		D1D04E8E36E0873A6D94D661 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		D6CFDE78282D74C1F90DD69F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		E1C71D29B2E05CAE6C27D498 /* PARSEQRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PARSEQRecognizer.swift; sourceTree = "<group>"; };
@@ -120,8 +130,17 @@
 				CBDF15C34D6661310197B75E /* Models */,
 				FC7F597AFF10926DBDCA153A /* KotenOCR */,
 				31AB1326BC6C9A97C1A15933 /* KotenOCRTests */,
+				21E036AAC946B6F79DF8375C /* KotenOCRUITests */,
 				D89E6EE8CC27C141DD22E6D2 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		21E036AAC946B6F79DF8375C /* KotenOCRUITests */ = {
+			isa = PBXGroup;
+			children = (
+				D02D5F325A2BFEFF88F7A6EA /* ScreenshotTests.swift */,
+			);
+			path = KotenOCRUITests;
 			sourceTree = "<group>";
 		};
 		31AB1326BC6C9A97C1A15933 /* KotenOCRTests */ = {
@@ -204,6 +223,7 @@
 			children = (
 				413F9EA8A3AF49B4FC18AF1C /* KotenOCR.app */,
 				04E391BFF7A576B58D3F6056 /* KotenOCRTests.xctest */,
+				CB2B82B10DC4DA4582D96186 /* KotenOCRUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -279,6 +299,24 @@
 			productReference = 04E391BFF7A576B58D3F6056 /* KotenOCRTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		EAB3FFBB8E14E59544943451 /* KotenOCRUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D9316838C54F3357B3A85F25 /* Build configuration list for PBXNativeTarget "KotenOCRUITests" */;
+			buildPhases = (
+				BD5D709DFF97624384D2ED16 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				787A162F4D0B1F8F14AB1439 /* PBXTargetDependency */,
+			);
+			name = KotenOCRUITests;
+			packageProductDependencies = (
+			);
+			productName = KotenOCRUITests;
+			productReference = CB2B82B10DC4DA4582D96186 /* KotenOCRUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -291,6 +329,9 @@
 					01F2268617CB02B3495831DA = {
 						DevelopmentTeam = Q6S8JS6GWV;
 						ProvisioningStyle = Automatic;
+					};
+					EAB3FFBB8E14E59544943451 = {
+						TestTargetID = 01F2268617CB02B3495831DA;
 					};
 				};
 			};
@@ -314,6 +355,7 @@
 			targets = (
 				01F2268617CB02B3495831DA /* KotenOCR */,
 				9A75F30FB5B222B22333BF8C /* KotenOCRTests */,
+				EAB3FFBB8E14E59544943451 /* KotenOCRUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -397,9 +439,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BD5D709DFF97624384D2ED16 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				01F5F77297B4C5ED26DB2004 /* ScreenshotTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		787A162F4D0B1F8F14AB1439 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 01F2268617CB02B3495831DA /* KotenOCR */;
+			targetProxy = B6D8C697C8C0791D0D4351CC /* PBXContainerItemProxy */;
+		};
 		F8CCF35D20E0B847B5BAA807 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 01F2268617CB02B3495831DA /* KotenOCR */;
@@ -493,6 +548,23 @@
 			};
 			name = Release;
 		};
+		68E35199D27623161A0A822C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.nakamura196.kotenocr.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = KotenOCR;
+			};
+			name = Debug;
+		};
 		A0A1F829510F7BA63774BFED /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -500,14 +572,14 @@
 				CODE_SIGN_ENTITLEMENTS = KotenOCR/KotenOCR.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_TEAM = Q6S8JS6GWV;
 				INFOPLIST_FILE = KotenOCR/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.nakamura196.kotenocr;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -577,6 +649,23 @@
 			};
 			name = Debug;
 		};
+		DBC9ABB0D603D0C55FA59A54 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.nakamura196.kotenocr.uitests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = KotenOCR;
+			};
+			name = Release;
+		};
 		E1BBC2B4E21D036156F99A2A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -584,14 +673,14 @@
 				CODE_SIGN_ENTITLEMENTS = KotenOCR/KotenOCR.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 7;
 				DEVELOPMENT_TEAM = Q6S8JS6GWV;
 				INFOPLIST_FILE = KotenOCR/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.0;
+				MARKETING_VERSION = 1.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.nakamura196.kotenocr;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -641,6 +730,15 @@
 			buildConfigurations = (
 				D2E827963B36B49A10206222 /* Debug */,
 				1F46605CF23CDFAC22AC6EE5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		D9316838C54F3357B3A85F25 /* Build configuration list for PBXNativeTarget "KotenOCRUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				68E35199D27623161A0A822C /* Debug */,
+				DBC9ABB0D603D0C55FA59A54 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

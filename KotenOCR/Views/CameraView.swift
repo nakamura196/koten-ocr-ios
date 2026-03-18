@@ -123,7 +123,7 @@ class CameraViewController: UIViewController {
 
     private func showNoCameraLabel() {
         let label = UILabel()
-        label.text = NSLocalizedString("camera_no_camera", comment: "")
+        label.text = String(localized: "camera_no_camera", defaultValue: "No Camera")
         label.textColor = .gray
         label.textAlignment = .center
         label.numberOfLines = 0
@@ -148,7 +148,7 @@ class CameraViewController: UIViewController {
         button.layer.borderWidth = 4
         button.layer.borderColor = UIColor.white.withAlphaComponent(0.5).cgColor
         button.addTarget(self, action: #selector(capturePhoto), for: .touchUpInside)
-        button.accessibilityLabel = NSLocalizedString("capture_button", comment: "")
+        button.accessibilityLabel = String(localized: "capture_button", defaultValue: "Capture")
         view.addSubview(button)
 
         NSLayoutConstraint.activate([
@@ -168,7 +168,7 @@ class CameraViewController: UIViewController {
         flash.backgroundColor = UIColor.white.withAlphaComponent(0.2)
         flash.layer.cornerRadius = 22
         flash.addTarget(self, action: #selector(toggleFlash), for: .touchUpInside)
-        flash.accessibilityLabel = NSLocalizedString("flash_off", comment: "")
+        flash.accessibilityLabel = String(localized: "flash_off", defaultValue: "Flash Off")
         view.addSubview(flash)
 
         NSLayoutConstraint.activate([
@@ -244,7 +244,9 @@ class CameraViewController: UIViewController {
                 device.exposureMode = .autoExpose
             }
             device.unlockForConfiguration()
-        } catch {}
+        } catch {
+            print("Failed to configure focus: \(error)")
+        }
 
         showFocusIndicator(at: point)
     }
@@ -289,7 +291,9 @@ class CameraViewController: UIViewController {
                 try device.lockForConfiguration()
                 device.videoZoomFactor = newZoom
                 device.unlockForConfiguration()
-            } catch {}
+            } catch {
+                print("Failed to configure zoom: \(error)")
+            }
             updateZoomLabel(newZoom)
         case .ended, .cancelled:
             hideZoomLabelAfterDelay()
@@ -320,7 +324,9 @@ class CameraViewController: UIViewController {
         let imageName = isFlashOn ? "bolt.fill" : "bolt.slash.fill"
         flashButton?.setImage(UIImage(systemName: imageName), for: .normal)
         flashButton?.tintColor = isFlashOn ? .yellow : .white
-        flashButton?.accessibilityLabel = NSLocalizedString(isFlashOn ? "flash_on" : "flash_off", comment: "")
+        flashButton?.accessibilityLabel = isFlashOn
+            ? String(localized: "flash_on", defaultValue: "Flash On")
+            : String(localized: "flash_off", defaultValue: "Flash Off")
     }
 
     private func toggleTorch(on: Bool) {
@@ -329,7 +335,9 @@ class CameraViewController: UIViewController {
             try device.lockForConfiguration()
             device.torchMode = on ? .on : .off
             device.unlockForConfiguration()
-        } catch {}
+        } catch {
+            print("Failed to configure torch: \(error)")
+        }
     }
 
     @objc private func capturePhoto() {
@@ -351,7 +359,7 @@ extension CameraViewController: AVCapturePhotoCaptureDelegate {
               let data = photo.fileDataRepresentation(),
               let uiImage = UIImage(data: data) else { return }
 
-        let correctedImage = uiImage.normalizedCGImage ?? uiImage.cgImage!
+        guard let correctedImage = uiImage.normalizedCGImage ?? uiImage.cgImage else { return }
         onCapture?(correctedImage)
     }
 }

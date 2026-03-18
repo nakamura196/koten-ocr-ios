@@ -95,10 +95,13 @@ class ReadingOrderProcessor: @unchecked Sendable {
             if bboxes[i][1] > bboxes[i][3] { bboxes[i][3] = bboxes[i][1] }
         }
 
-        let xMin = bboxes.map { $0[0] }.min()!
-        let yMin = bboxes.map { $0[1] }.min()!
-        let wPage = bboxes.map { $0[2] }.max()! - xMin
-        let hPage = bboxes.map { $0[3] }.max()! - yMin
+        guard !bboxes.isEmpty,
+              let xMin = bboxes.map({ $0[0] }).min(),
+              let yMin = bboxes.map({ $0[1] }).min(),
+              let xMax = bboxes.map({ $0[2] }).max(),
+              let yMax = bboxes.map({ $0[3] }).max() else { return }
+        let wPage = xMax - xMin
+        let hPage = yMax - yMin
         guard wPage > 0 && hPage > 0 else { return }
 
         let xGrid: Float = wPage < hPage ? Float(grid) : Float(grid) * (wPage / hPage)
@@ -154,8 +157,9 @@ class ReadingOrderProcessor: @unchecked Sendable {
             return (0, max(1, hist.count), 0)
         }
 
-        let minVal = hist.min()!
-        let maxVal = hist.max()!
+        guard let minVal = hist.min(), let maxVal = hist.max() else {
+            return (0, max(1, hist.count), 0)
+        }
 
         // Find consecutive runs of minimum value
         var runs: [(start: Int, end: Int)] = []
@@ -175,7 +179,9 @@ class ReadingOrderProcessor: @unchecked Sendable {
         }
 
         // Find longest run
-        let best = runs.max(by: { ($0.end - $0.start) < ($1.end - $1.start) })!
+        guard let best = runs.max(by: { ($0.end - $0.start) < ($1.end - $1.start) }) else {
+            return (0, hist.count, 0)
+        }
         let val: Float = maxVal > 0 ? -Float(minVal) / Float(maxVal) : 0
         return (best.start, best.end, val)
     }

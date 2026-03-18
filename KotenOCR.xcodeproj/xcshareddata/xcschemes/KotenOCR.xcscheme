@@ -64,6 +64,17 @@
                ReferencedContainer = "container:KotenOCR.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "EAB3FFBB8E14E59544943451"
+               BuildableName = "KotenOCRUITests.xctest"
+               BlueprintName = "KotenOCRUITests"
+               ReferencedContainer = "container:KotenOCR.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <CommandLineArguments>
       </CommandLineArguments>
