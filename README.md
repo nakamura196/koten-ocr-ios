@@ -1,11 +1,16 @@
 # KotenOCR
 
-古典籍・くずし字をAIで読み取るiOS OCRアプリ。
+古典籍・くずし字と近代活字をAIで読み取るiOS OCRアプリ。
 
-国立国会図書館の [NDL古典籍OCR-Lite](https://github.com/ndl-lab/ndlkotenocr-lite) モデルを搭載し、すべての処理をデバイス上で完結します。インターネット接続は不要です。
+国立国会図書館の [NDL古典籍OCR-Lite](https://github.com/ndl-lab/ndlkotenocr-lite) および [NDLOCR-Lite](https://github.com/ndl-lab/ndlocr-lite) モデルを搭載し、すべての処理をデバイス上で完結します。インターネット接続は不要です。
+
+[![App Store](https://img.shields.io/badge/App%20Store-Download-blue?logo=apple&logoColor=white)](https://apps.apple.com/jp/app/kotenocr/id6760045646)
+
+![App Store Screenshots](screenshots/marketing_combined.png)
 
 ## 機能
 
+- **2つのOCRモード** — 古典籍（くずし字）と近代（活字・手書き）を切り替えて使用
 - **カメラ撮影 / フォトライブラリ** — 古典籍のページを撮影または選択してOCR実行
 - **フラッシュ / タップフォーカス** — 暗所撮影やピント調整に対応
 - **認識結果の閲覧** — 検出領域のボックス表示、ピンチズーム、タップ選択
@@ -20,6 +25,15 @@
   - **クラウドAPI** — OpenAI互換API（OpenRouter / OpenAI / カスタム）
 - **応援（Tip Jar）** — StoreKit 2によるアプリ内課金
 
+## OCRモード
+
+| モード | 対象 | 検出モデル | 認識モデル |
+|--------|------|-----------|-----------|
+| 古典籍 | くずし字・変体仮名 | RTMDet-S | PARSeq (1モデル) |
+| 近代 | 活字・手書き文字 | DEIMv2-S | PARSeq カスケード (3モデル) |
+
+認識処理は並列化されており、近代モードでは最大6.7倍の高速化を実現しています。
+
 ## 要件
 
 - iOS 16.0+
@@ -33,7 +47,7 @@
 git clone https://github.com/nakamura196/koten-ocr-ios.git
 cd koten-ocr-ios
 
-# ONNXモデルをダウンロード（約80MB）
+# ONNXモデルをダウンロード（古典籍 + 近代、合計約230MB）
 ./setup.sh
 
 # Xcodeプロジェクトを生成
@@ -45,48 +59,23 @@ open KotenOCR.xcodeproj
 
 ### ONNXモデル
 
-以下のモデルを `KotenOCR/Models/` に配置する必要があります（`.gitignore` で除外済み）：
+以下のモデルを `KotenOCR/Models/` に配置する必要があります（`.gitignore` で除外済み、`setup.sh` で自動ダウンロード）：
+
+#### 古典籍モード（NDL古典籍OCR-Lite）
 
 | モデル | ファイル名 | サイズ |
 |--------|-----------|--------|
 | テキスト検出（RTMDet-S） | `rtmdet-s-1280x1280.onnx` | ~40MB |
-| 文字認識（PaRSEQ-NDL） | `parseq-ndl-32x384-tiny-10.onnx` | ~38MB |
+| 文字認識（PARSeq） | `parseq-ndl-32x384-tiny-10.onnx` | ~38MB |
 
-## プロジェクト構成
+#### 近代モード（NDLOCR-Lite）
 
-```
-KotenOCR/
-├── KotenOCRApp.swift          # エントリポイント
-├── Theme/
-│   └── AppTheme.swift         # テーマ管理
-├── Views/
-│   ├── ContentView.swift      # メイン画面
-│   ├── CameraView.swift       # カメラ（フラッシュ・フォーカス）
-│   ├── ResultOverlayView.swift # 結果表示（編集・エクスポート）
-│   ├── OnboardingView.swift   # オンボーディング
-│   ├── SettingsView.swift     # 設定
-│   ├── HistoryListView.swift  # 履歴一覧
-│   ├── TipJarView.swift       # 投げ銭
-│   └── TranslationSettingsView.swift # 現代語訳設定
-├── OCR/
-│   ├── OCREngine.swift        # OCRパイプライン
-│   ├── RTMDetector.swift      # テキスト検出
-│   ├── PARSEQRecognizer.swift # 文字認識
-│   └── ReadingOrder.swift     # 読み順序（xy-cut）
-├── Export/
-│   └── ExportManager.swift    # TXT/PDFエクスポート
-├── History/
-│   ├── HistoryItem.swift      # 履歴データモデル
-│   └── HistoryManager.swift   # 履歴の保存/読込/削除
-├── Store/
-│   ├── KeychainHelper.swift   # Keychain読み書きヘルパー
-│   └── TipJarManager.swift    # StoreKit 2購入管理
-├── Translation/
-│   └── TranslationService.swift # 現代語訳（ローカルAI / クラウドAPI、actor）
-├── Models/                    # ONNXモデル（gitignore）
-├── en.lproj/Localizable.strings
-└── ja.lproj/Localizable.strings
-```
+| モデル | ファイル名 | サイズ |
+|--------|-----------|--------|
+| レイアウト検出（DEIMv2-S） | `deim-s-1024x1024.onnx` | ~38MB |
+| 文字認識 30文字（PARSeq） | `parseq-ndl-16x256-30-tiny-192epoch-tegaki3.onnx` | ~34MB |
+| 文字認識 50文字（PARSeq） | `parseq-ndl-16x384-50-tiny-146epoch-tegaki2.onnx` | ~35MB |
+| 文字認識 100文字（PARSeq） | `parseq-ndl-16x768-100-tiny-165epoch-tegaki2.onnx` | ~39MB |
 
 ## ビルド & アーカイブ
 
@@ -105,6 +94,7 @@ xcodebuild build \
 
 ### OCRモデル
 - **NDL古典籍OCR-Lite** — [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) （国立国会図書館）
+- **NDLOCR-Lite** — [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) （国立国会図書館）
 
 ### 依存ライブラリ
 - **ONNX Runtime** — [MIT License](https://github.com/microsoft/onnxruntime/blob/main/LICENSE) （Microsoft）
