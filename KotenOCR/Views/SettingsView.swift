@@ -28,6 +28,7 @@ struct SettingsView: View {
                 themeSection
                 languageSection
                 tipJarSection
+                feedbackSection
                 licenseSection
                 linkSection
             }
@@ -180,6 +181,40 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - Feedback
+
+    private var feedbackSection: some View {
+        Section(header: Text(String(localized: "settings_feedback", defaultValue: "フィードバック"))) {
+            Button(action: sendFeedback) {
+                HStack {
+                    Image(systemName: "envelope")
+                        .foregroundColor(.blue)
+                    Text(String(localized: "settings_send_feedback", defaultValue: "フィードバックを送る"))
+                }
+            }
+        }
+    }
+
+    private func sendFeedback() {
+        let device = UIDevice.current
+        let systemVersion = device.systemVersion
+        let modelName = device.model
+        let subject = "KotenOCR Feedback (v\(appVersion))"
+        let body = """
+
+
+        ---
+        Device: \(modelName)
+        iOS: \(systemVersion)
+        App: \(appVersion)
+        """
+        let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let encodedBody = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        if let url = URL(string: "mailto:na.kamura.1263@gmail.com?subject=\(encodedSubject)&body=\(encodedBody)") {
+            UIApplication.shared.open(url)
+        }
+    }
+
     // MARK: - Licenses
 
     private var licenseSection: some View {
@@ -189,6 +224,17 @@ struct SettingsView: View {
             } label: {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("NDL古典籍OCR-Lite")
+                        .font(.body)
+                    Text("CC-BY-4.0 — 国立国会図書館")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+            NavigationLink {
+                ndlocrLiteLicenseDetail
+            } label: {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("NDLOCR-Lite")
                         .font(.body)
                     Text("CC-BY-4.0 — 国立国会図書館")
                         .font(.caption)
@@ -213,12 +259,14 @@ struct SettingsView: View {
 
     private var linkSection: some View {
         Section(header: Text(String(localized: "settings_links", defaultValue: "リンク"))) {
-            Link(destination: URL(string: "https://github.com/ndl-lab/ndlkotenocr-lite")!) {
-                HStack {
-                    Text("NDL Lab GitHub")
-                    Spacer()
-                    Image(systemName: "arrow.up.right.square")
-                        .foregroundColor(.secondary)
+            if let url = URL(string: "https://github.com/ndl-lab/ndlkotenocr-lite") {
+                Link(destination: url) {
+                    HStack {
+                        Text("NDL Lab GitHub")
+                        Spacer()
+                        Image(systemName: "arrow.up.right.square")
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
         }
@@ -256,9 +304,10 @@ struct SettingsView: View {
                 Text("Creative Commons Attribution 4.0 International (CC-BY-4.0)")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
-                Link("https://github.com/ndl-lab/ndlkotenocr-lite",
-                     destination: URL(string: "https://github.com/ndl-lab/ndlkotenocr-lite")!)
-                    .font(.subheadline)
+                if let repoURL = URL(string: "https://github.com/ndl-lab/ndlkotenocr-lite") {
+                    Link("https://github.com/ndl-lab/ndlkotenocr-lite", destination: repoURL)
+                        .font(.subheadline)
+                }
                 Divider()
                 Text(ccby4FullText)
                     .font(.caption)
@@ -267,6 +316,32 @@ struct SettingsView: View {
             .padding()
         }
         .navigationTitle("NDL古典籍OCR-Lite")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var ndlocrLiteLicenseDetail: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("NDLOCR-Lite")
+                    .font(.title2)
+                    .bold()
+                Text("© 国立国会図書館 (National Diet Library)")
+                    .font(.subheadline)
+                Text("Creative Commons Attribution 4.0 International (CC-BY-4.0)")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                if let repoURL = URL(string: "https://github.com/ndl-lab/ndlocr-lite") {
+                    Link("https://github.com/ndl-lab/ndlocr-lite", destination: repoURL)
+                        .font(.subheadline)
+                }
+                Divider()
+                Text(ccby4FullText)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding()
+        }
+        .navigationTitle("NDLOCR-Lite")
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -281,9 +356,10 @@ struct SettingsView: View {
                 Text("MIT License")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
-                Link("https://github.com/microsoft/onnxruntime",
-                     destination: URL(string: "https://github.com/microsoft/onnxruntime")!)
-                    .font(.subheadline)
+                if let repoURL = URL(string: "https://github.com/microsoft/onnxruntime") {
+                    Link("https://github.com/microsoft/onnxruntime", destination: repoURL)
+                        .font(.subheadline)
+                }
                 Divider()
                 Text(mitFullText)
                     .font(.caption)

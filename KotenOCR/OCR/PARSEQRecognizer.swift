@@ -5,13 +5,17 @@ import OnnxRuntimeBindings
 class PARSEQRecognizer: @unchecked Sendable {
     private let session: ORTSession
     private let charList: [Character]
-    private let inputWidth = 384
-    private let inputHeight = 32
+    let inputWidth: Int
+    let inputHeight: Int
 
-    init(env: ORTEnv, modelPath: String, charListPath: String) throws {
+    init(env: ORTEnv, modelPath: String, charListPath: String,
+         inputWidth: Int = 384, inputHeight: Int = 32) throws {
         let options = try ORTSessionOptions()
+
         self.session = try ORTSession(env: env, modelPath: modelPath, sessionOptions: options)
         self.charList = try PARSEQRecognizer.loadCharset(from: charListPath)
+        self.inputWidth = inputWidth
+        self.inputHeight = inputHeight
     }
 
     // MARK: - Charset Loading
@@ -61,10 +65,13 @@ class PARSEQRecognizer: @unchecked Sendable {
 
         let inputNames = try session.inputNames()
         let outputNames = try session.outputNames()
-        let inputs: [String: ORTValue] = [inputNames[0]: inputTensor]
+        guard let firstInputName = inputNames.first, let firstOutputName = outputNames.first else {
+            throw NSError(domain: "OCR", code: 30, userInfo: [NSLocalizedDescriptionKey: "PARSEQRecognizer: no input/output names"])
+        }
+        let inputs: [String: ORTValue] = [firstInputName: inputTensor]
         let results = try session.run(withInputs: inputs, outputNames: Set(outputNames), runOptions: nil)
 
-        return try postprocess(outputs: results, outputName: outputNames[0])
+        return try postprocess(outputs: results, outputName: firstOutputName)
     }
 
     // MARK: - Preprocessing

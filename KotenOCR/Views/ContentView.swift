@@ -77,20 +77,26 @@ struct ContentView: View {
     // MARK: - Loading View
 
     private var loadingView: some View {
-        VStack(spacing: 20) {
-            ProgressView()
-                .scaleEffect(1.5)
-            Text(String(localized: "loading_models", defaultValue: "Loading OCR Models..."))
+        VStack(spacing: 0) {
+            Spacer()
+            Image("AppIconDisplay")
+                .resizable()
+                .frame(width: 120, height: 120)
+                .cornerRadius(26)
+                .shadow(color: .black.opacity(0.15), radius: 10, y: 5)
+            Text("KotenOCR")
+                .font(.system(size: 28, weight: .semibold, design: .rounded))
                 .foregroundColor(.primary)
-                .font(.headline)
-            ProgressView(value: ocrEngine.progress)
-                .progressViewStyle(.linear)
-                .frame(width: 200)
-                .tint(.blue)
-            Text("\(Int(ocrEngine.progress * 100))%")
+                .padding(.top, 16)
+            Text(String(localized: "app_tagline", defaultValue: "くずし字をAIで読み取る"))
+                .font(.subheadline)
                 .foregroundColor(.secondary)
-                .font(.caption)
+                .padding(.top, 4)
+            Spacer()
+            ProgressView()
+                .padding(.bottom, 60)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(Text("loading_models"))
     }
@@ -268,45 +274,69 @@ struct ContentView: View {
 
                 Spacer()
 
-                // Action buttons
-                HStack(spacing: 20) {
-                    Button(action: {
-                        croppedPreview = nil
-                        cropSessionID = UUID()
-                        appState = .cropping
-                    }) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "crop")
-                            Text(String(localized: "retrim", defaultValue: "Re-crop"))
-                        }
-                        .foregroundColor(.primary)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(Color(.systemGray5))
-                        .cornerRadius(8)
-                    }
-
-                    Button(action: {
-                        if let img = croppedPreview {
-                            croppedPreview = nil
-                            processImage(img)
-                        }
-                    }) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "text.viewfinder")
-                            Text(String(localized: "run_ocr", defaultValue: "Run OCR"))
-                        }
-                        .foregroundColor(.white)
-                        .fontWeight(.semibold)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(Color.blue)
-                        .cornerRadius(8)
-                    }
-                }
-                .padding(.bottom, 40)
+                // OCR mode buttons
+                ocrModeButtons
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 40)
             }
         }
+    }
+
+    // MARK: - OCR Mode Buttons
+
+    private var ocrModeButtons: some View {
+        HStack(spacing: 16) {
+            Button(action: {
+                runOCRWithMode(.koten)
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "scroll")
+                        .font(.title3)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(String(localized: "run_ocr_koten", defaultValue: "古典籍 OCR"))
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                        Text(String(localized: "ocr_mode_koten_short", defaultValue: "くずし字"))
+                            .font(.caption2)
+                            .opacity(0.8)
+                    }
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(Color.orange)
+                .cornerRadius(12)
+            }
+
+            Button(action: {
+                runOCRWithMode(.ndl)
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "doc.text")
+                        .font(.title3)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(String(localized: "run_ocr_ndl", defaultValue: "近代 OCR"))
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                        Text(String(localized: "ocr_mode_ndl_short", defaultValue: "活字・手書き"))
+                            .font(.caption2)
+                            .opacity(0.8)
+                    }
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(Color.blue)
+                .cornerRadius(12)
+            }
+        }
+    }
+
+    private func runOCRWithMode(_ mode: OCRMode) {
+        guard let img = croppedPreview else { return }
+        croppedPreview = nil
+        ocrEngine.switchMode(to: mode)
+        processImage(img)
     }
 
     // MARK: - Processing View
@@ -351,7 +381,7 @@ struct ContentView: View {
                         resetToCamera()
                         showHistory = true
                     } else {
-                        resetToCamera()
+                        backFromResult()
                     }
                 }) {
                     HStack(spacing: 4) {
@@ -529,6 +559,21 @@ struct ContentView: View {
 
         // Directly start processing (skip crop for automation)
         processImage(cgImage)
+    }
+
+    private func backFromResult() {
+        if let img = capturedImage {
+            // Go back to confirm screen with the same image
+            croppedPreview = img
+            ocrResult = nil
+            editableDetections = []
+            selectedDetectionIndex = nil
+            processingTask = nil
+            translatedText = nil
+            appState = .confirmCrop
+        } else {
+            resetToCamera()
+        }
     }
 
     private func resetToCamera() {

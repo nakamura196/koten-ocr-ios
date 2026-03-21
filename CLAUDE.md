@@ -45,25 +45,36 @@ No linter configured.
 
 ### OCR Pipeline (KotenOCR/OCR/)
 
-The core processing flow in `OCREngine.process()`:
+デュアルモードアーキテクチャ。起動時に両モードのモデルをすべてロードし、ユーザーが確認画面で選択する。
 
-1. **Detection** — `RTMDetector` runs RTMDet-S model (1024x1024 input) to find text bounding boxes
-2. **Recognition** — `PARSEQRecognizer` runs PARSeq-Tiny (384x32 input) on each detected box, using NDLmoji.yaml charset (7141 characters). Supports vertical text via 90° rotation
-3. **Reading Order** — `ReadingOrderProcessor` applies block_xy_cut algorithm to order detections for Japanese text layout (right-to-left columns)
+#### Koten（古典籍）モード
+1. **Detection** — `RTMDetector` runs RTMDet-S model (1024x1024 input)
+2. **Recognition** — `PARSEQRecognizer` runs PARSeq-Tiny (384x32 input), NDLmoji charset (7141 chars)
+3. **Reading Order** — `ReadingOrderProcessor` applies block_xy_cut
 
-`OCREngine` is an `@MainActor ObservableObject` with states: `.uninitialized` → `.loading` → `.ready` / `.error`. Models load asynchronously at app start.
+#### NDL（近代）モード
+1. **Detection** — `DEIMDetector` runs DEIMv2-S model (800x800 input, 2 inputs: image + orig_size, 17 classes)
+2. **Recognition** — `CascadePARSEQRecognizer` routes to 3 models based on predicted char count:
+   - predCharCount==3 → 30-char model (16x256)
+   - predCharCount==2 → 50-char model (16x384)
+   - else → 100-char model (16x768)
+3. **Reading Order** — same `ReadingOrderProcessor`
+
+認識処理は `withThrowingTaskGroup` で並列実行（近代モードで最大6.7倍高速化）。
+
+`OCREngine` is an `@MainActor ObservableObject` with states: `.uninitialized` → `.loading` → `.ready` / `.error`. Both model sets load at startup.
 
 ### App State Machine (ContentView)
 
 `AppState` enum drives the main UI flow:
-```
+```text
 .camera → .cropping → .confirmCrop → .processing → .result
 ```
 - `.camera` — CameraView (AVFoundation) + PhotosPicker
 - `.cropping` — CropView with drag handles
-- `.confirmCrop` — Preview before OCR with re-crop option
+- `.confirmCrop` — Preview before OCR with mode selection buttons (古典籍/近代)
 - `.processing` — Shows progress, cancellable
-- `.result` — ResultOverlayView with box overlay, text editing, export, translation
+- `.result` — ResultOverlayView with box overlay, text editing, export, translation. Back button returns to `.confirmCrop` for re-OCR with different mode
 
 ### Translation (KotenOCR/Translation/)
 
@@ -74,17 +85,28 @@ The core processing flow in `OCREngine.process()`:
 
 ### Key Data Models
 
-- `Detection` — Codable struct: `box: [Float]` (x1,y1,x2,y2), `score`, `classId`, `className`, `text`
+- `Detection` — Codable struct: `box: [Int]` (x1,y1,x2,y2), `score`, `classId`, `className`, `text`, `predCharCount` (default 100.0, used by cascade recognizer)
 - `OCRResult` — `detections: [Detection]`, `text: String`
 - `HistoryItem` — Codable, stored as JSON + JPEG in `Documents/ScanHistory/`
 
 ### ONNX Models (gitignored)
 
 Located in `KotenOCR/Models/`, downloaded via `setup.sh`:
-- `rtmdet-s-1280x1280.onnx` (~40MB) — detection
-- `parseq-ndl-32x384-tiny-10.onnx` (~38MB) — recognition
+
+Koten models:
+- `rtmdet-s-1280x1280.onnx` (~40MB) — RTMDet detection
+- `parseq-ndl-32x384-tiny-10.onnx` (~38MB) — PARSeq recognition
 - `ndl.yaml` — model config (thresholds, max_detections)
-- `NDLmoji.yaml` — character set definition
+
+NDL models:
+- `deim-s-1024x1024.onnx` (~38MB) — DEIMv2 detection
+- `parseq-ndl-16x256-30-tiny-192epoch-tegaki3.onnx` (~34MB) — 30-char recognition
+- `parseq-ndl-16x384-50-tiny-146epoch-tegaki2.onnx` (~35MB) — 50-char recognition
+- `parseq-ndl-16x768-100-tiny-165epoch-tegaki2.onnx` (~39MB) — 100-char recognition
+- `ndl-deim.yaml` — DEIMv2 config (17 class names)
+
+Shared:
+- `NDLmoji.yaml` — character set definition (7141 chars)
 
 ## Localization
 

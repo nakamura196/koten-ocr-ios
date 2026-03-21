@@ -44,6 +44,7 @@
 
 /* Processing */
 "loading_models" = "Loading OCR Models...";
+"app_tagline" = "AI-powered classical text recognition";
 "recognizing_text" = "Recognizing text...";
 "cancel" = "Cancel";
 "init_error" = "Initialization Error";
@@ -81,6 +82,10 @@
 "tipjar_thanks" = "Thank you for your support!";
 "tipjar_error_unverified" = "Purchase verification failed";
 "settings_tipjar" = "Support Us";
+
+/* Feedback */
+"settings_feedback" = "Feedback";
+"settings_send_feedback" = "Send Feedback";
 
 /* Translation API */
 "settings_translation_api" = "Translation API";
@@ -146,3 +151,12 @@
 "onboarding_camera_granted" = "Camera access is authorized";
 "onboarding_camera_denied" = "Camera access is not authorized";
 "settings_save_to_library" = "Save to Photo Library";
+
+/* OCR Engine */
+"settings_ocr_engine" = "OCR Engine";
+"ocr_mode_koten" = "Classical";
+"ocr_mode_ndl" = "Modern";
+"run_ocr_koten" = "Classical OCR";
+"run_ocr_ndl" = "Modern OCR";
+"ocr_mode_koten_short" = "Kuzushiji";
+"ocr_mode_ndl_short" = "Printed / Handwritten";

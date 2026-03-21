@@ -44,6 +44,7 @@
 
 /* Processing */
 "loading_models" = "OCRモデルを読み込み中...";
+"app_tagline" = "くずし字をAIで読み取る";
 "recognizing_text" = "テキストを認識中...";
 "cancel" = "キャンセル";
 "init_error" = "初期化エラー";
@@ -81,6 +82,10 @@
 "tipjar_thanks" = "ご支援ありがとうございます！";
 "tipjar_error_unverified" = "購入の検証に失敗しました";
 "settings_tipjar" = "開発を応援";
+
+/* Feedback */
+"settings_feedback" = "フィードバック";
+"settings_send_feedback" = "フィードバックを送る";
 
 /* Translation API */
 "settings_translation_api" = "現代語訳 API";
@@ -146,3 +151,12 @@
 "onboarding_camera_granted" = "カメラは許可済みです";
 "onboarding_camera_denied" = "カメラが許可されていません";
 "settings_save_to_library" = "フォトライブラリに保存";
+
+/* OCR Engine */
+"settings_ocr_engine" = "OCRエンジン";
+"ocr_mode_koten" = "古典籍";
+"ocr_mode_ndl" = "近代";
+"run_ocr_koten" = "古典籍 OCR";
+"run_ocr_ndl" = "近代 OCR";
+"ocr_mode_koten_short" = "くずし字";
+"ocr_mode_ndl_short" = "活字・手書き";

@@ -10,6 +10,33 @@ struct Detection: Codable {
     let className: String
     var text: String = ""
     var id: Int = 0
+    var predCharCount: Float = 100.0
+
+    enum CodingKeys: String, CodingKey {
+        case box, score, classId, className, text, id, predCharCount
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        box = try container.decode([Int].self, forKey: .box)
+        score = try container.decode(Float.self, forKey: .score)
+        classId = try container.decode(Int.self, forKey: .classId)
+        className = try container.decode(String.self, forKey: .className)
+        text = try container.decodeIfPresent(String.self, forKey: .text) ?? ""
+        id = try container.decodeIfPresent(Int.self, forKey: .id) ?? 0
+        predCharCount = try container.decodeIfPresent(Float.self, forKey: .predCharCount) ?? 100.0
+    }
+
+    init(box: [Int], score: Float, classId: Int, className: String,
+         text: String = "", id: Int = 0, predCharCount: Float = 100.0) {
+        self.box = box
+        self.score = score
+        self.classId = classId
+        self.className = className
+        self.text = text
+        self.id = id
+        self.predCharCount = predCharCount
+    }
 }
 
 class RTMDetector: @unchecked Sendable {
@@ -29,6 +56,7 @@ class RTMDetector: @unchecked Sendable {
     init(env: ORTEnv, modelPath: String, scoreThreshold: Float = 0.3,
          nmsThreshold: Float = 0.4, maxDetections: Int = 100) throws {
         let options = try ORTSessionOptions()
+
         self.session = try ORTSession(env: env, modelPath: modelPath, sessionOptions: options)
         self.scoreThreshold = scoreThreshold
         self.nmsThreshold = nmsThreshold
@@ -42,7 +70,10 @@ class RTMDetector: @unchecked Sendable {
         let inputTensor = try ORTValue(tensorData: inputData, elementType: .float, shape: shape)
 
         let inputNames = try session.inputNames()
-        let inputs: [String: ORTValue] = [inputNames[0]: inputTensor]
+        guard let firstInputName = inputNames.first else {
+            throw NSError(domain: "OCR", code: 30, userInfo: [NSLocalizedDescriptionKey: "RTMDetector: no input names"])
+        }
+        let inputs: [String: ORTValue] = [firstInputName: inputTensor]
         let outputNames: Set<String> = ["dets", "labels"]
         let results = try session.run(withInputs: inputs, outputNames: outputNames, runOptions: nil)
 
@@ -113,9 +144,13 @@ class RTMDetector: @unchecked Sendable {
         let labels = labelsData.withUnsafeBytes { Array($0.bindMemory(to: Int64.self)) }
 
         let numDetections = dets.count / 5
+        guard dets.count >= 5, labels.count >= numDetections else {
+            return []
+        }
         var detections: [Detection] = []
 
         for i in 0..<numDetections {
+            guard i < labels.count else { break }
             let score = dets[i * 5 + 4]
             if score < scoreThreshold { continue }
 

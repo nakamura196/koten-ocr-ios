@@ -8,11 +8,13 @@
 
 /* Begin PBXBuildFile section */
 		01F5F77297B4C5ED26DB2004 /* ScreenshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D02D5F325A2BFEFF88F7A6EA /* ScreenshotTests.swift */; };
+		038900677AB943A552FBA0DC /* OCRMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9DAC4DF520D46A2BB54757A /* OCRMode.swift */; };
 		08940BF57F1C78A284A499E9 /* ExportManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CAD2DC2969703CFCAA54EA1 /* ExportManagerTests.swift */; };
 		196601FE2D346E7C50A06190 /* TranslationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA814C03E81A0F5068CB0AB1 /* TranslationService.swift */; };
 		1BE4FE0AC063CE4218405FBB /* HistoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82EE586A4C199D4AD67ED1AE /* HistoryManager.swift */; };
 		1E257D31C55F486C70B827A7 /* HistoryItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DE94F4988B24C1250C6F20D /* HistoryItem.swift */; };
 		22D3F53C8527D84E9F5DB888 /* HistoryItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9044A5844F791981ECF958E8 /* HistoryItemTests.swift */; };
+		241057F7E5B8AFA5380C78EE /* CascadePARSEQRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F947C41CFADDC63593FEB47 /* CascadePARSEQRecognizer.swift */; };
 		2756B08073121E03C17F3366 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00CDB764CCF8F80C1ACBEA35 /* CameraView.swift */; };
 		309188DFD1D2448CEE895A92 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D5CD36F65D4B7D385BBCA9C /* ContentView.swift */; };
 		3214E29F307A0A26E81B7011 /* TranslationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CBDBB27CB79CDA19787F6DE /* TranslationSettingsView.swift */; };
@@ -23,6 +25,7 @@
 		543D92C50A84D38DCFC78C4E /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0C02138D36BD4637583CC4 /* OnboardingView.swift */; };
 		5611919E371D5CA2CC2675B8 /* PARSEQRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C71D29B2E05CAE6C27D498 /* PARSEQRecognizer.swift */; };
 		59FE9F6100B0045A383CA90C /* ResultOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B4379D31980B50B6E4167FC /* ResultOverlayView.swift */; };
+		5F971906D31580A0E45441BA /* OCRPerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC5416D90C0C61B387A7EA3 /* OCRPerformanceTests.swift */; };
 		65E8D11410FF385A0964FB27 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34EEFFD47152BA87642516F1 /* KeychainHelper.swift */; };
 		728E5483FE3AADF2413203FA /* ExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A229657613D69582B3F74B4D /* ExportManager.swift */; };
 		74099E2D688F864C84A74B4A /* TipJarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12D6ADEDDD0734CA628912DE /* TipJarManager.swift */; };
@@ -35,6 +38,7 @@
 		B6268A1DEF5C02AC116B13D9 /* onnxruntime in Frameworks */ = {isa = PBXBuildFile; productRef = CEBA04EDE9D84A4D05C1D2FC /* onnxruntime */; };
 		B774EF502B536678D39CBC6D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6CFDE78282D74C1F90DD69F /* SettingsView.swift */; };
 		BCEC5A7E7C54907F9F6DEAB0 /* TipJarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43761597E39AC3C62D31C9E8 /* TipJarView.swift */; };
+		D0406D8EA89C3A5C31270431 /* DEIMDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = B89DD48A8B561A9D52076309 /* DEIMDetector.swift */; };
 		D2ADA4E7EFCF4A35211E3ACF /* KotenOCRApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 270641011EB727A6FC52AD0B /* KotenOCRApp.swift */; };
 		D2B4248805F9613D9461AE45 /* Models in Resources */ = {isa = PBXBuildFile; fileRef = CBDF15C34D6661310197B75E /* Models */; };
 		D3EEE12E67663C8EA0799D33 /* TipJar.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 75D337ED66BD4C54B44E5CD9 /* TipJar.storekit */; };
@@ -72,6 +76,7 @@
 		247E98FA5B2F2413221FD51D /* UIImage+Orientation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIImage+Orientation.swift"; sourceTree = "<group>"; };
 		270641011EB727A6FC52AD0B /* KotenOCRApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KotenOCRApp.swift; sourceTree = "<group>"; };
 		27E1D8978CB07EFAA65E6FC6 /* CropView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CropView.swift; sourceTree = "<group>"; };
+		2F947C41CFADDC63593FEB47 /* CascadePARSEQRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CascadePARSEQRecognizer.swift; sourceTree = "<group>"; };
 		33E0D72EA37B2FC8AEAAB9C3 /* ReadingOrder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingOrder.swift; sourceTree = "<group>"; };
 		34EEFFD47152BA87642516F1 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		413F9EA8A3AF49B4FC18AF1C /* KotenOCR.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = KotenOCR.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -92,12 +97,15 @@
 		9F0C02138D36BD4637583CC4 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		A229657613D69582B3F74B4D /* ExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportManager.swift; sourceTree = "<group>"; };
 		B375ECB40C38D777102F59BC /* OCREngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCREngine.swift; sourceTree = "<group>"; };
+		B89DD48A8B561A9D52076309 /* DEIMDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DEIMDetector.swift; sourceTree = "<group>"; };
 		BA814C03E81A0F5068CB0AB1 /* TranslationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationService.swift; sourceTree = "<group>"; };
+		BAC5416D90C0C61B387A7EA3 /* OCRPerformanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRPerformanceTests.swift; sourceTree = "<group>"; };
 		CB2B82B10DC4DA4582D96186 /* KotenOCRUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = KotenOCRUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CBDF15C34D6661310197B75E /* Models */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Models; path = KotenOCR/Models; sourceTree = SOURCE_ROOT; };
 		D02D5F325A2BFEFF88F7A6EA /* ScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotTests.swift; sourceTree = "<group>"; };
 		D1D04E8E36E0873A6D94D661 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		D6CFDE78282D74C1F90DD69F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		D9DAC4DF520D46A2BB54757A /* OCRMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRMode.swift; sourceTree = "<group>"; };
 		E1C71D29B2E05CAE6C27D498 /* PARSEQRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PARSEQRecognizer.swift; sourceTree = "<group>"; };
 		E42BA653965C493A22A7F003 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 		EFCF575F1A8FE24D8DD5780E /* OCREngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCREngineTests.swift; sourceTree = "<group>"; };
@@ -150,6 +158,7 @@
 				0CAD2DC2969703CFCAA54EA1 /* ExportManagerTests.swift */,
 				9044A5844F791981ECF958E8 /* HistoryItemTests.swift */,
 				EFCF575F1A8FE24D8DD5780E /* OCREngineTests.swift */,
+				BAC5416D90C0C61B387A7EA3 /* OCRPerformanceTests.swift */,
 				878990E0E6B16FF96510AED7 /* PARSEQRecognizerTests.swift */,
 				64BE69A1A5ED772D43AC3BCC /* ReadingOrderTests.swift */,
 				F700500728D38B14885CDFE3 /* TranslationServiceTests.swift */,
@@ -168,7 +177,10 @@
 		43006EC1C4978FB667780FD7 /* OCR */ = {
 			isa = PBXGroup;
 			children = (
+				2F947C41CFADDC63593FEB47 /* CascadePARSEQRecognizer.swift */,
+				B89DD48A8B561A9D52076309 /* DEIMDetector.swift */,
 				B375ECB40C38D777102F59BC /* OCREngine.swift */,
+				D9DAC4DF520D46A2BB54757A /* OCRMode.swift */,
 				E1C71D29B2E05CAE6C27D498 /* PARSEQRecognizer.swift */,
 				33E0D72EA37B2FC8AEAAB9C3 /* ReadingOrder.swift */,
 				56AB805A57FC795B0DC85FF4 /* RTMDetector.swift */,
@@ -402,8 +414,10 @@
 			files = (
 				A3AC83B11BD87194218B7E04 /* AppTheme.swift in Sources */,
 				2756B08073121E03C17F3366 /* CameraView.swift in Sources */,
+				241057F7E5B8AFA5380C78EE /* CascadePARSEQRecognizer.swift in Sources */,
 				309188DFD1D2448CEE895A92 /* ContentView.swift in Sources */,
 				75B2863EC2D302ACE062A056 /* CropView.swift in Sources */,
+				D0406D8EA89C3A5C31270431 /* DEIMDetector.swift in Sources */,
 				728E5483FE3AADF2413203FA /* ExportManager.swift in Sources */,
 				1E257D31C55F486C70B827A7 /* HistoryItem.swift in Sources */,
 				D6709D356E1F7B2EB7FFB166 /* HistoryListView.swift in Sources */,
@@ -411,6 +425,7 @@
 				65E8D11410FF385A0964FB27 /* KeychainHelper.swift in Sources */,
 				D2ADA4E7EFCF4A35211E3ACF /* KotenOCRApp.swift in Sources */,
 				51D3D846E8BD58665B59A081 /* OCREngine.swift in Sources */,
+				038900677AB943A552FBA0DC /* OCRMode.swift in Sources */,
 				543D92C50A84D38DCFC78C4E /* OnboardingView.swift in Sources */,
 				5611919E371D5CA2CC2675B8 /* PARSEQRecognizer.swift in Sources */,
 				3771321C98AE0D170C397897 /* RTMDetector.swift in Sources */,
@@ -433,6 +448,7 @@
 				08940BF57F1C78A284A499E9 /* ExportManagerTests.swift in Sources */,
 				22D3F53C8527D84E9F5DB888 /* HistoryItemTests.swift in Sources */,
 				DD3C1024DFD4E4B744B5E900 /* OCREngineTests.swift in Sources */,
+				5F971906D31580A0E45441BA /* OCRPerformanceTests.swift in Sources */,
 				9DDB6B10ADADB178D31304B3 /* PARSEQRecognizerTests.swift in Sources */,
 				4E252DB4F2D4933153D52FC0 /* ReadingOrderTests.swift in Sources */,
 				347BE39601D13C313482F9FD /* TranslationServiceTests.swift in Sources */,
@@ -572,14 +588,14 @@
 				CODE_SIGN_ENTITLEMENTS = KotenOCR/KotenOCR.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = Q6S8JS6GWV;
 				INFOPLIST_FILE = KotenOCR/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2.2;
+				MARKETING_VERSION = 1.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.nakamura196.kotenocr;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -673,14 +689,14 @@
 				CODE_SIGN_ENTITLEMENTS = KotenOCR/KotenOCR.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 7;
+				CURRENT_PROJECT_VERSION = 8;
 				DEVELOPMENT_TEAM = Q6S8JS6GWV;
 				INFOPLIST_FILE = KotenOCR/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.2.2;
+				MARKETING_VERSION = 1.3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.nakamura196.kotenocr;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
