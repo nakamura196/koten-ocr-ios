@@ -264,10 +264,67 @@ https://iiif.dl.itc.u-tokyo.ac.jp/iiif/genji/TIFF/A00_6587/01/01_0004.tif/full/f
 - [ ] MP4コピー → `screenshots/demo_v130.mp4`
 - [ ] zennの記事の動画も更新（`static/videos/posts/kotenocr/`）
 
-### 4. ビルド＆提出
-- [ ] `xcodebuild archive` → `xcodebuild -exportArchive` → `xcrun altool --upload-app`
-- [ ] App Store Connectで新バージョンを確認、審査に提出
-- [ ] プレビュー動画のアップロード（`python3 scripts/upload_preview.py`、PREPARE_FOR_SUBMISSION状態で）
+### 4. ビルド＆提出（API経由）
+
+詳細手順は `/Users/nakamura/git/zenn/content/ja/posts/ios-app-update-submission-api-guide.md` を参照。
+
+```bash
+# 4.1 Info.plistのバージョンも更新（project.ymlだけでは不十分）
+# KotenOCR/Info.plist の CFBundleShortVersionString, CFBundleVersion
+
+# 4.2 クリーンアーカイブ（キャッシュ防止のため clean 必須）
+xcodegen generate
+xcodebuild clean -project KotenOCR.xcodeproj -scheme KotenOCR -quiet
+xcodebuild -project KotenOCR.xcodeproj -scheme KotenOCR -configuration Release \
+  -archivePath /tmp/KotenOCR.xcarchive archive -allowProvisioningUpdates
+
+# 4.3 エクスポート
+xcodebuild -exportArchive -archivePath /tmp/KotenOCR.xcarchive \
+  -exportOptionsPlist scripts/ExportOptions.plist -exportPath /tmp/KotenOCR_export \
+  -allowProvisioningUpdates
+
+# 4.4 アップロード
+xcrun altool --upload-app --file /tmp/KotenOCR_export/KotenOCR.ipa --type ios \
+  --apiKey "$(grep APP_STORE_API_KEY .env | cut -d= -f2)" \
+  --apiIssuer "$(grep APP_STORE_API_ISSUER .env | cut -d= -f2)"
+
+# 4.5 API経由で審査提出（Python）
+# - 新バージョン作成（READY_FOR_SALEの場合）
+# - ビルド関連付け（build → appStoreVersion）
+# - whatsNew（リリースノート）を日英両方設定（必須）
+# - reviewSubmissions → reviewSubmissionItems → submitted=True
+```
+
+- [ ] `KotenOCR/Info.plist` のバージョンを更新
+- [ ] クリーンアーカイブ＆エクスポート＆アップロード
+- [ ] API経由でバージョン作成・ビルド関連付け・whatsNew設定・審査提出
+- [ ] プレビュー動画のアップロード（`scripts/upload_preview.py`、審査提出前に実行すること）
+
+### App Storeプレビュー動画の仕様
+
+スクリーンショットとは解像度が異なるので注意。
+
+| デバイス | 解像度（縦） | 解像度（横） |
+|---------|------------|------------|
+| iPhone 6.7" | **886 x 1920** | 1920 x 886 |
+| iPad 13" | 1200 x 1600 | 1600 x 1200 |
+
+- コーデック: H.264（High Profile Level 4.0）、30fps以下、プログレッシブ
+- 音声: **ステレオ音声トラック必須**（無音でもAAC 256kbps ステレオトラックが必要）
+- 長さ: 15〜30秒
+- ファイル: MP4/MOV、500MB以下、`-movflags +faststart`
+
+```bash
+# シミュレータ録画 → App Store用に変換
+ffmpeg -y -f lavfi -i anullsrc=r=44100:cl=stereo \
+  -i /tmp/kotenocr_videos/demo_ja_combined_iphone.mp4 \
+  -vf "scale=886:1920" -c:v libx264 -preset fast -crf 18 -r 30 \
+  -c:a aac -b:a 256k -shortest -movflags +faststart \
+  /tmp/kotenocr_videos/demo_ja_appstore.mp4
+
+# アップロード（PREPARE_FOR_SUBMISSION状態で、審査提出前に）
+python3 scripts/upload_preview.py --video /tmp/kotenocr_videos/demo_ja_appstore.mp4 --lang ja
+```
 
 ### 5. Git
 - [ ] 変更をcommit & push
