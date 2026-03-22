@@ -197,6 +197,41 @@ App Storeプレビュー動画（最大30秒）として使用可能。出力先
 - `TEST_TRANSLATION_TEXT` — ダミー翻訳テキストの注入
 - 録画後 ffmpeg で冒頭（ホーム画面+スプラッシュ）と末尾を自動トリミング
 
+### デモ動画の配布先と形式
+
+| 配布先 | ファイル | 形式 | フレーム |
+|--------|---------|------|---------|
+| GitHub README | `screenshots/demo_v130.gif` | GIF (10fps, 360px) | iPhoneデバイスフレーム付き |
+| zenn記事・docs | `screenshots/demo_v130.mp4` | MP4 | フレームなし |
+| App Store Connect | `/tmp/kotenocr_videos/` | MP4 (H.264) | フレームなし |
+
+- GIF（README用）はデバイスフレーム（ダークベゼル+角丸）を付けるとモダンな見栄え
+- 動画（zenn/docs/App Store用）はフレームなし。プレーヤー再生時に余白が出るため
+- App Store Connectへのアップロードは `scripts/upload_preview.py`（PREPARE_FOR_SUBMISSION状態が必要）
+
+### デモ動画の更新手順
+
+```bash
+# 1. 録画（古典籍+近代の統合動画）
+./scripts/record_demo_video.sh --mode combined
+
+# 2. GIF変換（デバイスフレーム付き、Python Pillow使用）
+#    extract frames → add_rounded_corners → add_device_frame → encode GIF
+#    ffmpegでパレット最適化: max_colors=128, dither=bayer
+#    出力: screenshots/demo_v130.gif
+
+# 3. MP4をコピー
+cp /tmp/kotenocr_videos/demo_ja_combined_iphone.mp4 screenshots/demo_v130.mp4
+
+# 4. commit & push
+git add screenshots/demo_v130.gif screenshots/demo_v130.mp4
+git commit -m "Update demo video and GIF"
+git push
+
+# 5. App Store Connect（レビュー外の時のみ）
+python3 scripts/upload_preview.py --video /tmp/kotenocr_videos/demo_ja_combined_iphone.mp4 --lang ja
+```
+
 ### テスト用サンプル画像
 
 古典籍（くずし字）モード用（東京大学IIIF）:
