@@ -340,16 +340,25 @@ api("PATCH", f"appStoreVersionLocalizations/{loc_id}", {
 - 長さ: 15〜30秒
 - ファイル: MP4/MOV、500MB以下、`-movflags +faststart`
 
+**トリミング時の注意:**
+- `record_demo_video.sh` のデフォルトtrim-start（10.5秒）はホーム画面が残る場合がある
+- raw動画を確認し、**スプラッシュ画面（白背景+アプリアイコン）の1フレーム目**からトリミングすること
+- スプラッシュ直前の黒画面（アプリ起動トランジション）は含めない
+- 言語によって起動時間が異なるため、JA/ENそれぞれでtrim開始位置を調整する必要がある
+- 確認: `ffmpeg -i raw.mp4 -vf "fps=5,scale=320:-1" -ss START -t 2 check_%02d.jpg` で冒頭フレームを目視確認
+
 ```bash
-# シミュレータ録画 → App Store用に変換
+# シミュレータ録画 → raw動画からスプラッシュ開始位置を特定してApp Store用に変換
+# TRIM_START はraw動画でスプラッシュが表示される秒数（JA: ~13.5s, EN: ~22.5s）
 ffmpeg -y -f lavfi -i anullsrc=r=44100:cl=stereo \
-  -i /tmp/kotenocr_videos/demo_ja_combined_iphone.mp4 \
-  -vf "scale=886:1920" -c:v libx264 -preset fast -crf 18 -r 30 \
+  -ss TRIM_START -i /tmp/kotenocr_videos/demo_XX_combined_iphone_raw.mp4 \
+  -t 30 -vf "scale=886:1920" -c:v libx264 -preset fast -crf 18 -r 30 \
   -c:a aac -b:a 256k -shortest -movflags +faststart \
-  /tmp/kotenocr_videos/demo_ja_appstore.mp4
+  docs/videos/demo_XX_appstore.mp4
 
 # アップロード（PREPARE_FOR_SUBMISSION状態で、審査提出前に）
-python3 scripts/upload_preview.py --video /tmp/kotenocr_videos/demo_ja_appstore.mp4 --lang ja
+python3 scripts/upload_preview.py --video docs/videos/demo_ja_appstore.mp4 --lang ja
+python3 scripts/upload_preview.py --video docs/videos/demo_en_appstore.mp4 --lang en
 ```
 
 ### 6. Git
