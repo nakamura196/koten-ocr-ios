@@ -10,7 +10,7 @@ Powered by the National Diet Library's NDL Koten OCR-Lite and NDLOCR-Lite models
 
 ### デモ / Demo
 
-https://github.com/nakamura196/koten-ocr-ios/raw/main/screenshots/demo_v130.mp4
+![Demo](screenshots/demo_v130.gif)
 
 ![App Store Screenshots](screenshots/marketing_combined.png)
 

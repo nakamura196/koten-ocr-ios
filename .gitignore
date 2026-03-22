@@ -6,6 +6,9 @@ build/
 *.xcodeproj/project.xcworkspace/xcuserdata/
 *.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
 
+# Analytics
+analytics/
+
 # API Keys
 *.p8
 .env
