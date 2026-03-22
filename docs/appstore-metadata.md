@@ -20,54 +20,63 @@ App Store Connect でアプリを作成する際に入力する情報。
 ## 説明文（日本語）
 
 ```
-古典籍のくずし字をAIで読み取るOCRアプリです。
+古典籍のくずし字と近代の活字・手書き文字をAIで読み取るOCRアプリです。
+
+【2つのOCRモード】
+・古典籍モード：くずし字（変体仮名・草書体）を認識。7000文字以上に対応
+・近代モード：明治以降の活字印刷物・手書き文書を認識。最大6.7倍の高速処理
 
 【特徴】
-・カメラで撮影するだけで、くずし字をテキストに変換
-・国立国会図書館のAIモデル（NDL古典籍OCR-Lite）を搭載
+・カメラで撮影するだけで、文字を自動検出・認識
+・国立国会図書館のAIモデル（NDL古典籍OCR-Lite / NDLOCR-Lite）を搭載
 ・すべての処理をデバイス上で完結（インターネット接続不要）
-・認識結果をテキストとしてコピー・共有
-・古文を現代語訳（日本語/英語対応、一般・学生・研究者向けの3段階解説）
-・ローカルAI翻訳（iOS 26+対応デバイスで完全オフライン動作）
+・認識結果をテキスト・TXT・PDFでエクスポート
+・古文を現代語訳（ローカルAI対応、iOS 26+で完全オフライン動作）
 ・クラウドAPI翻訳にも対応（OpenAI、OpenRouter等）
+・スキャン履歴の自動保存
 
 【使い方】
-1. カメラで古典籍のページを撮影、またはフォトライブラリから選択
-2. AIが自動でテキスト領域を検出し、くずし字を認識
-3. 認識結果をタップして確認、コピーして活用
-
-【対応文字】
-7000文字以上の漢字・ひらがな・カタカナに対応。江戸期の版本・写本を中心に高い認識精度を実現しています。
+1. カメラで撮影、またはフォトライブラリから画像を選択
+2. 古典籍または近代のOCRモードを選択
+3. AIが文字領域を検出し、テキストを認識
+4. 結果をコピー・共有・エクスポート
 
 【ライセンス】
-・OCRモデル: NDL古典籍OCR-Lite（国立国会図書館, CC-BY-4.0）
+・OCRモデル: NDL古典籍OCR-Lite / NDLOCR-Lite（国立国会図書館, CC-BY-4.0）
 ・推論エンジン: ONNX Runtime（Microsoft, MIT License）
+
+ソースコード: https://github.com/nakamura196/koten-ocr-ios
 ```
 
 ## 説明文（英語）
 
 ```
-An OCR app that reads classical Japanese cursive script (kuzushiji) using AI.
+An OCR app that reads classical Japanese cursive script (kuzushiji) and modern printed/handwritten text using AI.
+
+Two OCR Modes:
+• Classical mode: Recognizes kuzushiji (cursive script). Supports 7,000+ characters
+• Modern mode: Recognizes post-Meiji printed and handwritten text. Up to 6.7x faster processing
 
 Features:
-• Just take a photo to convert kuzushiji to text
-• Powered by the National Diet Library's AI model (NDL Koten OCR-Lite)
+• Just take a photo to detect and recognize text automatically
+• Powered by the National Diet Library's AI models (NDL Koten OCR-Lite / NDLOCR-Lite)
 • All processing runs on-device (no internet connection required)
-• Copy and share recognized text
-• Translate classical text into modern Japanese or English (3 detail levels: general, student, researcher)
-• On-device AI translation with Apple Foundation Models (iOS 26+, fully offline)
+• Export results as text, TXT, or PDF
+• Translate classical text to modern Japanese (local AI on iOS 26+, fully offline)
 • Also supports cloud APIs (OpenAI, OpenRouter, etc.)
+• Auto-save scan history
 
 How to Use:
-1. Capture a page with the camera or select from your photo library
-2. AI automatically detects text regions and recognizes kuzushiji
-3. Tap results to review, copy and use
-
-Supports over 7,000 kanji, hiragana, and katakana characters. Optimized for Edo-period woodblock prints and manuscripts.
+1. Capture a photo or select from your library
+2. Choose Classical or Modern OCR mode
+3. AI detects text regions and recognizes characters
+4. Copy, share, or export results
 
 Licenses:
-• OCR Model: NDL Koten OCR-Lite (National Diet Library, CC-BY-4.0)
+• OCR Models: NDL Koten OCR-Lite / NDLOCR-Lite (National Diet Library, CC-BY-4.0)
 • Inference Engine: ONNX Runtime (Microsoft, MIT License)
+
+Source code: https://github.com/nakamura196/koten-ocr-ios
 ```
 
 ## キーワード（日本語、最大100文字）
@@ -88,10 +97,16 @@ OCR,kuzushiji,classical,Japanese,manuscript,recognition,NDL,translation,kanji,te
 古典籍のくずし字をAIが読み取り、現代語訳まで完全オフラインで。国立国会図書館のOCRモデルとApple Foundation Modelsを搭載し、古文の意味・背景もAIが解説します。
 ```
 
-## サポートURL
+## サポートURL（ユーザーの問い合わせ先）
 
 ```
-https://github.com/nakamura196/koten-ocr-ios
+https://github.com/nakamura196/koten-ocr-ios/issues
+```
+
+## マーケティングURL（アプリ紹介ページ）
+
+```
+https://koten-ocr-ios.vercel.app
 ```
 
 ## プライバシーポリシーURL

@@ -254,7 +254,8 @@ https://iiif.dl.itc.u-tokyo.ac.jp/iiif/genji/TIFF/A00_6587/01/01_0004.tif/full/f
 
 ### 2. ドキュメント更新
 - [ ] `docs/index.html` の更新履歴セクションに新バージョンを追加
-- [ ] `docs/appstore-metadata.md` の必要箇所を更新（説明文変更がある場合）
+- [ ] `docs/appstore-metadata.md` の説明文・メタデータを更新（正としてここで管理）
+- [ ] App Store Connectの説明文をAPIで更新（説明文変更は審査が必要）
 - [ ] `README.md` の更新（機能追加がある場合）
 - [ ] `CLAUDE.md` の更新（アーキテクチャ変更がある場合）
 
@@ -297,8 +298,33 @@ xcrun altool --upload-app --file /tmp/KotenOCR_export/KotenOCR.ipa --type ios \
 
 - [ ] `KotenOCR/Info.plist` のバージョンを更新
 - [ ] クリーンアーカイブ＆エクスポート＆アップロード
-- [ ] API経由でバージョン作成・ビルド関連付け・whatsNew設定・審査提出
-- [ ] プレビュー動画のアップロード（`scripts/upload_preview.py`、審査提出前に実行すること）
+- [ ] API経由でバージョン作成・ビルド関連付け・whatsNew（日英）設定
+- [ ] プレビュー動画のアップロード（`scripts/upload_preview.py`、**審査提出前に**実行すること）
+- [ ] 審査提出（reviewSubmissions → reviewSubmissionItems → submitted=True）
+
+### 5. App Store メタデータ（審査中でも変更可能）
+
+以下は審査なしでいつでも更新可能。提出後でもOK。
+
+- [ ] プロモーションテキスト（日英）— App Storeページの説明文の上に表示される
+- [ ] サポートURL → `https://github.com/nakamura196/koten-ocr-ios/issues`（ユーザーの問い合わせ先）
+- [ ] マーケティングURL → `https://koten-ocr-ios.vercel.app`（アプリ紹介ページ）
+
+```python
+# プロモーションテキスト・URLは審査中でもPATCHで更新可能
+api("PATCH", f"appStoreVersionLocalizations/{loc_id}", {
+    "data": {"type": "appStoreVersionLocalizations", "id": loc_id,
+             "attributes": {
+                 "promotionalText": "...",
+                 "supportUrl": "https://github.com/nakamura196/koten-ocr-ios/issues",
+                 "marketingUrl": "https://koten-ocr-ios.vercel.app"
+             }}
+})
+```
+
+注意: サポートURLとマーケティングURLの用途を混同しないこと:
+- **サポートURL** = 問い合わせ先（GitHub Issues等）
+- **マーケティングURL** = アプリ紹介ページ（ランディングページ等）
 
 ### App Storeプレビュー動画の仕様
 
@@ -326,7 +352,7 @@ ffmpeg -y -f lavfi -i anullsrc=r=44100:cl=stereo \
 python3 scripts/upload_preview.py --video /tmp/kotenocr_videos/demo_ja_appstore.mp4 --lang ja
 ```
 
-### 5. Git
+### 6. Git
 - [ ] 変更をcommit & push
 - [ ] zennリポジトリもcommit & push（記事更新がある場合）
 
