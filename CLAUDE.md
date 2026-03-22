@@ -162,18 +162,51 @@ python3 scripts/upload_screenshots.py --dir screenshots/marketing --dry-run
 
 ### デモ動画
 
-- `xcrun simctl io recordVideo` でシミュレータ画面を録画
-- JA/EN各1本（iPhone）、`/tmp/kotenocr_screenshots/videos/` に出力
-- App Storeプレビュー動画として使用可能（最大30秒）
+専用スクリプト `scripts/record_demo_video.sh` でシミュレータ画面を自動録画 → ffmpegでトリミング。
+App Storeプレビュー動画（最大30秒）として使用可能。出力先: `/tmp/kotenocr_videos/`
+
+```bash
+# 古典籍 OCR のみ（デフォルト）
+./scripts/record_demo_video.sh
+
+# 近代 OCR のみ（校異源氏物語、クロップ→モード選択フロー）
+./scripts/record_demo_video.sh --mode picker
+
+# 古典籍 + 近代 OCR を1本の動画に（推奨）
+./scripts/record_demo_video.sh --mode combined
+
+# 日英両方
+./scripts/record_demo_video.sh --mode combined --lang all
+
+# トリミング調整（デフォルト: 先頭10.5秒カット＝スプラッシュ残し、30秒に制限）
+./scripts/record_demo_video.sh --mode combined --trim-start 10.5 --trim-duration 30
+
+# トリミングなし（生データ確認用）
+./scripts/record_demo_video.sh --mode combined --no-trim
+```
+
+テストメソッド（`KotenOCRUITests/ScreenshotTests.swift`）:
+- `testDemoVideoFlow` — 古典籍 auto-load → OCR結果 → スクロール → 翻訳
+- `testDemoVideoPickerFlow` — 校異源氏物語 → クロップ → 近代OCR選択 → OCR結果
+- `testDemoVideoCombined` — 古典籍OCR → 翻訳 → 校異源氏物語クロップ → 近代OCR（1本に統合）
+
+自動化の仕組み:
+- `TEST_IMAGE_PATH` — 起動時に自動ロードするテスト画像パス
+- `TEST_SHOW_CROP` — `YES` で自動ロード時にクロップ画面を経由
+- `TEST_SECOND_IMAGE_PATH` — カメラに戻った際に2枚目を自動ロード（combined用）
+- `TEST_TRANSLATION_TEXT` — ダミー翻訳テキストの注入
+- 録画後 ffmpeg で冒頭（ホーム画面+スプラッシュ）と末尾を自動トリミング
 
 ### テスト用サンプル画像
 
-OCRテスト・スクリーンショット撮影用のサンプル古典籍画像（東京大学IIIF）:
+古典籍（くずし字）モード用（東京大学IIIF）:
 ```
 https://iiif.dl.itc.u-tokyo.ac.jp/iiif/genji/TIFF/A00_6587/01/01_0004.tif/full/full/0/default.jpg
 ```
-
 ローカルコピー: `KotenOCRUITests/Resources/test_koten_sample.jpg`
+
+近代（活字・手書き）モード用 — 校異源氏物語（国立国会図書館デジタルコレクション）:
+ローカルコピー: `KotenOCRUITests/Resources/test_ndl_sample.jpg`
 
 ## Project Generation
 

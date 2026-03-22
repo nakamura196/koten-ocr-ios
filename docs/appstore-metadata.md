@@ -101,6 +101,38 @@ App Store 提出時に公開URLが必要。GitHub Pages 等にホストする:
 https://nakamura196.github.io/koten-ocr-ios/privacy-policy.html
 ```
 
+## App Storeプレビュー動画
+
+| 項目 | 仕様 |
+|------|------|
+| 形式 | MP4 (H.264) |
+| 最大長 | 30秒 |
+| デバイス | iPhone 6.7" (iPhone 17 Pro Max) |
+| 言語 | 日本語 / 英語 |
+
+デモ動画は `scripts/record_demo_video.sh` で自動生成。古典籍OCRと近代OCRの両モードを紹介。
+
+<video src="../screenshots/demo_v130.mp4" controls muted playsinline width="300"></video>
+
+### 動画の内容
+
+1. スプラッシュ画面（アプリ起動）
+2. 古典籍OCR結果（くずし字の認識）
+3. 現代語訳（翻訳タブ）
+4. クロップ画面（校異源氏物語の画像選択）
+5. 近代OCRモード選択
+6. 近代OCR結果（活字の認識）
+
+### 動画の生成・アップロード
+
+```bash
+# 録画（古典籍+近代の統合動画）
+./scripts/record_demo_video.sh --mode combined
+
+# App Store Connectへアップロード（PREPARE_FOR_SUBMISSION状態のバージョンが必要）
+python3 scripts/upload_preview.py --video /tmp/kotenocr_videos/demo_ja_combined_iphone.mp4 --lang ja
+```
+
 ## スクリーンショット要件
 
 | デバイス | サイズ | 必須 |

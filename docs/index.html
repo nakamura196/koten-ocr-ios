@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KotenOCR — 古典籍OCRアプリ</title>
+<title>KotenOCR — 古典籍・近代活字OCRアプリ</title>
 <style>
   :root {
     --bg: #fafaf8;
@@ -63,6 +63,29 @@
     margin-top: 8px;
   }
 
+  /* Demo */
+  .demo {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+    text-align: center;
+  }
+  .demo h2 {
+    font-size: 1.4em;
+    margin-bottom: 24px;
+  }
+  .demo video {
+    max-width: 320px;
+    width: 100%;
+    border-radius: 20px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+  }
+  .demo .caption {
+    font-size: 0.85em;
+    color: var(--muted);
+    margin-top: 12px;
+  }
+
   /* Features */
   .features {
     max-width: 720px;
@@ -93,6 +116,54 @@
   .feature p {
     font-size: 0.9em;
     color: var(--muted);
+  }
+
+  /* OCR Modes */
+  .modes {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+    text-align: center;
+  }
+  .modes h2 {
+    font-size: 1.4em;
+    margin-bottom: 24px;
+  }
+  .mode-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 520px) {
+    .mode-cards { grid-template-columns: 1fr; }
+  }
+  .mode-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 24px;
+    text-align: left;
+  }
+  .mode-card .mode-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 0.8em;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 12px;
+  }
+  .mode-card.koten .mode-badge { background: #e67e22; }
+  .mode-card.ndl .mode-badge { background: #2980b9; }
+  .mode-card h3 {
+    font-size: 1.05em;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .mode-card p {
+    font-size: 0.85em;
+    color: var(--muted);
+    margin-bottom: 4px;
   }
 
   /* How it works */
@@ -138,6 +209,53 @@
     color: var(--muted);
   }
 
+  /* Changelog */
+  .changelog {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+  }
+  .changelog h2 {
+    font-size: 1.4em;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  .changelog-entry {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .changelog-entry h3 {
+    font-size: 1em;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .changelog-entry .version-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    padding: 2px 10px;
+    border-radius: 6px;
+    font-size: 0.8em;
+    font-weight: 600;
+    margin-right: 8px;
+  }
+  .changelog-entry .date {
+    font-size: 0.8em;
+    color: var(--muted);
+  }
+  .changelog-entry ul {
+    margin-top: 8px;
+    padding-left: 20px;
+  }
+  .changelog-entry li {
+    font-size: 0.85em;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
   /* Credits */
   .credits {
     max-width: 720px;
@@ -151,7 +269,7 @@
   }
   .credit-list {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     gap: 16px;
   }
   @media (max-width: 520px) {
@@ -195,7 +313,9 @@
     cursor: pointer;
   }
   .lang-toggle a:hover { text-decoration: underline; }
-  .en { display: none; }
+  .en { display: none !important; }
+  body.show-en .en { display: inline !important; }
+  body.show-en .ja { display: none !important; }
 </style>
 </head>
 <body>
@@ -209,13 +329,72 @@
   <img src="icon.png" alt="KotenOCR" class="hero-icon" onerror="this.style.display='none'">
   <h1>KotenOCR</h1>
   <p class="tagline">
-    <span class="ja">古典籍・くずし字を、スマホで読む。</span>
-    <span class="en">Read classical Japanese texts on your phone.</span>
+    <span class="ja">古典籍・近代活字を、スマホで読む。</span>
+    <span class="en">Read classical & modern Japanese texts on your phone.</span>
   </p>
   <p style="color:var(--muted);font-size:0.95em;">
-    <span class="ja">国立国会図書館のAIモデルを活用した、完全オフラインの古典籍OCRアプリ。</span>
+    <span class="ja">国立国会図書館のAIモデルを活用した、完全オフラインのOCRアプリ。</span>
     <span class="en">Fully offline OCR app powered by the National Diet Library's AI models.</span>
   </p>
+</section>
+
+<!-- Demo Video -->
+<section class="demo">
+  <h2>
+    <span class="ja">デモ</span>
+    <span class="en">Demo</span>
+  </h2>
+  <video src="../screenshots/demo_v130.mp4" controls muted playsinline></video>
+  <p class="caption">
+    <span class="ja">古典籍OCR（くずし字）と近代OCR（活字）の動作例</span>
+    <span class="en">Classical OCR (kuzushiji) and Modern OCR (printed text) in action</span>
+  </p>
+</section>
+
+<!-- OCR Modes -->
+<section class="modes">
+  <h2>
+    <span class="ja">2つのOCRモード</span>
+    <span class="en">Dual OCR Modes</span>
+  </h2>
+  <div class="mode-cards">
+    <div class="mode-card koten">
+      <span class="mode-badge">
+        <span class="ja">古典籍</span>
+        <span class="en">Classical</span>
+      </span>
+      <h3>
+        <span class="ja">くずし字OCR</span>
+        <span class="en">Kuzushiji OCR</span>
+      </h3>
+      <p>
+        <span class="ja">検出: RTMDet-S / 認識: PARSeq</span>
+        <span class="en">Detection: RTMDet-S / Recognition: PARSeq</span>
+      </p>
+      <p>
+        <span class="ja">江戸期の版本・写本に最適化。7000文字以上に対応。</span>
+        <span class="en">Optimized for Edo-period woodblock prints & manuscripts. 7000+ characters.</span>
+      </p>
+    </div>
+    <div class="mode-card ndl">
+      <span class="mode-badge">
+        <span class="ja">近代</span>
+        <span class="en">Modern</span>
+      </span>
+      <h3>
+        <span class="ja">活字・手書きOCR</span>
+        <span class="en">Printed & Handwritten OCR</span>
+      </h3>
+      <p>
+        <span class="ja">検出: DEIMv2-S / 認識: PARSeq cascade（3モデル）</span>
+        <span class="en">Detection: DEIMv2-S / Recognition: PARSeq cascade (3 models)</span>
+      </p>
+      <p>
+        <span class="ja">明治以降の活字印刷物・手書き文書に対応。最大6.7倍高速化。</span>
+        <span class="en">For post-Meiji printed & handwritten documents. Up to 6.7x faster.</span>
+      </p>
+    </div>
+  </div>
 </section>
 
 <!-- Features -->
@@ -227,8 +406,8 @@
       <span class="en">Snap & Recognize</span>
     </h3>
     <p>
-      <span class="ja">カメラで古典籍を撮影するだけ。くずし字を自動で検出・認識します。</span>
-      <span class="en">Just photograph a classical text. Kuzushiji characters are automatically detected and recognized.</span>
+      <span class="ja">カメラで撮影するだけ。文字を自動で検出・認識します。</span>
+      <span class="en">Just photograph a text. Characters are automatically detected and recognized.</span>
     </p>
   </div>
   <div class="feature">
@@ -243,25 +422,25 @@
     </p>
   </div>
   <div class="feature">
-    <div class="feature-icon">⚡</div>
+    <div class="feature-icon">📝</div>
     <h3>
-      <span class="ja">高速処理</span>
-      <span class="en">Fast Processing</span>
+      <span class="ja">現代語訳</span>
+      <span class="en">Modern Translation</span>
     </h3>
     <p>
-      <span class="ja">ONNX Runtimeによる高速推論。撮影から数秒で認識結果を表示します。</span>
-      <span class="en">Fast inference via ONNX Runtime. Results appear within seconds of capture.</span>
+      <span class="ja">古文を現代語に翻訳。ローカルAI（iOS 26+）またはクラウドAPIに対応。</span>
+      <span class="en">Translate classical text to modern Japanese. Supports local AI (iOS 26+) or cloud APIs.</span>
     </p>
   </div>
   <div class="feature">
     <div class="feature-icon">📋</div>
     <h3>
-      <span class="ja">テキストコピー</span>
-      <span class="en">Copy Text</span>
+      <span class="ja">エクスポート</span>
+      <span class="en">Export</span>
     </h3>
     <p>
-      <span class="ja">認識結果はワンタップでコピー。研究や学習にすぐ活用できます。</span>
-      <span class="en">Copy results with one tap. Ready for your research and studies.</span>
+      <span class="ja">認識結果をテキスト・TXT・PDFでエクスポート。研究や学習にすぐ活用できます。</span>
+      <span class="en">Export results as text, TXT, or PDF. Ready for your research and studies.</span>
     </p>
   </div>
 </section>
@@ -287,25 +466,110 @@
     <div class="step">
       <div class="step-num">2</div>
       <h4>
-        <span class="ja">認識</span>
-        <span class="en">Recognize</span>
+        <span class="ja">モード選択</span>
+        <span class="en">Select Mode</span>
       </h4>
       <p>
-        <span class="ja">AIが文字の位置を検出し、くずし字を翻字</span>
-        <span class="en">AI detects characters and transcribes kuzushiji</span>
+        <span class="ja">古典籍または近代OCRを選択</span>
+        <span class="en">Choose Classical or Modern OCR</span>
       </p>
     </div>
     <div class="step">
       <div class="step-num">3</div>
       <h4>
+        <span class="ja">認識</span>
+        <span class="en">Recognize</span>
+      </h4>
+      <p>
+        <span class="ja">AIが文字を検出・認識</span>
+        <span class="en">AI detects and recognizes text</span>
+      </p>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <h4>
         <span class="ja">活用</span>
         <span class="en">Use</span>
       </h4>
       <p>
-        <span class="ja">結果をコピー・エクスポートして研究に活用</span>
-        <span class="en">Copy or export results for your research</span>
+        <span class="ja">コピー・翻訳・エクスポート</span>
+        <span class="en">Copy, translate, or export</span>
       </p>
     </div>
+  </div>
+</section>
+
+<!-- Changelog -->
+<section class="changelog">
+  <h2>
+    <span class="ja">更新履歴</span>
+    <span class="en">Changelog</span>
+  </h2>
+
+  <div class="changelog-entry">
+    <h3><span class="version-badge">v1.3.0</span><span class="date">2026-03-22</span></h3>
+    <ul>
+      <li>
+        <span class="ja">近代活字OCR（NDLOCR-Lite）に対応。古典籍・近代の2モード切替</span>
+        <span class="en">Added Modern OCR (NDLOCR-Lite). Switch between Classical and Modern modes</span>
+      </li>
+      <li>
+        <span class="ja">確認画面でOCRモードをワンタップ選択</span>
+        <span class="en">One-tap OCR mode selection on confirm screen</span>
+      </li>
+      <li>
+        <span class="ja">認識処理の並列化（近代モード最大6.7倍高速化）</span>
+        <span class="en">Parallel recognition (up to 6.7x faster in Modern mode)</span>
+      </li>
+      <li>
+        <span class="ja">スプラッシュ画面・フィードバック送信機能を追加</span>
+        <span class="en">Added splash screen and feedback email</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="changelog-entry">
+    <h3><span class="version-badge">v1.2.2</span><span class="date">2026-03-19</span></h3>
+    <ul>
+      <li>
+        <span class="ja">App Storeマーケティング画像を更新</span>
+        <span class="en">Updated App Store marketing screenshots</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="changelog-entry">
+    <h3><span class="version-badge">v1.2.1</span><span class="date">2026-03-14</span></h3>
+    <ul>
+      <li>
+        <span class="ja">チップ（Tip Jar）機能を追加</span>
+        <span class="en">Added Tip Jar (in-app tips)</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="changelog-entry">
+    <h3><span class="version-badge">v1.2.0</span><span class="date">2026-03-13</span></h3>
+    <ul>
+      <li>
+        <span class="ja">現代語訳機能を追加（ローカルAI / クラウドAPI）</span>
+        <span class="en">Added modern translation (local AI / cloud API)</span>
+      </li>
+      <li>
+        <span class="ja">トリミング確認画面・カメラ保存オプションを追加</span>
+        <span class="en">Added crop confirmation screen and camera save option</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="changelog-entry">
+    <h3><span class="version-badge">v1.0</span><span class="date">2026-03-04</span></h3>
+    <ul>
+      <li>
+        <span class="ja">初回リリース。くずし字OCR、カメラ撮影、テキスト編集・エクスポート</span>
+        <span class="en">Initial release. Kuzushiji OCR, camera capture, text editing & export</span>
+      </li>
+    </ul>
   </div>
 </section>
 
@@ -320,6 +584,11 @@
       <h4>NDL古典籍OCR-Lite</h4>
       <p>CC-BY-4.0 — 国立国会図書館</p>
       <a href="https://github.com/ndl-lab/ndlkotenocr-lite">GitHub</a>
+    </div>
+    <div class="credit">
+      <h4>NDLOCR-Lite</h4>
+      <p>CC-BY-4.0 — 国立国会図書館</p>
+      <a href="https://github.com/ndl-lab/ndlocr-lite">GitHub</a>
     </div>
     <div class="credit">
       <h4>ONNX Runtime</h4>
@@ -338,18 +607,15 @@
     </a>
     &nbsp;·&nbsp;
     <a href="https://github.com/nakamura196/koten-ocr-ios">GitHub</a>
+    &nbsp;·&nbsp;
+    <a href="https://apps.apple.com/jp/app/kotenocr/id6760045646">App Store</a>
   </p>
   <p style="margin-top:8px;">&copy; 2026 Satoru Nakamura</p>
 </footer>
 
 <script>
 function toggleLang() {
-  document.querySelectorAll('.ja').forEach(e => {
-    e.style.display = e.style.display === 'none' ? '' : 'none';
-  });
-  document.querySelectorAll('.en').forEach(e => {
-    e.style.display = e.style.display === 'none' ? '' : 'none';
-  });
+  document.body.classList.toggle('show-en');
 }
 </script>
 

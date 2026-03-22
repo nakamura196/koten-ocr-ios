@@ -29,6 +29,7 @@ struct ContentView: View {
     @State private var preCropImage: CGImage?
     @State private var croppedPreview: CGImage?
     @State private var cropSessionID = UUID()
+    @State private var testImageLoadCount = 0
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @AppStorage("appTheme") private var appThemeRaw: String = AppTheme.system.rawValue
     @AppStorage("saveToLibrary") private var saveToLibrary = false
@@ -54,6 +55,11 @@ struct ContentView: View {
                 case .ready:
                     mainContent
                         .onAppear { loadTestImageIfNeeded() }
+                        .onChange(of: appState) { newState in
+                            if newState == .camera {
+                                loadSecondTestImageIfNeeded()
+                            }
+                        }
                 }
             }
         }
@@ -307,6 +313,7 @@ struct ContentView: View {
                 .background(Color.orange)
                 .cornerRadius(12)
             }
+            .accessibilityIdentifier("koten_ocr_button")
 
             Button(action: {
                 runOCRWithMode(.ndl)
@@ -329,6 +336,7 @@ struct ContentView: View {
                 .background(Color.blue)
                 .cornerRadius(12)
             }
+            .accessibilityIdentifier("ndl_ocr_button")
         }
     }
 
@@ -547,18 +555,40 @@ struct ContentView: View {
         appState = .result
     }
 
-    /// Load a test image from path specified via launch argument (for UI test screenshot automation)
+    /// Load a test image from path specified via environment variable (for UI test automation).
+    /// When TEST_SHOW_CROP is "YES", enters the crop flow instead of processing directly.
     private func loadTestImageIfNeeded() {
-        guard appState == .camera,
+        guard appState == .camera, testImageLoadCount == 0,
               let testImagePath = ProcessInfo.processInfo.environment["TEST_IMAGE_PATH"],
               !testImagePath.isEmpty else { return }
+
+        testImageLoadCount = 1
 
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: testImagePath)),
               let uiImage = UIImage(data: data),
               let cgImage = uiImage.normalizedCGImage else { return }
 
-        // Directly start processing (skip crop for automation)
-        processImage(cgImage)
+        if ProcessInfo.processInfo.environment["TEST_SHOW_CROP"] == "YES" {
+            showCropping(cgImage)
+        } else {
+            processImage(cgImage)
+        }
+    }
+
+    /// Load a second test image when returning to camera (for combined demo videos).
+    /// Activated by TEST_SECOND_IMAGE_PATH env var; always enters the crop flow.
+    private func loadSecondTestImageIfNeeded() {
+        guard testImageLoadCount == 1,
+              let secondPath = ProcessInfo.processInfo.environment["TEST_SECOND_IMAGE_PATH"],
+              !secondPath.isEmpty else { return }
+
+        testImageLoadCount = 2
+
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: secondPath)),
+              let uiImage = UIImage(data: data),
+              let cgImage = uiImage.normalizedCGImage else { return }
+
+        showCropping(cgImage)
     }
 
     private func backFromResult() {

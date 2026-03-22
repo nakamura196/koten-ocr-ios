@@ -176,6 +176,7 @@ struct CropView: View {
                             .background(Color.white.opacity(0.2))
                             .cornerRadius(8)
                     }
+                    .accessibilityIdentifier("skip_crop_button")
 
                     Button(action: performCrop) {
                         Text(String(localized: "crop_apply", defaultValue: "Crop"))
@@ -186,6 +187,7 @@ struct CropView: View {
                             .background(Color.white)
                             .cornerRadius(8)
                     }
+                    .accessibilityIdentifier("crop_button")
                 }
                 .padding(.vertical, 20)
             }

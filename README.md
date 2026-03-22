@@ -8,6 +8,10 @@ Powered by the National Diet Library's NDL Koten OCR-Lite and NDLOCR-Lite models
 
 [![App Store](https://img.shields.io/badge/App%20Store-Download-blue?logo=apple&logoColor=white)](https://apps.apple.com/jp/app/kotenocr/id6760045646)
 
+### デモ / Demo
+
+https://github.com/nakamura196/koten-ocr-ios/raw/main/screenshots/demo_v130.mp4
+
 ![App Store Screenshots](screenshots/marketing_combined.png)
 
 ## 機能 / Features
