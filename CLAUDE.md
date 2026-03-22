@@ -243,6 +243,36 @@ https://iiif.dl.itc.u-tokyo.ac.jp/iiif/genji/TIFF/A00_6587/01/01_0004.tif/full/f
 近代（活字・手書き）モード用 — 校異源氏物語（国立国会図書館デジタルコレクション）:
 ローカルコピー: `KotenOCRUITests/Resources/test_ndl_sample.jpg`
 
+## バージョンアップ時のTODOリスト
+
+新バージョンをリリースする際のチェックリスト。漏れ防止のため、上から順に実施する。
+
+### 1. コード変更
+- [ ] `project.yml` の `MARKETING_VERSION` と `CURRENT_PROJECT_VERSION` を更新
+- [ ] `CHANGELOG.md` に変更内容を追記
+- [ ] `xcodegen generate` でXcodeプロジェクトを再生成
+
+### 2. ドキュメント更新
+- [ ] `docs/index.html` の更新履歴セクションに新バージョンを追加
+- [ ] `docs/appstore-metadata.md` の必要箇所を更新（説明文変更がある場合）
+- [ ] `README.md` の更新（機能追加がある場合）
+- [ ] `CLAUDE.md` の更新（アーキテクチャ変更がある場合）
+
+### 3. デモ動画・スクリーンショット（UI変更がある場合）
+- [ ] `./scripts/record_demo_video.sh --mode combined` でデモ動画を再録画
+- [ ] GIF変換（デバイスフレーム付き）→ `screenshots/demo_v130.gif`
+- [ ] MP4コピー → `screenshots/demo_v130.mp4`
+- [ ] zennの記事の動画も更新（`static/videos/posts/kotenocr/`）
+
+### 4. ビルド＆提出
+- [ ] `xcodebuild archive` → `xcodebuild -exportArchive` → `xcrun altool --upload-app`
+- [ ] App Store Connectで新バージョンを確認、審査に提出
+- [ ] プレビュー動画のアップロード（`python3 scripts/upload_preview.py`、PREPARE_FOR_SUBMISSION状態で）
+
+### 5. Git
+- [ ] 変更をcommit & push
+- [ ] zennリポジトリもcommit & push（記事更新がある場合）
+
 ## Project Generation
 
 Uses **XcodeGen** (`project.yml`). After modifying project settings, run `xcodegen generate` to regenerate `KotenOCR.xcodeproj`.

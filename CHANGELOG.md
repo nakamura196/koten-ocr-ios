@@ -1,5 +1,11 @@
 # Changelog / 変更履歴
 
+## 1.3.1 (2026-03-23)
+
+- 近代OCRの検出精度を改善。NMS（IoU=0.2）を追加し重複検出を除去 / Improved Modern OCR detection accuracy by adding NMS (IoU=0.2) to remove duplicate detections
+- 近代OCRでline_*クラスのみをOCR認識対象に変更（本家ndlocr-liteと同じ挙動） / Filter to line_* classes only for OCR recognition (matching ndlocr-lite behavior)
+- 検出パラメータを本家と統一（scoreThreshold=0.2, maxDetections=100） / Aligned detection parameters with upstream (scoreThreshold=0.2, maxDetections=100)
+
 ## 1.3.0 (2026-03-22)
 
 - NDLOCR-Lite（近代活字OCR）に対応。古典籍と近代の2つのOCRモードを切り替えて使用可能 / Added NDLOCR-Lite (modern printed text OCR). Switch between Classical and Modern OCR modes

@@ -112,7 +112,7 @@ https://nakamura196.github.io/koten-ocr-ios/privacy-policy.html
 
 デモ動画は `scripts/record_demo_video.sh` で自動生成。古典籍OCRと近代OCRの両モードを紹介。
 
-<video src="../screenshots/demo_v130.mp4" controls muted playsinline width="300"></video>
+<video src="demo_v130.mp4" controls muted playsinline width="300"></video>
 
 ### 動画の内容
 

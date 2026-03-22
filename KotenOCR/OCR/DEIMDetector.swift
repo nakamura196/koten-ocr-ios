@@ -6,7 +6,9 @@ class DEIMDetector: @unchecked Sendable {
     private let session: ORTSession
     private let inputWidth = 800
     private let inputHeight = 800
+    private let scoreThreshold: Float
     private let confThreshold: Float
+    private let iouThreshold: Float
     private let maxDetections: Int
     private let classNames: [Int: String]
 
@@ -17,11 +19,14 @@ class DEIMDetector: @unchecked Sendable {
     }
 
     init(env: ORTEnv, modelPath: String, configPath: String,
-         confThreshold: Float = 0.25, maxDetections: Int = 300) throws {
+         scoreThreshold: Float = 0.2, confThreshold: Float = 0.25,
+         iouThreshold: Float = 0.2, maxDetections: Int = 100) throws {
         let options = try ORTSessionOptions()
 
         self.session = try ORTSession(env: env, modelPath: modelPath, sessionOptions: options)
+        self.scoreThreshold = scoreThreshold
         self.confThreshold = confThreshold
+        self.iouThreshold = iouThreshold
         self.maxDetections = maxDetections
         self.classNames = DEIMDetector.loadClassNames(from: configPath)
     }
@@ -175,7 +180,7 @@ class DEIMDetector: @unchecked Sendable {
 
         for i in 0..<numDetections {
             let score = scores[i]
-            if score < confThreshold { continue }
+            if score < scoreThreshold { continue }
 
             let label = Int(labels[i])
             // Python code: class_index = int(label) - 1
@@ -207,8 +212,53 @@ class DEIMDetector: @unchecked Sendable {
             detections.append(det)
         }
 
-        // Sort by score descending, limit to maxDetections
+        // Sort by score descending
         let sorted = detections.sorted { $0.score > $1.score }
-        return Array(sorted.prefix(maxDetections))
+
+        // Apply NMS to remove overlapping detections
+        let nmsResult = applyNMS(sorted, iouThreshold: iouThreshold)
+
+        return Array(nmsResult.prefix(maxDetections))
+    }
+
+    // MARK: - NMS
+
+    /// Apply Non-Maximum Suppression to remove overlapping detections.
+    private func applyNMS(_ detections: [Detection], iouThreshold: Float) -> [Detection] {
+        var kept: [Detection] = []
+
+        for det in detections {
+            var shouldKeep = true
+            for existing in kept {
+                if computeIoU(det.box, existing.box) > iouThreshold {
+                    shouldKeep = false
+                    break
+                }
+            }
+            if shouldKeep {
+                kept.append(det)
+            }
+        }
+
+        return kept
+    }
+
+    /// Compute Intersection over Union between two boxes [x1, y1, x2, y2].
+    private func computeIoU(_ a: [Int], _ b: [Int]) -> Float {
+        let x1 = max(a[0], b[0])
+        let y1 = max(a[1], b[1])
+        let x2 = min(a[2], b[2])
+        let y2 = min(a[3], b[3])
+
+        let interW = max(0, x2 - x1)
+        let interH = max(0, y2 - y1)
+        let interArea = Float(interW * interH)
+
+        let areaA = Float((a[2] - a[0]) * (a[3] - a[1]))
+        let areaB = Float((b[2] - b[0]) * (b[3] - b[1]))
+        let unionArea = areaA + areaB - interArea
+
+        guard unionArea > 0 else { return 0 }
+        return interArea / unionArea
     }
 }

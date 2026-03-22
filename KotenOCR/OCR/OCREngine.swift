@@ -120,7 +120,8 @@ class OCREngine: ObservableObject {
 
         self.ndlDetector = try DEIMDetector(
             env: env, modelPath: detModelPath, configPath: configPath,
-            confThreshold: 0.25, maxDetections: 300
+            scoreThreshold: 0.2, confThreshold: 0.25,
+            iouThreshold: 0.2, maxDetections: 100
         )
         DispatchQueue.main.async { self.progress = 0.5 }
 
@@ -273,11 +274,14 @@ class OCREngine: ObservableObject {
         }
 
         // Step 1: Layout detection
-        let detections = try await Task.detached(priority: .userInitiated) {
+        let allDetections = try await Task.detached(priority: .userInitiated) {
             try detector.detect(image: image)
         }.value
 
         try Task.checkCancellation()
+
+        // Filter to line_* classes only (text_block and block_* are structural, not for OCR)
+        let detections = allDetections.filter { $0.className.hasPrefix("line_") }
 
         // Step 2: Cascade text recognition for each detection (parallel)
         var recognized = detections
