@@ -284,6 +284,21 @@ struct ContentView: View {
                 ocrModeButtons
                     .padding(.horizontal, 20)
                     .padding(.bottom, 40)
+                    .disabled(ocrEngine.isLoadingModels)
+            }
+
+            if ocrEngine.isLoadingModels {
+                Color.black.opacity(0.3).ignoresSafeArea()
+                VStack(spacing: 12) {
+                    ProgressView()
+                        .scaleEffect(1.2)
+                    Text(String(localized: "loading_models", defaultValue: "Loading models..."))
+                        .font(.subheadline)
+                        .foregroundColor(.white)
+                }
+                .padding(24)
+                .background(Color.black.opacity(0.7))
+                .cornerRadius(12)
             }
         }
     }
@@ -343,8 +358,20 @@ struct ContentView: View {
     private func runOCRWithMode(_ mode: OCRMode) {
         guard let img = croppedPreview else { return }
         croppedPreview = nil
-        ocrEngine.switchMode(to: mode)
-        processImage(img)
+        Task {
+            do {
+                try await ocrEngine.switchMode(to: mode)
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = error.localizedDescription
+                    self.appState = .result
+                }
+                return
+            }
+            await MainActor.run {
+                processImage(img)
+            }
+        }
     }
 
     // MARK: - Processing View

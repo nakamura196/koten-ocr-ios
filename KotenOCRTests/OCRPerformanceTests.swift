@@ -93,13 +93,37 @@ final class OCRPerformanceTests: XCTestCase {
         }
         let parTime = CFAbsoluteTimeGetCurrent() - parStart
 
-        let speedup = seqTime / parTime
+        // Batched parallel (max 4 concurrent)
+        let batchStart = CFAbsoluteTimeGetCurrent()
+        let maxConcurrency = 4
+        var batchResults2: [String] = []
+        for chunkStart in stride(from: 0, to: detections.count, by: maxConcurrency) {
+            let chunkEnd = min(chunkStart + maxConcurrency, detections.count)
+            let chunk = try await withThrowingTaskGroup(of: String.self) { group in
+                for i in chunkStart..<chunkEnd {
+                    let det = detections[i]
+                    let rect = CGRect(x: max(0, det.box[0]), y: max(0, det.box[1]),
+                                      width: max(1, det.box[2] - det.box[0]),
+                                      height: max(1, det.box[3] - det.box[1]))
+                    guard let cropped = image.cropping(to: rect) else { continue }
+                    group.addTask { try recognizer.recognize(image: cropped) }
+                }
+                var r: [String] = []
+                for try await s in group { r.append(s) }
+                return r
+            }
+            batchResults2.append(contentsOf: chunk)
+        }
+        let batchTime = CFAbsoluteTimeGetCurrent() - batchStart
+
+        let kotenSpeedup = seqTime / parTime
+        let kotenBatchSpeedup = seqTime / batchTime
         print("")
         print("=== Koten OCR Results ===")
-        print("Regions:    \(detections.count)")
-        print("Sequential: \(String(format: "%.3f", seqTime))s")
-        print("Parallel:   \(String(format: "%.3f", parTime))s")
-        print("Speedup:    \(String(format: "%.2f", speedup))x")
+        print("Regions:      \(detections.count)")
+        print("Sequential:   \(String(format: "%.3f", seqTime))s")
+        print("Unlimited:    \(String(format: "%.3f", parTime))s (\(String(format: "%.2f", kotenSpeedup))x)")
+        print("Batched (4):  \(String(format: "%.3f", batchTime))s (\(String(format: "%.2f", kotenBatchSpeedup))x)")
     }
 
     // MARK: - NDL benchmark (modern printed text)
@@ -148,12 +172,35 @@ final class OCRPerformanceTests: XCTestCase {
         }
         let parTime = CFAbsoluteTimeGetCurrent() - parStart
 
+        // Batched parallel (max 4 concurrent)
+        let ndlMaxConcurrency = 4
+        let batchStart2 = CFAbsoluteTimeGetCurrent()
+        for chunkStart in stride(from: 0, to: detections.count, by: ndlMaxConcurrency) {
+            let chunkEnd = min(chunkStart + ndlMaxConcurrency, detections.count)
+            _ = try await withThrowingTaskGroup(of: String.self) { group in
+                for i in chunkStart..<chunkEnd {
+                    let det = detections[i]
+                    let rect = CGRect(x: max(0, det.box[0]), y: max(0, det.box[1]),
+                                      width: max(1, det.box[2] - det.box[0]),
+                                      height: max(1, det.box[3] - det.box[1]))
+                    guard let cropped = image.cropping(to: rect) else { continue }
+                    let charCount = det.predCharCount
+                    group.addTask { try cascade.recognize(image: cropped, predCharCount: charCount) }
+                }
+                var r: [String] = []
+                for try await s in group { r.append(s) }
+                return r
+            }
+        }
+        let batchTime = CFAbsoluteTimeGetCurrent() - batchStart2
+
         let speedup = seqTime / parTime
+        let batchSpeedup = seqTime / batchTime
         print("")
         print("=== NDL OCR Results ===")
-        print("Regions:    \(detections.count)")
-        print("Sequential: \(String(format: "%.3f", seqTime))s")
-        print("Parallel:   \(String(format: "%.3f", parTime))s")
-        print("Speedup:    \(String(format: "%.2f", speedup))x")
+        print("Regions:      \(detections.count)")
+        print("Sequential:   \(String(format: "%.3f", seqTime))s")
+        print("Unlimited:    \(String(format: "%.3f", parTime))s (\(String(format: "%.2f", speedup))x)")
+        print("Batched (4):  \(String(format: "%.3f", batchTime))s (\(String(format: "%.2f", batchSpeedup))x)")
     }
 }

@@ -7,6 +7,8 @@ struct KotenOCRApp: App {
     private var transactionListener: Task<Void, Never>?
 
     init() {
+        MetricKitManager.shared.start()
+
         transactionListener = Task.detached {
             for await result in Transaction.updates {
                 if case .verified(let transaction) = result {
@@ -22,6 +24,9 @@ struct KotenOCRApp: App {
                 .environmentObject(ocrEngine)
                 .onAppear {
                     ocrEngine.initialize()
+                }
+                .onReceive(NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)) { _ in
+                    ocrEngine.handleMemoryWarning()
                 }
         }
     }

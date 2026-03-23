@@ -24,8 +24,8 @@ targets:
       base:
         INFOPLIST_FILE: KotenOCR/Info.plist
         PRODUCT_BUNDLE_IDENTIFIER: com.nakamura196.kotenocr
-        MARKETING_VERSION: "1.3.1"
-        CURRENT_PROJECT_VERSION: "9"
+        MARKETING_VERSION: "1.3.2"
+        CURRENT_PROJECT_VERSION: "10"
         DEVELOPMENT_TEAM: "Q6S8JS6GWV"
         CODE_SIGN_STYLE: "Automatic"
         TARGETED_DEVICE_FAMILY: "1,2"

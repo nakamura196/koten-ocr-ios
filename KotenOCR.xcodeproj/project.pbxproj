@@ -45,6 +45,7 @@
 		D6709D356E1F7B2EB7FFB166 /* HistoryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A139A6962601902EBDFB6DD /* HistoryListView.swift */; };
 		DD3C1024DFD4E4B744B5E900 /* OCREngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFCF575F1A8FE24D8DD5780E /* OCREngineTests.swift */; };
 		E08D99583FA14352749CCF1A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 76A6BD467DEA7229DFCBB191 /* Assets.xcassets */; };
+		EA6132D99688DA796D3498AE /* MetricKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A2B8FC9F37AF7ABC52CE712 /* MetricKitManager.swift */; };
 		F90AF6B5F88C2159FED81F00 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 7078A6C58B9E131D0C86B41E /* Localizable.strings */; };
 /* End PBXBuildFile section */
 
@@ -94,6 +95,7 @@
 		9044A5844F791981ECF958E8 /* HistoryItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryItemTests.swift; sourceTree = "<group>"; };
 		91ECD227D650332CC3FA89B7 /* DetectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetectionTests.swift; sourceTree = "<group>"; };
 		9A139A6962601902EBDFB6DD /* HistoryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryListView.swift; sourceTree = "<group>"; };
+		9A2B8FC9F37AF7ABC52CE712 /* MetricKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricKitManager.swift; sourceTree = "<group>"; };
 		9F0C02138D36BD4637583CC4 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		A229657613D69582B3F74B4D /* ExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportManager.swift; sourceTree = "<group>"; };
 		B375ECB40C38D777102F59BC /* OCREngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCREngine.swift; sourceTree = "<group>"; };
@@ -256,6 +258,7 @@
 				1A4629A0F5DA8EE91C6DB6D6 /* KotenOCR.entitlements */,
 				270641011EB727A6FC52AD0B /* KotenOCRApp.swift */,
 				7078A6C58B9E131D0C86B41E /* Localizable.strings */,
+				9A2B8FC9F37AF7ABC52CE712 /* MetricKitManager.swift */,
 				75D337ED66BD4C54B44E5CD9 /* TipJar.storekit */,
 				E412F87D82C0E2D914BD5700 /* Export */,
 				02791E8C5A98F9A68F1D9D32 /* Extensions */,
@@ -424,6 +427,7 @@
 				1BE4FE0AC063CE4218405FBB /* HistoryManager.swift in Sources */,
 				65E8D11410FF385A0964FB27 /* KeychainHelper.swift in Sources */,
 				D2ADA4E7EFCF4A35211E3ACF /* KotenOCRApp.swift in Sources */,
+				EA6132D99688DA796D3498AE /* MetricKitManager.swift in Sources */,
 				51D3D846E8BD58665B59A081 /* OCREngine.swift in Sources */,
 				038900677AB943A552FBA0DC /* OCRMode.swift in Sources */,
 				543D92C50A84D38DCFC78C4E /* OnboardingView.swift in Sources */,
@@ -588,14 +592,14 @@
 				CODE_SIGN_ENTITLEMENTS = KotenOCR/KotenOCR.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_TEAM = Q6S8JS6GWV;
 				INFOPLIST_FILE = KotenOCR/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3.0;
+				MARKETING_VERSION = 1.3.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.nakamura196.kotenocr;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -689,14 +693,14 @@
 				CODE_SIGN_ENTITLEMENTS = KotenOCR/KotenOCR.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 10;
 				DEVELOPMENT_TEAM = Q6S8JS6GWV;
 				INFOPLIST_FILE = KotenOCR/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3.0;
+				MARKETING_VERSION = 1.3.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.nakamura196.kotenocr;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";

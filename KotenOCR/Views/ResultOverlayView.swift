@@ -43,8 +43,8 @@ struct ResultOverlayView: View {
                     // Visual-only box overlay (non-interactive)
                     .overlay {
                         GeometryReader { geometry in
-                            let scaleX = geometry.size.width / CGFloat(image.width)
-                            let scaleY = geometry.size.height / CGFloat(image.height)
+                            let scaleX = image.width > 0 ? geometry.size.width / CGFloat(image.width) : 0
+                            let scaleY = image.height > 0 ? geometry.size.height / CGFloat(image.height) : 0
 
                             ForEach(Array(detections.enumerated()), id: \.offset) { index, det in
                                 let rect = CGRect(

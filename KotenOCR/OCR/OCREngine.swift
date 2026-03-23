@@ -20,6 +20,7 @@ struct OCRResult {
 class OCREngine: ObservableObject {
     @Published var state: OCREngineState = .uninitialized
     @Published var progress: Float = 0
+    @Published var isLoadingModels: Bool = false
     @AppStorage("ocrMode") var currentModeRaw: String = OCRMode.koten.rawValue
 
     var currentMode: OCRMode {
@@ -58,9 +59,47 @@ class OCREngine: ObservableObject {
         }
     }
 
-    /// Switch OCR mode (models are already loaded at startup)
-    func switchMode(to mode: OCRMode) {
+    /// Switch OCR mode, loading models on demand if needed
+    func switchMode(to mode: OCRMode) async throws {
         currentModeRaw = mode.rawValue
+
+        // Check if models for the target mode are already loaded
+        switch mode {
+        case .koten:
+            if kotenDetector != nil && kotenRecognizer != nil { return }
+        case .ndl:
+            if ndlDetector != nil && ndlCascadeRecognizer != nil { return }
+        }
+
+        // Models need loading
+        guard let env = self.env else {
+            throw NSError(domain: "OCR", code: 21, userInfo: [NSLocalizedDescriptionKey: "ORTEnv not initialized"])
+        }
+
+        await MainActor.run { self.isLoadingModels = true }
+        defer { DispatchQueue.main.async { self.isLoadingModels = false } }
+
+        try await Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self = self else { return }
+            switch mode {
+            case .koten:
+                try self.loadKotenModels(env: env)
+            case .ndl:
+                try self.loadNDLModels(env: env)
+            }
+        }.value
+    }
+
+    /// Handle memory warning by releasing unused mode's models
+    func handleMemoryWarning() {
+        if currentMode == .koten {
+            ndlDetector = nil
+            ndlCascadeRecognizer = nil
+        } else {
+            kotenDetector = nil
+            kotenRecognizer = nil
+        }
+        print("[OCREngine] Released unused models due to memory pressure")
     }
 
     private func loadModels() throws {
@@ -72,9 +111,14 @@ class OCREngine: ObservableObject {
             self.env = env
         }
 
-        // Load both model sets at startup
-        try loadKotenModels(env: env)
-        try loadNDLModels(env: env)
+        // Load only the currently selected mode's models at startup
+        let mode = OCRMode(rawValue: currentModeRaw) ?? .koten
+        switch mode {
+        case .koten:
+            try loadKotenModels(env: env)
+        case .ndl:
+            try loadNDLModels(env: env)
+        }
 
         // Reading order (shared)
         self.readingOrderProcessor = ReadingOrderProcessor()
@@ -224,32 +268,36 @@ class OCREngine: ObservableObject {
 
         try Task.checkCancellation()
 
-        // Step 2: Text recognition for each detection (parallel)
+        // Step 2: Text recognition for each detection (parallel, batched)
         var recognized = detections
-        let results = try await withThrowingTaskGroup(of: (Int, String).self) { group in
-            for i in 0..<recognized.count {
-                let box = recognized[i].box
-                guard box.count >= 4 else { continue }
-                let cropRect = CGRect(
-                    x: max(0, box[0]),
-                    y: max(0, box[1]),
-                    width: max(1, box[2] - box[0]),
-                    height: max(1, box[3] - box[1])
-                )
-                guard let cropped = image.cropping(to: cropRect) else { continue }
-                group.addTask {
-                    let text = try recognizer.recognize(image: cropped)
-                    return (i, text)
+        let maxConcurrency = 4
+        for batchStart in stride(from: 0, to: recognized.count, by: maxConcurrency) {
+            let batchEnd = min(batchStart + maxConcurrency, recognized.count)
+            let batchResults = try await withThrowingTaskGroup(of: (Int, String).self) { group in
+                for i in batchStart..<batchEnd {
+                    let box = recognized[i].box
+                    guard box.count >= 4 else { continue }
+                    let cropRect = CGRect(
+                        x: max(0, box[0]),
+                        y: max(0, box[1]),
+                        width: max(1, box[2] - box[0]),
+                        height: max(1, box[3] - box[1])
+                    )
+                    guard let cropped = image.cropping(to: cropRect) else { continue }
+                    group.addTask {
+                        let text = try recognizer.recognize(image: cropped)
+                        return (i, text)
+                    }
                 }
+                var texts: [(Int, String)] = []
+                for try await result in group {
+                    texts.append(result)
+                }
+                return texts
             }
-            var texts: [(Int, String)] = []
-            for try await result in group {
-                texts.append(result)
+            for (i, text) in batchResults {
+                recognized[i].text = text
             }
-            return texts
-        }
-        for (i, text) in results {
-            recognized[i].text = text
         }
 
         try Task.checkCancellation()
@@ -283,35 +331,39 @@ class OCREngine: ObservableObject {
         // Filter to line_* classes only (text_block and block_* are structural, not for OCR)
         let detections = allDetections.filter { $0.className.hasPrefix("line_") }
 
-        // Step 2: Cascade text recognition for each detection (parallel)
+        // Step 2: Cascade text recognition for each detection (parallel, batched)
         var recognized = detections
-        let results = try await withThrowingTaskGroup(of: (Int, String).self) { group in
-            for i in 0..<recognized.count {
-                let box = recognized[i].box
-                guard box.count >= 4 else { continue }
-                let cropRect = CGRect(
-                    x: max(0, box[0]),
-                    y: max(0, box[1]),
-                    width: max(1, box[2] - box[0]),
-                    height: max(1, box[3] - box[1])
-                )
-                guard let cropped = image.cropping(to: cropRect) else { continue }
-                let predCharCount = recognized[i].predCharCount
+        let maxConcurrency = 4
+        for batchStart in stride(from: 0, to: recognized.count, by: maxConcurrency) {
+            let batchEnd = min(batchStart + maxConcurrency, recognized.count)
+            let batchResults = try await withThrowingTaskGroup(of: (Int, String).self) { group in
+                for i in batchStart..<batchEnd {
+                    let box = recognized[i].box
+                    guard box.count >= 4 else { continue }
+                    let cropRect = CGRect(
+                        x: max(0, box[0]),
+                        y: max(0, box[1]),
+                        width: max(1, box[2] - box[0]),
+                        height: max(1, box[3] - box[1])
+                    )
+                    guard let cropped = image.cropping(to: cropRect) else { continue }
+                    let predCharCount = recognized[i].predCharCount
 
-                group.addTask {
-                    let text = try cascadeRecognizer.recognize(image: cropped, predCharCount: predCharCount)
-                    return (i, text)
+                    group.addTask {
+                        let text = try cascadeRecognizer.recognize(image: cropped, predCharCount: predCharCount)
+                        return (i, text)
+                    }
                 }
-            }
 
-            var texts: [(Int, String)] = []
-            for try await result in group {
-                texts.append(result)
+                var texts: [(Int, String)] = []
+                for try await result in group {
+                    texts.append(result)
+                }
+                return texts
             }
-            return texts
-        }
-        for (i, text) in results {
-            recognized[i].text = text
+            for (i, text) in batchResults {
+                recognized[i].text = text
+            }
         }
 
         try Task.checkCancellation()

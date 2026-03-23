@@ -96,31 +96,28 @@ class DEIMDetector: @unchecked Sendable {
         let maxWH = max(origW, origH)
         let metadata = Metadata(originalWidth: origW, originalHeight: origH, maxWH: maxWH)
 
-        // Create square context (maxWH x maxWH), fill black, draw image at top-left
+        // Optimized: resize FIRST to scaled dimensions, then pad to input size.
+        // This avoids creating a full-resolution padded context (e.g., 4032x4032 = 63MB).
+        let ratio = Float(inputWidth) / Float(maxWH)
+        let scaledW = max(1, Int((Float(origW) * ratio).rounded()))
+        let scaledH = max(1, Int((Float(origH) * ratio).rounded()))
+
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         let bitmapInfo = CGImageAlphaInfo.premultipliedLast.rawValue
-        guard let padCtx = CGContext(data: nil, width: maxWH, height: maxWH,
-                                     bitsPerComponent: 8, bytesPerRow: maxWH * 4,
-                                     space: colorSpace, bitmapInfo: bitmapInfo) else {
+
+        // Create input-sized context (e.g., 800x800), fill black, draw resized image
+        guard let ctx = CGContext(data: nil, width: inputWidth, height: inputHeight,
+                                  bitsPerComponent: 8, bytesPerRow: inputWidth * 4,
+                                  space: colorSpace, bitmapInfo: bitmapInfo) else {
             return ([], metadata)
         }
-        padCtx.setFillColor(CGColor(red: 0, green: 0, blue: 0, alpha: 1))
-        padCtx.fill(CGRect(x: 0, y: 0, width: maxWH, height: maxWH))
-        // CG has y-up: draw at top = y offset of (maxWH - origH)
-        padCtx.draw(image, in: CGRect(x: 0, y: CGFloat(maxWH - origH), width: CGFloat(origW), height: CGFloat(origH)))
+        ctx.setFillColor(CGColor(red: 0, green: 0, blue: 0, alpha: 1))
+        ctx.fill(CGRect(x: 0, y: 0, width: inputWidth, height: inputHeight))
+        ctx.interpolationQuality = .high
+        // CG has y-up: draw at top = y offset of (inputHeight - scaledH)
+        ctx.draw(image, in: CGRect(x: 0, y: CGFloat(inputHeight - scaledH), width: CGFloat(scaledW), height: CGFloat(scaledH)))
 
-        guard let paddedImage = padCtx.makeImage() else { return ([], metadata) }
-
-        // Resize to inputWidth x inputHeight
-        guard let resizeCtx = CGContext(data: nil, width: inputWidth, height: inputHeight,
-                                        bitsPerComponent: 8, bytesPerRow: inputWidth * 4,
-                                        space: colorSpace, bitmapInfo: bitmapInfo) else {
-            return ([], metadata)
-        }
-        resizeCtx.interpolationQuality = .high
-        resizeCtx.draw(paddedImage, in: CGRect(x: 0, y: 0, width: inputWidth, height: inputHeight))
-
-        guard let data = resizeCtx.data else { return ([], metadata) }
+        guard let data = ctx.data else { return ([], metadata) }
         let ptr = data.bindMemory(to: UInt8.self, capacity: inputWidth * inputHeight * 4)
 
         // Build NCHW tensor: divide by 255, subtract ImageNet means, divide by stds
@@ -245,6 +242,7 @@ class DEIMDetector: @unchecked Sendable {
 
     /// Compute Intersection over Union between two boxes [x1, y1, x2, y2].
     private func computeIoU(_ a: [Int], _ b: [Int]) -> Float {
+        guard a.count >= 4, b.count >= 4 else { return 0 }
         let x1 = max(a[0], b[0])
         let y1 = max(a[1], b[1])
         let x2 = min(a[2], b[2])

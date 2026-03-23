@@ -1,5 +1,14 @@
 # Changelog / 変更履歴
 
+## 1.3.2 (2026-03-24)
+
+- メモリ使用量を大幅削減。起動時に選択中のモードのみロード（遅延ロード） / Reduced memory usage: lazy model loading (only selected mode at startup)
+- DEIMDetector前処理を最適化（ピークメモリ63MB→2.4MB） / Optimized DEIMDetector preprocessing (peak memory 63MB → 2.4MB)
+- 並列認識タスクを最大4バッチに制限（メモリスパイク防止） / Limited parallel recognition to 4-batch (prevents memory spikes)
+- メモリ警告時に未使用モデルを自動解放 / Auto-release unused models on memory warning
+- MetricKitによるクラッシュ診断収集を追加 / Added MetricKit crash diagnostics
+- クラッシュリスクの追加修正（IoU境界チェック、ゼロ除算防止、force unwrap除去） / Additional crash fixes (IoU bounds check, division-by-zero guard, force unwrap removal)
+
 ## 1.3.1 (2026-03-23)
 
 - 近代OCRの検出精度を改善。NMS（IoU=0.2）を追加し重複検出を除去 / Improved Modern OCR detection accuracy by adding NMS (IoU=0.2) to remove duplicate detections
