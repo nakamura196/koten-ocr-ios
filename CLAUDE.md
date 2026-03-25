@@ -116,6 +116,14 @@ Two languages: Japanese (`ja.lproj/`) and English (`en.lproj/`). Use `String(loc
 
 Credentials stored in `.env` (gitignored). API key `.p8` file at `~/.private_keys/`. JWT auth with PyJWT. Key operations documented in the blog post at `/Users/nakamura/git/zenn/content/ja/posts/appstore-connect-api-guide.md`.
 
+### Analytics ダッシュボード（Web UI）
+
+App Store Connect Web UIのアナリティクス。APIより最新のデータが見られる。
+
+- **セッション数（バージョン別）**: https://appstoreconnect.apple.com/apps/6760045646/analytics/metrics?chartType=singleaxis&dateSpec=d90&frequency=day&groupByDimensionKey=appVersion&measureKey=sessions
+- **クラッシュ数（バージョン別）**: https://appstoreconnect.apple.com/apps/6760045646/analytics/metrics?chartType=singleaxis&dateSpec=d90&frequency=day&groupByDimensionKey=appVersion&measureKey=crashes
+- **概要（DL・セッション・クラッシュ等）**: https://appstoreconnect.apple.com/apps/6760045646/analytics/overview
+
 ## Dependencies
 
 - **ONNX Runtime** (SPM, v1.20.0+) — ML inference

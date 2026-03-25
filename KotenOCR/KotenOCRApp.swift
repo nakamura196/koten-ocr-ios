@@ -1,5 +1,6 @@
 import SwiftUI
 import StoreKit
+import Siren
 
 @main
 struct KotenOCRApp: App {
@@ -18,12 +19,23 @@ struct KotenOCRApp: App {
         }
     }
 
+    private func configureSiren() {
+        let siren = Siren.shared
+        siren.rulesManager = RulesManager(
+            majorUpdateRules: .critical,
+            minorUpdateRules: .annoying,
+            patchUpdateRules: .default
+        )
+        siren.wail()
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(ocrEngine)
                 .onAppear {
                     ocrEngine.initialize()
+                    configureSiren()
                 }
                 .onReceive(NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)) { _ in
                     ocrEngine.handleMemoryWarning()

@@ -30,13 +30,11 @@ final class MetricKitManager: NSObject, MXMetricManagerSubscriber {
             let json = payload.jsonRepresentation()
             saveReport(json, prefix: "diagnostic")
 
-            // Log crash info
             if let crashDiagnostics = payload.crashDiagnostics {
                 for crash in crashDiagnostics {
                     let reason = crash.terminationReason ?? "unknown"
                     let signal = crash.signal?.intValue ?? -1
                     print("[MetricKit] Crash: signal=\(signal) reason=\(reason)")
-                    print("[MetricKit] Stack: \(crash.callStackTree.jsonRepresentation())")
                 }
             }
 
@@ -82,4 +80,5 @@ final class MetricKitManager: NSObject, MXMetricManagerSubscriber {
             return (url.lastPathComponent, data)
         }
     }
+
 }
