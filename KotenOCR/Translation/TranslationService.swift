@@ -297,13 +297,57 @@ actor TranslationService {
 
     // MARK: - Local AI Availability
 
-    var isLocalAIAvailable: Bool {
+    enum LocalAIStatus {
+        case available
+        case intelligenceNotEnabled
+        case modelNotReady
+        case deviceNotEligible
+        case osNotSupported
+
+        var message: String {
+            switch self {
+            case .available:
+                return String(localized: "local_ai_ready", defaultValue: "オンデバイスAIが利用可能です")
+            case .intelligenceNotEnabled:
+                return String(localized: "local_ai_not_enabled", defaultValue: "Apple Intelligenceが有効になっていません。「設定  > Apple Intelligence と Siri」で有効にしてください。")
+            case .modelNotReady:
+                return String(localized: "local_ai_model_not_ready", defaultValue: "AIモデルをダウンロード中です。Wi-Fi接続の上、しばらくお待ちください。")
+            case .deviceNotEligible:
+                return String(localized: "local_ai_device_not_eligible", defaultValue: "このデバイスはローカルAIに対応していません。iPhone 15 Pro以降が必要です。")
+            case .osNotSupported:
+                return String(localized: "local_ai_os_not_supported", defaultValue: "ローカルAIにはiOS 26以降が必要です。")
+            }
+        }
+    }
+
+    var localAIStatus: LocalAIStatus {
         #if canImport(FoundationModels)
         if #available(iOS 26, *) {
-            return SystemLanguageModel.default.availability == .available
+            let availability = SystemLanguageModel.default.availability
+            switch availability {
+            case .available:
+                return .available
+            case .unavailable(let reason):
+                switch reason {
+                case .appleIntelligenceNotEnabled:
+                    return .intelligenceNotEnabled
+                case .modelNotReady:
+                    return .modelNotReady
+                case .deviceNotEligible:
+                    return .deviceNotEligible
+                @unknown default:
+                    return .deviceNotEligible
+                }
+            @unknown default:
+                return .deviceNotEligible
+            }
         }
         #endif
-        return false
+        return .osNotSupported
+    }
+
+    var isLocalAIAvailable: Bool {
+        return localAIStatus == .available
     }
 
     // MARK: - Translation

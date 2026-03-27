@@ -9,6 +9,7 @@ struct TranslationSettingsView: View {
     @State private var targetLanguage: TranslationService.TargetLanguage = .japanese
     @State private var showSaved = false
     @State private var localAIAvailable = false
+    @State private var localAIStatus: TranslationService.LocalAIStatus = .osNotSupported
 
     private var isCustomProvider: Bool {
         selectedProvider == .custom
@@ -72,14 +73,21 @@ struct TranslationSettingsView: View {
                 }
 
                 if isLocalAIProvider {
-                    if localAIAvailable {
-                        Label(String(localized: "local_ai_ready", defaultValue: "オンデバイスAIが利用可能です"),
-                              systemImage: "checkmark.circle.fill")
+                    switch localAIStatus {
+                    case .available:
+                        Label(localAIStatus.message, systemImage: "checkmark.circle.fill")
                             .font(.caption)
                             .foregroundColor(.green)
-                    } else {
-                        Label(String(localized: "local_ai_unavailable", defaultValue: "このデバイスではローカルAIを利用できません。対応デバイスでiOS 26以降が必要です。"),
-                              systemImage: "exclamationmark.triangle.fill")
+                    case .modelNotReady:
+                        Label(localAIStatus.message, systemImage: "arrow.down.circle")
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                    case .intelligenceNotEnabled:
+                        Label(localAIStatus.message, systemImage: "gearshape")
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                    default:
+                        Label(localAIStatus.message, systemImage: "exclamationmark.triangle.fill")
                             .font(.caption)
                             .foregroundColor(.orange)
                     }
@@ -185,6 +193,7 @@ struct TranslationSettingsView: View {
             translationLevel = await service.loadLevel()
             targetLanguage = await service.loadTargetLanguage()
             localAIAvailable = await service.isLocalAIAvailable
+            localAIStatus = await service.localAIStatus
         }
     }
 }
