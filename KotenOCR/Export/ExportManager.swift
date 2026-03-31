@@ -33,20 +33,22 @@ struct ExportManager {
             let uiImage = UIImage(cgImage: image)
             let availableWidth = pageWidth - margin * 2
             let availableHeight = pageHeight - margin * 2
-            let imageAspect = uiImage.size.width / uiImage.size.height
-            let availableAspect = availableWidth / availableHeight
+            if uiImage.size.height > 0, availableHeight > 0 {
+                let imageAspect = uiImage.size.width / uiImage.size.height
+                let availableAspect = availableWidth / availableHeight
 
-            var drawRect: CGRect
-            if imageAspect > availableAspect {
-                let w = availableWidth
-                let h = w / imageAspect
-                drawRect = CGRect(x: margin, y: margin, width: w, height: h)
-            } else {
-                let h = availableHeight
-                let w = h * imageAspect
-                drawRect = CGRect(x: margin, y: margin, width: w, height: h)
+                var drawRect: CGRect
+                if imageAspect > availableAspect {
+                    let w = availableWidth
+                    let h = w / imageAspect
+                    drawRect = CGRect(x: margin, y: margin, width: w, height: h)
+                } else {
+                    let h = availableHeight
+                    let w = h * imageAspect
+                    drawRect = CGRect(x: margin, y: margin, width: w, height: h)
+                }
+                uiImage.draw(in: drawRect)
             }
-            uiImage.draw(in: drawRect)
         }
 
         // Page 2+: Text

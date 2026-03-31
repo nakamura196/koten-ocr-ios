@@ -95,6 +95,7 @@ class DEIMDetector: @unchecked Sendable {
         let origH = image.height
         let maxWH = max(origW, origH)
         let metadata = Metadata(originalWidth: origW, originalHeight: origH, maxWH: maxWH)
+        guard maxWH > 0 else { return ([], metadata) }
 
         // Optimized: resize FIRST to scaled dimensions, then pad to input size.
         // This avoids creating a full-resolution padded context (e.g., 4032x4032 = 63MB).

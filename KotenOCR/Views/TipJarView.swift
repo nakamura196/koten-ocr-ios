@@ -103,8 +103,8 @@ struct TipJarView: View {
 
     private func emojiForProduct(_ product: Product) -> String {
         let ids = TipJarManager.productIDs
-        if product.id == ids[0] { return "☕️" }
-        if product.id == ids[1] { return "🍵" }
+        if ids.count > 0, product.id == ids[0] { return "☕️" }
+        if ids.count > 1, product.id == ids[1] { return "🍵" }
         return "🎉"
     }
 }

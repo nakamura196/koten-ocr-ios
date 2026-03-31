@@ -87,6 +87,7 @@ class RTMDetector: @unchecked Sendable {
         let origH = image.height
         let maxWH = max(origW, origH)
         let metadata = Metadata(originalWidth: origW, originalHeight: origH, maxWH: maxWH)
+        guard maxWH > 0 else { return ([], metadata) }
 
         // Create 1280x1280 context, fill black, draw padded+resized image
         let colorSpace = CGColorSpaceCreateDeviceRGB()

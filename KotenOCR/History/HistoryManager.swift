@@ -6,7 +6,9 @@ class HistoryManager: ObservableObject {
     static let shared = HistoryManager()
 
     static var historyDirectory: URL {
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            return URL(fileURLWithPath: NSTemporaryDirectory())
+        }
         let dir = docs.appendingPathComponent("ScanHistory", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
