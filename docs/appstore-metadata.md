@@ -106,15 +106,16 @@ https://github.com/nakamura196/koten-ocr-ios/issues
 ## マーケティングURL（アプリ紹介ページ）
 
 ```
-https://koten-ocr-ios.vercel.app
+https://kotenocr.ldas.jp
 ```
 
 ## プライバシーポリシーURL
 
-App Store 提出時に公開URLが必要。GitHub Pages 等にホストする:
+App Store 提出時に公開URLが必要。docs/ を Vercel で配っている (GitHub Pages は使っていない):
 ```
-https://nakamura196.github.io/koten-ocr-ios/privacy-policy.html
+https://kotenocr.ldas.jp/privacy-policy.html
 ```
+2026-09 時点の App Store の登録は旧 `https://koten-ocr-ios.vercel.app/privacy-policy.html`。旧ホストは docs/vercel.json で同じパスへ 308 転送するので、そのままでも開ける。次の版の提出時に新 URL へ書き換える。
 
 ## App Storeプレビュー動画
 

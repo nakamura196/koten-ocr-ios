@@ -316,7 +316,7 @@ xcrun altool --upload-app --file /tmp/KotenOCR_export/KotenOCR.ipa --type ios \
 
 - [ ] プロモーションテキスト（日英）— App Storeページの説明文の上に表示される
 - [ ] サポートURL → `https://github.com/nakamura196/koten-ocr-ios/issues`（ユーザーの問い合わせ先）
-- [ ] マーケティングURL → `https://koten-ocr-ios.vercel.app`（アプリ紹介ページ）
+- [ ] マーケティングURL → `https://kotenocr.ldas.jp`（アプリ紹介ページ）
 
 ```python
 # プロモーションテキスト・URLは審査中でもPATCHで更新可能
@@ -325,7 +325,7 @@ api("PATCH", f"appStoreVersionLocalizations/{loc_id}", {
              "attributes": {
                  "promotionalText": "...",
                  "supportUrl": "https://github.com/nakamura196/koten-ocr-ios/issues",
-                 "marketingUrl": "https://koten-ocr-ios.vercel.app"
+                 "marketingUrl": "https://kotenocr.ldas.jp"
              }}
 })
 ```
