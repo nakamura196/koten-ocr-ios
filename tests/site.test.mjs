@@ -36,9 +36,10 @@ test('vercel.json: 旧ホスト koten-ocr-ios.vercel.app の全パスを新ホ�
   const cfg = JSON.parse(read('vercel.json'));
   assert.deepEqual(cfg.redirects, [
     {
-      source: '/:path*',
+      // /:path* はトップ (/) に当たらず、旧トップだけ 200 のまま残った (2026-09-25 に実測)。(.*) で空も含める
+      source: '/:rest(.*)',
       has: [{ type: 'host', value: 'koten-ocr-ios.vercel.app' }],
-      destination: `${SITE}/:path*`,
+      destination: `${SITE}/:rest`,
       permanent: true,
     },
   ]);

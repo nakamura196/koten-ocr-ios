@@ -2,9 +2,9 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "redirects": [
     {
-      "source": "/:path*",
+      "source": "/:rest(.*)",
       "has": [{ "type": "host", "value": "koten-ocr-ios.vercel.app" }],
-      "destination": "https://kotenocr.ldas.jp/:path*",
+      "destination": "https://kotenocr.ldas.jp/:rest",
       "permanent": true
     }
   ]
