@@ -72,4 +72,20 @@ final class ExportManagerTests: XCTestCase {
         XCTAssertNotNil(data)
         XCTAssertGreaterThan(data!.count, 0)
     }
+
+    // MARK: - File names
+
+    func testDefaultFileNameIncludesDateTime() {
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: "Asia/Tokyo")!
+        let date = cal.date(from: DateComponents(year: 2026, month: 10, day: 29, hour: 21, minute: 54))!
+        XCTAssertEqual(ExportManager.defaultFileName(date: date, calendar: cal), "KotenOCR_20261029_2154")
+    }
+
+    func testDefaultExportNameIsNotFixed() throws {
+        let url = try XCTUnwrap(ExportManager.exportAsTXT(text: "x"))
+        defer { try? FileManager.default.removeItem(at: url) }
+        XCTAssertNotEqual(url.lastPathComponent, "KotenOCR.txt")
+        XCTAssertTrue(url.lastPathComponent.hasPrefix("KotenOCR_"))
+    }
 }
