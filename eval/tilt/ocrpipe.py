@@ -41,6 +41,8 @@ DESKEW_MIN_GAIN = 1.01
 DESKEW_MIN_INK = 200
 DESKEW_WORK_LONG = 1000
 DESKEW_MAX_POINTS = 80_000
+DESKEW_STRIP_SPREAD = 2.0   # degrees; max(strip angles) - min(strip angles) above this -> do not rotate globally
+DESKEW_SIGN_NOISE = 0.5     # degrees; strips of opposite sign both beyond this -> do not rotate globally
 
 
 def _downscale(img: Image.Image) -> np.ndarray:
@@ -90,43 +92,68 @@ def estimate_skew(img: Image.Image, orientation: str = "vertical"):
         xx, yy = xx[idx], yy[idx]
         n = len(xx)
     if n < DESKEW_MIN_INK:
-        return dict(angle=0.0, gain=1.0, ink=n, paper=paper)
+        return dict(angle=0.0, gain=1.0, ink=n, paper=paper, strips=[None, None, None])
     fx = xx.astype(np.float32) - np.float32(w) / 2
     fy = yy.astype(np.float32) - np.float32(h) / 2
     bins = int(math.sqrt(w * w + h * h)) + 2
 
-    def score(deg: float) -> float:
-        t = deg * math.pi / 180
-        c, s = np.float32(math.cos(t)), np.float32(math.sin(t))
-        u = fx * c - fy * s            # vertical lines: constant along a line tilted by +deg
-        k = np.clip(np.floor(u + np.float32(bins // 2)).astype(np.int64), 0, bins - 1)
-        hist = np.bincount(k, minlength=bins).astype(np.float64)
-        return float((hist * hist).sum())
+    def search(px_, py_):
+        """Projection-profile search on the given points: (angle, best score, score at 0)."""
+        def score(deg: float) -> float:
+            t = deg * math.pi / 180
+            c, s = np.float32(math.cos(t)), np.float32(math.sin(t))
+            u = px_ * c - py_ * s          # vertical lines: constant along a line tilted by +deg
+            k = np.clip(np.floor(u + np.float32(bins // 2)).astype(np.int64), 0, bins - 1)
+            hist = np.bincount(k, minlength=bins).astype(np.float64)
+            return float((hist * hist).sum())
 
-    best, best_angle = -1.0, 0.0
-    for k in range(-20, 21):
-        d = k * 0.5
-        sc = score(d)
-        if sc > best:
-            best, best_angle = sc, d
-    coarse = best_angle
-    for k in range(-5, 6):
-        if k == 0:
-            continue
-        d = coarse + k * 0.1
-        sc = score(d)
-        if sc > best:
-            best, best_angle = sc, d
-    zero = score(0.0)
+        best, best_angle = -1.0, 0.0
+        for k in range(-20, 21):
+            d = k * 0.5
+            sc = score(d)
+            if sc > best:
+                best, best_angle = sc, d
+        coarse = best_angle
+        for k in range(-5, 6):
+            if k == 0:
+                continue
+            d = coarse + k * 0.1
+            sc = score(d)
+            if sc > best:
+                best, best_angle = sc, d
+        return round(best_angle * 10) / 10, best, score(0.0)
+
+    angle, best, zero = search(fx, fy)
     gain = best / zero if zero > 0 else 1.0
-    return dict(angle=round(best_angle * 10) / 10, gain=gain, ink=n, paper=paper)
+    # Strip consistency: same estimator on the left / middle / right third of the text area (x range of the ink,
+    # 2nd..98th percentile).  A strip with fewer than DESKEW_MIN_INK points gives None.
+    lo, hi = np.percentile(fx, [2, 98])
+    strips = []
+    for i in range(3):
+        a, b = lo + (hi - lo) * i / 3, lo + (hi - lo) * (i + 1) / 3
+        m = (fx >= a) & ((fx < b) if i < 2 else (fx <= b))
+        strips.append(search(fx[m], fy[m])[0] if int(m.sum()) >= DESKEW_MIN_INK else None)
+    return dict(angle=angle, gain=gain, ink=n, paper=paper, strips=strips)
 
 
-def deskew(img: Image.Image):
+def strips_consistent(strips, max_spread=None, sign_noise=None):
+    """False when the strip angles disagree: spread (max-min) above max_spread, or two strips of opposite sign that
+    both exceed DESKEW_SIGN_NOISE.  Fewer than 2 usable strips -> True (no evidence against a global angle)."""
+    max_spread = DESKEW_STRIP_SPREAD if max_spread is None else max_spread
+    sign_noise = DESKEW_SIGN_NOISE if sign_noise is None else sign_noise
+    v = [a for a in strips if a is not None]
+    if len(v) < 2:
+        return True
+    if max(v) - min(v) > max_spread + 1e-9:
+        return False
+    return not (max(v) > sign_noise and min(v) < -sign_noise)
+
+
+def deskew(img: Image.Image, strip_gate: bool = True):
     """Return (image, angle).  Positive angle = page content was rotated CCW (see Deskew.swift)."""
     est = estimate_skew(img)
     should = (abs(est["angle"]) >= DESKEW_MIN_ANGLE and est["gain"] >= DESKEW_MIN_GAIN
-              and est["ink"] >= DESKEW_MIN_INK)
+              and est["ink"] >= DESKEW_MIN_INK and (not strip_gate or strips_consistent(est["strips"])))
     if not should:
         return img, 0.0
     fill = tuple(int(round(c * 255)) for c in est["paper"])
@@ -420,7 +447,7 @@ class Result:
 
 
 class Pipeline:
-    def __init__(self, models_dir: str, deskew_on: bool = False, per_line=None, threads: int = 0):
+    def __init__(self, models_dir: str, deskew_on: bool = False, per_line=None, threads: int = 0, strip_gate: bool = True):
         so = ort.SessionOptions()
         if threads:
             so.intra_op_num_threads = threads
@@ -428,13 +455,14 @@ class Pipeline:
         self.rec = Recognizer(os.path.join(models_dir, "parseq-ndl-32x384-tiny-10.onnx"),
                               os.path.join(models_dir, "NDLmoji.yaml"), so)
         self.deskew_on = deskew_on
+        self.strip_gate = strip_gate
         self.per_line = per_line        # callable(crop_rgb ndarray, box, page PIL image) -> ndarray, or None
 
     def run(self, img: Image.Image) -> Result:
         img = img.convert("RGB")
         angle = 0.0
         if self.deskew_on:
-            img, angle = deskew(img)
+            img, angle = deskew(img, self.strip_gate)
         dets = self.det.detect(img)
         rgb = np.asarray(img)
         H, W = rgb.shape[:2]

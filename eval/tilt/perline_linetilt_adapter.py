@@ -2,11 +2,9 @@
 
     python -I measure.py --per-line on --per-line-module perline_linetilt_adapter.py ...
 
-The prototype is a Python mirror written next to the Swift work (`ocr.py`, functions `estimate_lean`,
-`plan_line`, `oriented_crop`).  As of this commit it is NOT in the repository (it sits in the line-tilt agent's
-scratch directory), so point LINETILT_PROTO at the file:
-
-    LINETILT_PROTO=/path/to/ocr.py
+The prototype is a Python mirror written next to the Swift work (functions `estimate_lean`, `plan_line`,
+`oriented_crop`).  A copy is kept next to this file as `linetilt_proto_ocr.py` (provenance in its header); set
+LINETILT_PROTO=/path/to/ocr.py to use another version.
 
 Only the oriented-crop step is used.  The prototype's own garbage filter, de-duplication and simplified reading order
 (`run_page(..., dedupe=, drop_garbage=)`) are NOT applied, so that --per-line differs from the baseline in the crop
@@ -17,7 +15,7 @@ import os
 
 import numpy as np
 
-_path = os.environ.get("LINETILT_PROTO", "")
+_path = os.environ.get("LINETILT_PROTO") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "linetilt_proto_ocr.py")
 if not _path or not os.path.exists(_path):
     raise SystemExit(f"line-tilt prototype not found: {_path} (set LINETILT_PROTO)")
 _spec = importlib.util.spec_from_file_location("linetilt_proto_ocr", _path)

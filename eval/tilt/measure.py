@@ -132,11 +132,11 @@ def load_per_line(arg_module, root):
 _PIPE = None
 
 
-def _init(models, deskew_on, per_line_path, threads):
+def _init(models, deskew_on, per_line_path, threads, strip_gate=True):
     global _PIPE
     import ocrpipe
     pl = load_per_line(per_line_path, DEFAULT_PERLINE) if per_line_path else None
-    _PIPE = ocrpipe.Pipeline(models, deskew_on=deskew_on, per_line=pl, threads=threads)
+    _PIPE = ocrpipe.Pipeline(models, deskew_on=deskew_on, per_line=pl, threads=threads, strip_gate=strip_gate)
 
 
 def _work(job):
@@ -158,6 +158,7 @@ def _work(job):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--deskew", choices=["on", "off"], default="off")
+    ap.add_argument("--strip-gate", choices=["on", "off"], default="on", help="deskew: decline when left/middle/right strip angles disagree")
     ap.add_argument("--per-line", choices=["on", "off"], default="off")
     ap.add_argument("--per-line-module", default=None)
     ap.add_argument("--models", default=DEFAULT_MODELS)
@@ -181,7 +182,7 @@ def main():
     os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
     results, hyps = [], []
     t0 = time.time()
-    initargs = (a.models, a.deskew == "on", per_line_path, 1 if a.workers > 1 else 0)
+    initargs = (a.models, a.deskew == "on", per_line_path, 1 if a.workers > 1 else 0, a.strip_gate == "on")
     if a.workers > 1:
         import multiprocessing as mp
         with mp.get_context("spawn").Pool(a.workers, initializer=_init, initargs=initargs) as pool:

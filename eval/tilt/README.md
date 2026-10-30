@@ -106,10 +106,18 @@ S (symbols). Line breaks and spaces therefore never count. No folding of old/new
 
 **Switches:** `--deskew on|off`; `--per-line on|off`. Per-line hook: with `--per-line on` the file given by
 `--per-line-module` (or `KOTEN_PERLINE_MODULE`) must expose `rectify_line(crop_rgb, box, page) -> crop_rgb`; it is applied
-between cropping and PARSeq. `perline_linetilt_adapter.py` wires the Python prototype of branch `line-tilt`
-(`plan_line`, oriented crops) in; the prototype is not yet in the repository (it lives in the other agent's scratch
-directory), set `LINETILT_PROTO=/path/to/ocr.py`. Only its crop step is used, not its dedupe/garbage filter.
-The Swift version in the line-tilt worktree (`LineTilt.swift`) was uncommitted at the time and may differ from the prototype.
+between cropping and PARSeq. `perline_linetilt_adapter.py` wires the Python prototype of branch `line-tilt` (`plan_line`, oriented crops) in; a copy of the
+prototype is committed as `linetilt_proto_ocr.py` (provenance in its header; copy of commit 5fb5452's Python mirror, only
+the models path became `$KOTEN_MODELS`). `LINETILT_PROTO=/path/to/ocr.py` overrides it. Only its crop step is used, not its
+dedupe/garbage filter, so the Python "per-line" configurations differ from the app (which also drops duplicate and
+placeholder-only lines).
+
+**Deskew strip gate (added 2026-10-29):** `--strip-gate on|off` (default on). Global deskew additionally estimates the angle on the left,
+middle and right thirds of the text area (2nd..98th percentile of the ink x) with the same projection method; it declines
+to rotate when max-min of the strip angles exceeds `DESKEW_STRIP_SPREAD` (2.0 degrees) or when two strips have opposite
+signs and both exceed `DESKEW_SIGN_NOISE` (0.5 degrees). `tune_gate.py` derives the CER at other thresholds from the
+baseline and old-gate runs without re-running OCR (`results/gate_tuning.md`, `results/strip_angles.csv`). `summarize4.py`
+makes the four-configuration table with bootstrap CIs (`results/summary4.md`, `results/summary4_ci.csv`).
 
 ## Differences between `ocrpipe.py` and the Swift app
 
@@ -171,4 +179,11 @@ Observations (measured, not interpreted beyond the numbers):
 - With deskew the rotated pages sit at 9-12 % CER with no leaks; the estimated angle averaged -7.83 for rot-8.0 and +8.14 for rot+8.0.
 - Keystone up to +/-3 degrees at the page edge did not hurt the baseline (CER 10-13 %, no leaks). Deskew made keystone 3 worse (22.8 / 22.6 % CER, 31 / 28 leaked lines): one global angle cannot fit columns leaning in opposite directions.
 - Curl (max tilt 2 / 4 degrees) and light+keystone were not harmful at these strengths.
-- Per-line hook smoke test: perline_linetilt_adapter.py runs on 3 key-up3 images; no full per-line run was made (the prototype is work in progress on another branch).
+- Per-line hook: the full per-line runs are in the "Results with the strip gate" section below.
+
+## Results with the strip gate (30 pages x 19 conditions, run 2026-10-29)
+
+Configurations: baseline (`results/baseline.csv`); deskew with the strip gate (`deskew.csv`); per-line only (`perline.csv`);
+deskew + per-line (`deskew_perline.csv`). `deskew_oldgate.csv` is the first run above (no strip check). Full table with 95 %
+bootstrap CIs of the CER difference to the baseline (paired over the 30 pages, 10 000 resamples) in `results/summary4.md`;
+gate threshold sweep in `results/gate_tuning.md`. The `*.hyp.jsonl` files (recognised text) are git-ignored.
