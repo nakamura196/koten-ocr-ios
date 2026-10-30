@@ -66,4 +66,36 @@ final class ImageIntakeTests: XCTestCase {
         XCTAssertEqual(rotated.width, 20)
         XCTAssertEqual(rotated.height, 40)
     }
+
+    // MARK: - UIImage orientation
+
+    /// A scanner page stored sideways (orientation .right) comes out upright and already downscaled.
+    func testLimitUIImageAppliesOrientationAndSize() throws {
+        let ctx = try XCTUnwrap(CGContext(data: nil, width: 800, height: 400, bitsPerComponent: 8, bytesPerRow: 0,
+                                          space: CGColorSpaceCreateDeviceRGB(),
+                                          bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue))
+        ctx.setFillColor(red: 1, green: 1, blue: 1, alpha: 1)
+        ctx.fill(CGRect(x: 0, y: 0, width: 800, height: 400))
+        ctx.setFillColor(red: 0, green: 0, blue: 0, alpha: 1)
+        ctx.fill(CGRect(x: 0, y: 300, width: 100, height: 100))  // stored top-left corner (CG is y-up)
+        let stored = try XCTUnwrap(ctx.makeImage())
+        let ui = UIImage(cgImage: stored, scale: 1, orientation: .right)
+
+        let upright = try XCTUnwrap(ImageIntake.limit(ui, maxLongSide: 200))
+        XCTAssertEqual(upright.width, 100)
+        XCTAssertEqual(upright.height, 200)
+        // .right shows the stored top-left corner at the top right.
+        XCTAssertLessThan(try luminance(upright, x: 95, y: 5), 0.2)
+        XCTAssertGreaterThan(try luminance(upright, x: 5, y: 5), 0.8)
+    }
+
+    private func luminance(_ image: CGImage, x: Int, y: Int) throws -> Double {
+        var px = [UInt8](repeating: 0, count: 4)
+        let ctx = try XCTUnwrap(CGContext(data: &px, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4,
+                                          space: CGColorSpaceCreateDeviceRGB(),
+                                          bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+        // Draw so that pixel (x, y) from the top lands on the single destination pixel.
+        ctx.draw(image, in: CGRect(x: -x, y: -(image.height - 1 - y), width: image.width, height: image.height))
+        return Double(px[0]) / 255
+    }
 }
