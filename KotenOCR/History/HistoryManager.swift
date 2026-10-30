@@ -168,6 +168,19 @@ class HistoryManager: ObservableObject {
         return UIImage(cgImage: cg).jpegData(compressionQuality: 0.7)
     }
 
+    /// Downsamples the original to `maxPixel` for a larger tile (home with one or two scans).
+    /// Not stored; falls back to the list thumbnail.
+    func preview(for item: HistoryItem, maxPixel: CGFloat) async -> UIImage? {
+        let imagePath = imageURL(for: item)
+        let image: UIImage? = await withCheckedContinuation { cont in
+            ioQueue.async {
+                cont.resume(returning: Self.makeThumbnailJPEG(fromFile: imagePath, maxPixel: maxPixel).flatMap(UIImage.init(data:)))
+            }
+        }
+        if let image { return image }
+        return await thumbnail(for: item)
+    }
+
     /// Returns the list thumbnail. Uses the stored thumbnail if present; otherwise downsamples the
     /// original on a background thread and stores the result for next time (old items).
     func thumbnail(for item: HistoryItem) async -> UIImage? {

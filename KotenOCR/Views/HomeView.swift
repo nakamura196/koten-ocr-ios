@@ -217,21 +217,28 @@ struct HomeView: View {
                 .foregroundColor(KotenColor.ink)
                 .accessibilityAddTraits(.isHeader)
                 .padding(.horizontal, 24)
-            HStack(alignment: .top, spacing: 10) {
+            HStack(alignment: .top, spacing: 12) {
                 ForEach(Array(recentItems.enumerated()), id: \.element.id) { index, item in
                     Button { onOpenHistoryItem(item) } label: {
-                        RecentThumbnail(item: item)
+                        RecentThumbnail(item: item, height: recentThumbnailHeight)
                     }
                     .buttonStyle(KotenCardButtonStyle())
                     .accessibilityLabel(Text(HistoryListView.accessibilityLabel(for: item)))
                     .accessibilityIdentifier("home_recent_\(index)")
                 }
-                // Keep three equal columns even when there are fewer items.
-                ForEach(recentItems.count..<3, id: \.self) { _ in
-                    Color.clear.frame(maxWidth: .infinity, maxHeight: 1)
-                }
             }
-            .padding(.horizontal, 20)
+            // With one or two scans the tiles grow and sit in the middle, so the page does not look empty.
+            .frame(maxWidth: recentItems.count == 1 ? 240 : .infinity)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, recentItems.count == 2 ? 36 : 20)
+        }
+    }
+
+    private var recentThumbnailHeight: CGFloat {
+        switch recentItems.count {
+        case 1: return 280
+        case 2: return 200
+        default: return 112
         }
     }
 
@@ -255,6 +262,7 @@ struct HomeView: View {
 /// Thumbnail with date and line count, from the 200px history thumbnail.
 private struct RecentThumbnail: View {
     let item: HistoryItem
+    var height: CGFloat = 112
     @State private var image: UIImage?
 
     var body: some View {
@@ -262,7 +270,7 @@ private struct RecentThumbnail: View {
             // The thumbnail fills the tile without asking for more width than the tile has.
             KotenColor.mount
                 .frame(maxWidth: .infinity)
-                .frame(height: 112)
+                .frame(height: height)
                 .overlay {
                     if let image {
                         Image(uiImage: image)
@@ -280,8 +288,10 @@ private struct RecentThumbnail: View {
                 .multilineTextAlignment(.leading)
         }
         .frame(maxWidth: .infinity)
-        .task(id: item.id) {
-            image = await HistoryManager.shared.thumbnail(for: item)
+        .task(id: "\(item.id)-\(height)") {
+            image = height > 112
+                ? await HistoryManager.shared.preview(for: item, maxPixel: height * 3)
+                : await HistoryManager.shared.thumbnail(for: item)
         }
     }
 
