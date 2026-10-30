@@ -176,3 +176,9 @@
 "camera_permission_denied" = "カメラが許可されていません。設定アプリでカメラへのアクセスを許可してください。写真ライブラリから画像を選ぶこともできます。";
 "camera_capture_failed" = "撮影に失敗しました。もう一度お試しください。";
 "crop_reset_zoom" = "拡大をリセット";
+"scan_document" = "書類スキャン";
+"tilt_hint" = "資料と平行に構えてください";
+"tilt_try_scanner" = "書類スキャンも使えます";
+"settings_show_tilt_guide" = "傾きの案内を表示";
+"crop_mode_rect" = "矩形";
+"crop_mode_quad" = "4点補正";

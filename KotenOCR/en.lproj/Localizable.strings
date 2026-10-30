@@ -176,3 +176,9 @@
 "camera_permission_denied" = "Camera access is not allowed. Please allow camera access in Settings. You can also choose an image from your photo library.";
 "camera_capture_failed" = "Capture failed. Please try again.";
 "crop_reset_zoom" = "Reset zoom";
+"scan_document" = "Scan document";
+"tilt_hint" = "Hold the phone parallel to the page";
+"tilt_try_scanner" = "Try Scan document";
+"settings_show_tilt_guide" = "Show tilt guide";
+"crop_mode_rect" = "Rectangle";
+"crop_mode_quad" = "4 corners";

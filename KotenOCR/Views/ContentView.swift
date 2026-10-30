@@ -28,6 +28,7 @@ struct ContentView: View {
     @State private var translatedText: String?
     @State private var cameFromHistory = false
     @State private var preCropImage: CGImage?
+    @State private var showScanner = false
     @State private var croppedPreview: CGImage?
     @State private var cropSessionID = UUID()
     @State private var testImageLoadCount = 0
@@ -169,6 +170,7 @@ struct ContentView: View {
     private var cameraView: some View {
         ZStack {
             CameraView(onCapture: { cgImage in
+                CaptureMode.camera.save()
                 showCropping(cgImage, fromCamera: true)
             })
             .ignoresSafeArea()
@@ -213,6 +215,10 @@ struct ContentView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
 
+                if !showScanner {
+                    LevelGuideView(onTryScanner: DocumentScannerView.isSupported ? { openScanner() } : nil)
+                        .padding(.top, 12)
+                }
                 Spacer()
                 HStack(spacing: 40) {
                     // Gallery button
@@ -228,10 +234,40 @@ struct ContentView: View {
                     .accessibilityLabel(Text("gallery_button"))
 
                     Spacer()
+
+                    if DocumentScannerView.isSupported {
+                        Button(action: openScanner) {
+                            Image(systemName: "doc.viewfinder")
+                                .font(.system(size: 24))
+                                .foregroundColor(.white)
+                                .frame(width: 60, height: 60)
+                                .background(Color.white.opacity(0.2))
+                                .clipShape(Circle())
+                        }
+                        .accessibilityIdentifier("scan_document_button")
+                        .accessibilityLabel(Text(String(localized: "scan_document", defaultValue: "書類スキャン")))
+                    }
                 }
                 .padding(.horizontal, 30)
                 .padding(.bottom, 40)
             }
+        }
+        .onAppear {
+            if CaptureMode.load() == .scan && DocumentScannerView.isSupported { openScanner() }
+        }
+        .fullScreenCover(isPresented: $showScanner) {
+            DocumentScannerView(
+                onScan: { cg in
+                    showScanner = false
+                    CaptureMode.scan.save()
+                    showCropping(cg, fromCamera: true)
+                },
+                onCancel: {
+                    showScanner = false
+                    CaptureMode.camera.save()
+                }
+            )
+            .ignoresSafeArea()
         }
     }
 
@@ -523,6 +559,11 @@ struct ContentView: View {
     }
 
     // MARK: - Actions
+
+    private func openScanner() {
+        CaptureMode.scan.save()
+        showScanner = true
+    }
 
     private func showCropping(_ cgImage: CGImage, fromCamera: Bool = false) {
         preCropImage = cgImage
