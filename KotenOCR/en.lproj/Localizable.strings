@@ -133,13 +133,13 @@
 "history_translated_badge" = "Translated";
 
 /* Crop */
-"crop_title" = "Crop";
+"crop_title" = "Choose Area";
 "crop_apply" = "Crop";
 "crop_skip" = "Skip";
 "crop_rotate" = "Rotate";
 "confirm_crop_title" = "Confirm";
 "retrim" = "Re-crop";
-"run_ocr" = "Run OCR";
+"run_ocr" = "Read";
 
 /* Camera Settings */
 "settings_camera" = "Camera";
@@ -176,3 +176,34 @@
 "camera_permission_denied" = "Camera access is not allowed. Please allow camera access in Settings. You can also choose an image from your photo library.";
 "camera_capture_failed" = "Capture failed. Please try again.";
 "crop_reset_zoom" = "Reset zoom";
+
+/* Hybrid design (washi + glass) */
+"brand_tagline" = "Read kuzushiji, right where you are";
+"home_take_photo_sub" = "Photograph a document";
+"home_recent" = "Recent scans";
+"lines_count_format" = "%d lines";
+"camera_frame_hint" = "Fit the whole page inside the frame";
+"coach_shutter" = "Tap here to take the photo";
+"coach_crop_corner" = "Drag a corner\nto choose the area";
+"crop_tip" = "Move the red dots at the corners around the part you want to read";
+"ocr_mode_picker" = "Text type";
+"reading_in_progress" = "Reading…";
+"scan_title" = "Reading";
+"scan_preparing" = "Preparing…";
+"scan_finding_lines" = "Finding lines…";
+"scan_reading_text" = "Reading characters…";
+"scan_done_format" = "Read %d lines";
+"copied_toast" = "Copied";
+"no_lines_title" = "No text was found";
+"no_lines_tip_page" = "Fit the whole page in the photo";
+"no_lines_tip_light" = "Use good light and avoid shadows";
+"no_lines_tip_modern" = "For printed text, choose Modern";
+"camera_unavailable_title" = "Camera unavailable";
+"camera_unavailable_body" = "Turn on Camera for KotenOCR in the Settings app. Your photos never leave this device.";
+"history_empty_title" = "No scans yet";
+"history_empty_body" = "Documents you read will be kept here.";
+"onboarding_next" = "Next";
+"settings_show_tips_again" = "Show Tips Again";
+"settings_tips_footer" = "Shows the one-time hints on the shutter button and the crop corner again.";
+"ocr_finished_announcement" = "Reading finished";
+"onboarding_heading" = "Read kuzushiji,\nright where you are";

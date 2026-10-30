@@ -77,6 +77,10 @@ enum KotenGlassKind {
     case prominent
     /// Control on top of the camera image.
     case onCamera
+
+    /// Launch argument `-kotenSolidPlates YES` shows the iOS 16–25 plates on iOS 26, so the
+    /// fallback can be checked on a simulator without an older runtime.
+    static let forceSolidPlates = UserDefaults.standard.bool(forKey: "kotenSolidPlates")
 }
 
 private struct KotenGlassModifier<S: Shape>: ViewModifier {
@@ -85,7 +89,7 @@ private struct KotenGlassModifier<S: Shape>: ViewModifier {
     let interactive: Bool
 
     func body(content: Content) -> some View {
-        if #available(iOS 26, *) {
+        if #available(iOS 26, *), !KotenGlassKind.forceSolidPlates {
             content.glassEffect(glass, in: shape)
         } else {
             content.background(fallback)
