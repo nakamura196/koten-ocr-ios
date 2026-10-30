@@ -14,6 +14,7 @@
 		1BE4FE0AC063CE4218405FBB /* HistoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82EE586A4C199D4AD67ED1AE /* HistoryManager.swift */; };
 		1CD5548915A2B502895F0A2E /* LaunchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1513108D6B6AD89946D8872 /* LaunchView.swift */; };
 		1E257D31C55F486C70B827A7 /* HistoryItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DE94F4988B24C1250C6F20D /* HistoryItem.swift */; };
+		1F196A8262EFD7EF9EAA4E90 /* BoxEditGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06130ADEB28B2B5B29E0E84C /* BoxEditGeometry.swift */; };
 		22D3F53C8527D84E9F5DB888 /* HistoryItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9044A5844F791981ECF958E8 /* HistoryItemTests.swift */; };
 		241057F7E5B8AFA5380C78EE /* CascadePARSEQRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F947C41CFADDC63593FEB47 /* CascadePARSEQRecognizer.swift */; };
 		2756B08073121E03C17F3366 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00CDB764CCF8F80C1ACBEA35 /* CameraView.swift */; };
@@ -24,11 +25,15 @@
 		3771321C98AE0D170C397897 /* RTMDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56AB805A57FC795B0DC85FF4 /* RTMDetector.swift */; };
 		3CFDA6B92DEE7381A1BAE2CF /* CropGeometryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97430BDC73FFC9DBC1546ADF /* CropGeometryTests.swift */; };
 		3EF09F4EDC579CD57A457779 /* HistoryManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53AD4224B5B9AD280E6B6DE6 /* HistoryManagerTests.swift */; };
+		45184B77499F47352224E5AC /* BoxEditRereadTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53DA58029D61FB0DBF1E5564 /* BoxEditRereadTests.swift */; };
+		47B1640E27146147C2AA7D73 /* BoxEditorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39F206BFDD4D52FB6AA774F4 /* BoxEditorTests.swift */; };
 		4E252DB4F2D4933153D52FC0 /* ReadingOrderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64BE69A1A5ED772D43AC3BCC /* ReadingOrderTests.swift */; };
 		51D3D846E8BD58665B59A081 /* OCREngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B375ECB40C38D777102F59BC /* OCREngine.swift */; };
 		543D92C50A84D38DCFC78C4E /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0C02138D36BD4637583CC4 /* OnboardingView.swift */; };
 		5611919E371D5CA2CC2675B8 /* PARSEQRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C71D29B2E05CAE6C27D498 /* PARSEQRecognizer.swift */; };
 		56E2BC9606B92FA940F5B821 /* KotenStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B8356DD72D048FA8FE3C5FC /* KotenStyle.swift */; };
+		57F7F6933F8102ED7C39D387 /* BoxEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94914BDD29708506D447F3E7 /* BoxEditView.swift */; };
+		59720B65F22D3985A8369DDB /* BoxEditUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6830F8735A7CCAEB3A692C60 /* BoxEditUITests.swift */; };
 		59FE9F6100B0045A383CA90C /* ResultOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B4379D31980B50B6E4167FC /* ResultOverlayView.swift */; };
 		5F971906D31580A0E45441BA /* OCRPerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC5416D90C0C61B387A7EA3 /* OCRPerformanceTests.swift */; };
 		65E8D11410FF385A0964FB27 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34EEFFD47152BA87642516F1 /* KeychainHelper.swift */; };
@@ -49,6 +54,7 @@
 		B8BB03A5E632F8FDF86E7736 /* Siren in Frameworks */ = {isa = PBXBuildFile; productRef = 11B4923D14F1A8C3B41FF7DF /* Siren */; };
 		BCEC5A7E7C54907F9F6DEAB0 /* TipJarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43761597E39AC3C62D31C9E8 /* TipJarView.swift */; };
 		C97FE648011FCF06DC82597D /* NavigationFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ADB3679F99034CCC9249D7C /* NavigationFlowTests.swift */; };
+		CF7FAC4E24F0D9377DC130D5 /* BoxEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F15DC60E1FA911EEFE9AD65 /* BoxEditor.swift */; };
 		D0406D8EA89C3A5C31270431 /* DEIMDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = B89DD48A8B561A9D52076309 /* DEIMDetector.swift */; };
 		D2ADA4E7EFCF4A35211E3ACF /* KotenOCRApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 270641011EB727A6FC52AD0B /* KotenOCRApp.swift */; };
 		D2B4248805F9613D9461AE45 /* Models in Resources */ = {isa = PBXBuildFile; fileRef = CBDF15C34D6661310197B75E /* Models */; };
@@ -57,6 +63,7 @@
 		DBA075122681D5DCC0496543 /* CameraDeniedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3647BF67752CC02041C8D1E /* CameraDeniedView.swift */; };
 		DD3C1024DFD4E4B744B5E900 /* OCREngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFCF575F1A8FE24D8DD5780E /* OCREngineTests.swift */; };
 		E08D99583FA14352749CCF1A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 76A6BD467DEA7229DFCBB191 /* Assets.xcassets */; };
+		E93E4110F627C8D269BCF3E1 /* BoxEditGeometryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 354D3779AB48212B2F4A209A /* BoxEditGeometryTests.swift */; };
 		EA6132D99688DA796D3498AE /* MetricKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A2B8FC9F37AF7ABC52CE712 /* MetricKitManager.swift */; };
 		F90AF6B5F88C2159FED81F00 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 7078A6C58B9E131D0C86B41E /* Localizable.strings */; };
 /* End PBXBuildFile section */
@@ -82,6 +89,7 @@
 		00CDB764CCF8F80C1ACBEA35 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
 		042CA1185DB0ADB541DECC16 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		04E391BFF7A576B58D3F6056 /* KotenOCRTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = KotenOCRTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		06130ADEB28B2B5B29E0E84C /* BoxEditGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxEditGeometry.swift; sourceTree = "<group>"; };
 		0CAD2DC2969703CFCAA54EA1 /* ExportManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportManagerTests.swift; sourceTree = "<group>"; };
 		0F0A5DC841B1B099E64FB1CE /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		12D6ADEDDD0734CA628912DE /* TipJarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJarManager.swift; sourceTree = "<group>"; };
@@ -94,23 +102,29 @@
 		2F947C41CFADDC63593FEB47 /* CascadePARSEQRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CascadePARSEQRecognizer.swift; sourceTree = "<group>"; };
 		33E0D72EA37B2FC8AEAAB9C3 /* ReadingOrder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingOrder.swift; sourceTree = "<group>"; };
 		34EEFFD47152BA87642516F1 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		354D3779AB48212B2F4A209A /* BoxEditGeometryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxEditGeometryTests.swift; sourceTree = "<group>"; };
+		39F206BFDD4D52FB6AA774F4 /* BoxEditorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxEditorTests.swift; sourceTree = "<group>"; };
 		413F9EA8A3AF49B4FC18AF1C /* KotenOCR.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = KotenOCR.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		43761597E39AC3C62D31C9E8 /* TipJarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJarView.swift; sourceTree = "<group>"; };
 		4ADB3679F99034CCC9249D7C /* NavigationFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationFlowTests.swift; sourceTree = "<group>"; };
 		4B8356DD72D048FA8FE3C5FC /* KotenStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KotenStyle.swift; sourceTree = "<group>"; };
 		4DE94F4988B24C1250C6F20D /* HistoryItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryItem.swift; sourceTree = "<group>"; };
 		53AD4224B5B9AD280E6B6DE6 /* HistoryManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryManagerTests.swift; sourceTree = "<group>"; };
+		53DA58029D61FB0DBF1E5564 /* BoxEditRereadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxEditRereadTests.swift; sourceTree = "<group>"; };
 		56AB805A57FC795B0DC85FF4 /* RTMDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTMDetector.swift; sourceTree = "<group>"; };
 		5B4379D31980B50B6E4167FC /* ResultOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultOverlayView.swift; sourceTree = "<group>"; };
 		5CBDBB27CB79CDA19787F6DE /* TranslationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationSettingsView.swift; sourceTree = "<group>"; };
 		64BE69A1A5ED772D43AC3BCC /* ReadingOrderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingOrderTests.swift; sourceTree = "<group>"; };
+		6830F8735A7CCAEB3A692C60 /* BoxEditUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxEditUITests.swift; sourceTree = "<group>"; };
 		75D337ED66BD4C54B44E5CD9 /* TipJar.storekit */ = {isa = PBXFileReference; path = TipJar.storekit; sourceTree = "<group>"; };
 		76A6BD467DEA7229DFCBB191 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		7D5CD36F65D4B7D385BBCA9C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		7F15DC60E1FA911EEFE9AD65 /* BoxEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxEditor.swift; sourceTree = "<group>"; };
 		82EE586A4C199D4AD67ED1AE /* HistoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryManager.swift; sourceTree = "<group>"; };
 		878990E0E6B16FF96510AED7 /* PARSEQRecognizerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PARSEQRecognizerTests.swift; sourceTree = "<group>"; };
 		9044A5844F791981ECF958E8 /* HistoryItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryItemTests.swift; sourceTree = "<group>"; };
 		91ECD227D650332CC3FA89B7 /* DetectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetectionTests.swift; sourceTree = "<group>"; };
+		94914BDD29708506D447F3E7 /* BoxEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxEditView.swift; sourceTree = "<group>"; };
 		97430BDC73FFC9DBC1546ADF /* CropGeometryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CropGeometryTests.swift; sourceTree = "<group>"; };
 		9A139A6962601902EBDFB6DD /* HistoryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryListView.swift; sourceTree = "<group>"; };
 		9A2B8FC9F37AF7ABC52CE712 /* MetricKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricKitManager.swift; sourceTree = "<group>"; };
@@ -173,6 +187,7 @@
 		21E036AAC946B6F79DF8375C /* KotenOCRUITests */ = {
 			isa = PBXGroup;
 			children = (
+				6830F8735A7CCAEB3A692C60 /* BoxEditUITests.swift */,
 				F1850C0E7DE63831117CB679 /* DesignScreenshotTests.swift */,
 				4ADB3679F99034CCC9249D7C /* NavigationFlowTests.swift */,
 				D02D5F325A2BFEFF88F7A6EA /* ScreenshotTests.swift */,
@@ -183,6 +198,9 @@
 		31AB1326BC6C9A97C1A15933 /* KotenOCRTests */ = {
 			isa = PBXGroup;
 			children = (
+				354D3779AB48212B2F4A209A /* BoxEditGeometryTests.swift */,
+				39F206BFDD4D52FB6AA774F4 /* BoxEditorTests.swift */,
+				53DA58029D61FB0DBF1E5564 /* BoxEditRereadTests.swift */,
 				97430BDC73FFC9DBC1546ADF /* CropGeometryTests.swift */,
 				91ECD227D650332CC3FA89B7 /* DetectionTests.swift */,
 				0CAD2DC2969703CFCAA54EA1 /* ExportManagerTests.swift */,
@@ -223,6 +241,9 @@
 		832D36786C1FB097CB49B5B1 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				06130ADEB28B2B5B29E0E84C /* BoxEditGeometry.swift */,
+				7F15DC60E1FA911EEFE9AD65 /* BoxEditor.swift */,
+				94914BDD29708506D447F3E7 /* BoxEditView.swift */,
 				A3647BF67752CC02041C8D1E /* CameraDeniedView.swift */,
 				00CDB764CCF8F80C1ACBEA35 /* CameraView.swift */,
 				7D5CD36F65D4B7D385BBCA9C /* ContentView.swift */,
@@ -455,6 +476,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				A3AC83B11BD87194218B7E04 /* AppTheme.swift in Sources */,
+				1F196A8262EFD7EF9EAA4E90 /* BoxEditGeometry.swift in Sources */,
+				57F7F6933F8102ED7C39D387 /* BoxEditView.swift in Sources */,
+				CF7FAC4E24F0D9377DC130D5 /* BoxEditor.swift in Sources */,
 				DBA075122681D5DCC0496543 /* CameraDeniedView.swift in Sources */,
 				2756B08073121E03C17F3366 /* CameraView.swift in Sources */,
 				241057F7E5B8AFA5380C78EE /* CascadePARSEQRecognizer.swift in Sources */,
@@ -493,6 +517,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E93E4110F627C8D269BCF3E1 /* BoxEditGeometryTests.swift in Sources */,
+				45184B77499F47352224E5AC /* BoxEditRereadTests.swift in Sources */,
+				47B1640E27146147C2AA7D73 /* BoxEditorTests.swift in Sources */,
 				3CFDA6B92DEE7381A1BAE2CF /* CropGeometryTests.swift in Sources */,
 				B08FDACE53C363DD87842F4E /* DetectionTests.swift in Sources */,
 				08940BF57F1C78A284A499E9 /* ExportManagerTests.swift in Sources */,
@@ -510,6 +537,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				59720B65F22D3985A8369DDB /* BoxEditUITests.swift in Sources */,
 				7916164F0E7D5ABB978B986A /* DesignScreenshotTests.swift in Sources */,
 				C97FE648011FCF06DC82597D /* NavigationFlowTests.swift in Sources */,
 				01F5F77297B4C5ED26DB2004 /* ScreenshotTests.swift in Sources */,
