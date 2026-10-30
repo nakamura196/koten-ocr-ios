@@ -48,4 +48,22 @@ final class ImageIntakeTests: XCTestCase {
         let small = try solidImage(width: 3024, height: 4032)
         XCTAssertTrue(ImageIntake.limit(small) === small, "images within the limit are passed through")
     }
+
+    // MARK: - Rotation
+
+    /// 16-bit grayscale is common for archival scans, and ImageIntake keeps it 16-bit. Rotating it
+    /// built an RGBA context with the image's gray colour space and depth, which CoreGraphics refuses.
+    func testRotateSixteenBitGrayscaleImage() throws {
+        let bytesPerRow = 40 * 2
+        let pixels = Data(repeating: 0x80, count: bytesPerRow * 20)
+        let gray = try XCTUnwrap(CGImage(
+            width: 40, height: 20, bitsPerComponent: 16, bitsPerPixel: 16, bytesPerRow: bytesPerRow,
+            space: CGColorSpaceCreateDeviceGray(),
+            bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.none.rawValue | CGBitmapInfo.byteOrder16Little.rawValue),
+            provider: try XCTUnwrap(CGDataProvider(data: pixels as CFData)), decode: nil,
+            shouldInterpolate: false, intent: .defaultIntent))
+        let rotated = try XCTUnwrap(gray.rotated90Clockwise(), "a 16-bit grayscale image should rotate")
+        XCTAssertEqual(rotated.width, 20)
+        XCTAssertEqual(rotated.height, 40)
+    }
 }
