@@ -24,6 +24,7 @@ struct ContentView: View {
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var selectedDetectionIndex: Int?
     @State private var showSettings = false
+    @State private var showSamples = false
     @State private var showHistory = false
     @State private var processingTask: Task<Void, Never>?
     @State private var currentHistoryItemID: UUID?
@@ -50,6 +51,8 @@ struct ContentView: View {
     @AppStorage("appTheme") private var appThemeRaw: String = AppTheme.system.rawValue
     @AppStorage("saveToLibrary") private var saveToLibrary = false
     @AppStorage("ocrSuccessCount") private var ocrSuccessCount = 0
+    /// The mode the reader last chose on the confirm screen. Samples do not change it.
+    @AppStorage("preferredOCRMode") private var preferredOCRModeRaw = ""
     /// The full seal-stamp launch plays once; later launches use the short version.
     @AppStorage("hasSeenLaunchStamp") private var hasSeenLaunchStamp = false
     @Environment(\.requestReview) private var requestReview
@@ -116,6 +119,9 @@ struct ContentView: View {
         .sheet(isPresented: $showSettings) {
             SettingsView()
         }
+        .sheet(isPresented: $showSamples) {
+            SampleSheet(onSelect: { page in loadSample(page) })
+        }
         .sheet(isPresented: $showHistory) {
             HistoryListView(onSelect: { item in
                 loadHistoryItem(item)
@@ -164,7 +170,8 @@ struct ContentView: View {
                     onCamera: { appState = .camera },
                     onHistory: { showHistory = true },
                     onSettings: { showSettings = true },
-                    onOpenHistoryItem: { item in loadHistoryItem(item) }
+                    onOpenHistoryItem: { item in loadHistoryItem(item) },
+                    onSample: { showSamples = true }
                 )
                 .transition(.opacity)
             case .camera:
@@ -451,7 +458,7 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            selectedOCRMode = ocrEngine.currentMode
+            selectedOCRMode = OCRMode(rawValue: preferredOCRModeRaw) ?? ocrEngine.currentMode
             isStartingOCR = false
         }
     }
@@ -477,7 +484,10 @@ struct ContentView: View {
             .accessibilityElement(children: .contain)
             .accessibilityLabel(Text("ocr_mode_picker"))
 
-            Button(action: { runOCRWithMode(selectedOCRMode) }) {
+            Button(action: {
+                preferredOCRModeRaw = selectedOCRMode.rawValue
+                runOCRWithMode(selectedOCRMode)
+            }) {
                 HStack(spacing: 8) {
                     if isStartingOCR {
                         ProgressView().tint(.white)
@@ -527,6 +537,14 @@ struct ContentView: View {
         .buttonStyle(.plain)
         .accessibilityIdentifier(id)
         .accessibilityAddTraits(selected ? [.isSelected] : [])
+    }
+
+    /// Reads a bundled sample page straight away, in the mode it was chosen for.
+    private func loadSample(_ page: SamplePage) {
+        guard let img = page.loadImage() else { return }
+        preCropImage = nil
+        croppedPreview = img
+        runOCRWithMode(page.mode)
     }
 
     private func runOCRWithMode(_ mode: OCRMode) {

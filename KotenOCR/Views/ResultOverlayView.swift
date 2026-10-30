@@ -54,30 +54,36 @@ struct ResultOverlayView: View {
                             let scaleX = image.width > 0 ? geometry.size.width / CGFloat(image.width) : 0
                             let scaleY = image.height > 0 ? geometry.size.height / CGFloat(image.height) : 0
 
-                            ForEach(Array(shownDetections.enumerated()), id: \.offset) { index, det in
-                                let rect = CGRect(
+                            let rects = shownDetections.map { det in
+                                CGRect(
                                     x: CGFloat(det.box[0]) * scaleX,
                                     y: CGFloat(det.box[1]) * scaleY,
                                     width: CGFloat(det.box[2] - det.box[0]) * scaleX,
                                     height: CGFloat(det.box[3] - det.box[1]) * scaleY
                                 )
-                                let isSelected = selectedIndex == index
-                                let color = boxColor(for: index)
+                            }
 
-                                if showBoxes && !edit.isActive {
+                            if showBoxes && !edit.isActive {
+                                ForEach(Array(rects.enumerated()), id: \.offset) { index, rect in
+                                    let isSelected = selectedIndex == index
+                                    let color = boxColor(for: index)
                                     Rectangle()
                                         .stroke(color, lineWidth: isSelected ? 3 : 1.5)
                                         .background(color.opacity(isSelected ? 0.3 : 0.08))
                                         .frame(width: rect.width, height: rect.height)
-                                        .overlay(alignment: .topLeading) {
-                                            Text("\(index + 1)")
-                                                .font(.system(size: 9, weight: .bold))
-                                                .foregroundColor(.white)
-                                                .padding(.horizontal, 3)
-                                                .padding(.vertical, 1)
-                                                .background(KotenColor.shuFill)
-                                        }
                                         .position(x: rect.midX, y: rect.midY)
+                                }
+                                // Numbers sit outside the boxes so they never hide the first characters.
+                                ForEach(Array(LineTagLayout.centers(for: rects).enumerated()), id: \.offset) { index, center in
+                                    Text("\(index + 1)")
+                                        .font(.system(size: 9, weight: .bold))
+                                        .monospacedDigit()
+                                        .foregroundColor(.white)
+                                        .frame(width: LineTagLayout.size(for: index + 1).width,
+                                               height: LineTagLayout.size(for: index + 1).height)
+                                        .background(Capsule().fill(KotenColor.shuFill))
+                                        .fixedSize()
+                                        .position(center)
                                 }
                             }
                         }
@@ -727,6 +733,49 @@ struct ResultOverlayView: View {
 
     private func boxColor(for index: Int) -> Color {
         KotenColor.shu
+    }
+}
+
+/// Places line-number tags just outside their boxes: above a vertical line, left of a
+/// horizontal one. Tags that would collide with an earlier tag step further out; when
+/// there is no room before the image edge the tag goes back inside the box.
+enum LineTagLayout {
+    static let gap: CGFloat = 1.5
+    private static let maxSteps = 3
+
+    static func size(for number: Int) -> CGSize {
+        let digits = String(number).count
+        return CGSize(width: CGFloat(8 + 5 * digits), height: 12)
+    }
+
+    static func centers(for rects: [CGRect]) -> [CGPoint] {
+        var placed: [CGRect] = []
+        var centers: [CGPoint] = []
+        for (index, rect) in rects.enumerated() {
+            let size = size(for: index + 1)
+            let vertical = rect.height >= rect.width
+            var tag: CGRect?
+            for step in 0..<maxSteps {
+                let outward = CGFloat(step) * (vertical ? size.height : size.width) + gap
+                let candidate = vertical
+                    ? CGRect(x: rect.midX - size.width / 2, y: rect.minY - outward - size.height,
+                             width: size.width, height: size.height)
+                    : CGRect(x: rect.minX - outward - size.width, y: rect.midY - size.height / 2,
+                             width: size.width, height: size.height)
+                if candidate.minX < 0 || candidate.minY < 0 { break }
+                if !placed.contains(where: { $0.intersects(candidate) }) {
+                    tag = candidate
+                    break
+                }
+            }
+            let chosen = tag ?? CGRect(
+                x: vertical ? rect.midX - size.width / 2 : rect.minX + gap,
+                y: vertical ? rect.minY + gap : rect.midY - size.height / 2,
+                width: size.width, height: size.height)
+            placed.append(chosen)
+            centers.append(CGPoint(x: chosen.midX, y: chosen.midY))
+        }
+        return centers
     }
 }
 

@@ -9,6 +9,7 @@ struct HomeView: View {
     let onHistory: () -> Void
     let onSettings: () -> Void
     var onOpenHistoryItem: (HistoryItem) -> Void = { _ in }
+    var onSample: () -> Void = {}
 
     @ObservedObject private var historyManager = HistoryManager.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -47,6 +48,8 @@ struct HomeView: View {
                         mainCard
                         secondaryRow
                             .padding(.top, 12)
+                        sampleLink
+                            .padding(.top, 14)
                     }
                     .opacity(appeared >= 2 ? 1 : 0)
                     .offset(y: appeared >= 2 || reduceMotion ? 0 : 10)
@@ -141,6 +144,26 @@ struct HomeView: View {
             .buttonStyle(KotenCardButtonStyle())
             .accessibilityIdentifier("home_history_button")
         }
+        .padding(.horizontal, 20)
+    }
+
+    /// A quiet text link: try the app on a bundled page without a book at hand.
+    private var sampleLink: some View {
+        Button(action: onSample) {
+            HStack(spacing: 6) {
+                Image(systemName: "book.pages")
+                    .accessibilityHidden(true)
+                Text("home_try_sample")
+                    .underline(color: KotenColor.shu.opacity(0.5))
+            }
+            .font(.mincho(15, relativeTo: .subheadline))
+            .foregroundColor(KotenColor.ink)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("home_sample_button")
         .padding(.horizontal, 20)
     }
 

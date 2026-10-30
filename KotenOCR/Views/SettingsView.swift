@@ -312,6 +312,13 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
+            VStack(alignment: .leading, spacing: 2) {
+                Text("settings_sample_pages_title")
+                    .font(.body)
+                Text("settings_sample_pages_credit")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
         }
     }
 

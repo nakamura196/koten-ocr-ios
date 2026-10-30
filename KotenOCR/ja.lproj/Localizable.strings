@@ -234,3 +234,14 @@
 
 "settings_sample_image_title" = "初回説明の写本画像";
 "onboarding_sample_credit" = "『源氏物語』（東京大学総合図書館所蔵）を改変";
+
+/* Sample pages */
+"home_try_sample" = "サンプルの頁で試す";
+"sample_sheet_title" = "サンプルで試す";
+"sample_sheet_lead" = "選ぶとすぐに読み取ります。結果は履歴にも残ります。";
+"sample_taketori_title" = "竹取物語";
+"sample_genji_title" = "源氏物語　桐壺";
+"sample_modern_title" = "国立国会図書館スタッフ・マニュアル";
+"sample_ndl_credit" = "国立国会図書館デジタルコレクション";
+"settings_sample_pages_title" = "サンプルの頁";
+"settings_sample_pages_credit" = "『竹取物語』・『国立国会図書館スタッフ・マニュアル』（国立国会図書館デジタルコレクション）、『源氏物語』（東京大学総合図書館所蔵）を改変";

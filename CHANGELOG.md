@@ -1,6 +1,10 @@
 # Changelog / 変更履歴
 
-## Unreleased
+## 2.0 (Unreleased)
+
+- ホームに「サンプルの頁で試す」を追加。『竹取物語』・『源氏物語』（古典籍）と国立国会図書館の資料（近代）の 3 頁を選ぶとすぐに読み取る / Added "Try a sample page" on the home screen: three bundled pages (Taketori Monogatari and The Tale of Genji for Classical, an NDL document for Modern) that read straight away
+- 結果画面の行番号を枠の外（縦書きは上、横書きは左）に出し、行頭の文字を隠さないように。2 桁の番号も折り返さない / Line numbers on the result screen now sit outside the box (above vertical lines, left of horizontal ones) so they no longer hide the first characters; two-digit numbers no longer wrap
+- 確認画面で最後に選んだモード（古典籍／近代）を次回も選択。サンプルを試しても変わらない / The confirm screen remembers the mode you last chose; trying a sample does not change it
 
 - 起動時にホーム画面を表示（撮影する／写真から選ぶ／履歴／設定）。いきなりカメラが開かないように変更 / Added a home (start) screen on launch with Take Photo, Choose from Photos, History and Settings, instead of opening straight into the camera
 - カメラ画面にホームへ戻るボタンを追加 / Added a Home button on the camera screen

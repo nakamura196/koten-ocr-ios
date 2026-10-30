@@ -234,3 +234,14 @@
 
 "settings_sample_image_title" = "Manuscript in the introduction";
 "onboarding_sample_credit" = "Image courtesy of the University of Tokyo General Library - The Tale of Genji / transformed";
+
+/* Sample pages */
+"home_try_sample" = "Try a sample page";
+"sample_sheet_title" = "Try a Sample";
+"sample_sheet_lead" = "Choose a page to read it right away. The result is also saved to History.";
+"sample_taketori_title" = "The Tale of the Bamboo Cutter";
+"sample_genji_title" = "The Tale of Genji: Kiritsubo";
+"sample_modern_title" = "NDL Staff Manual (1963)";
+"sample_ndl_credit" = "National Diet Library Digital Collections";
+"settings_sample_pages_title" = "Sample pages";
+"settings_sample_pages_credit" = "Taketori Monogatari and the NDL Staff Manual: National Diet Library Digital Collections. The Tale of Genji: image courtesy of the University of Tokyo General Library / transformed";

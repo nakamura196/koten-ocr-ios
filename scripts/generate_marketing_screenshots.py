@@ -19,73 +19,44 @@ IPAD_SIZE = (2048, 2732)    # iPad 12.9"
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.dirname(SCRIPT_DIR)
 
-# Font paths (macOS)
-FONT_BOLD = "/System/Library/Fonts/ヒラギノ角ゴシック W6.ttc"
-FONT_REGULAR = "/System/Library/Fonts/ヒラギノ角ゴシック W3.ttc"
+# Headings are set in Mincho on washi, matching the app's paper / ink / shu design.
+# Hiragino Mincho ProN covers Latin as well, so English uses the same face.
+FONT_MINCHO = "/System/Library/Fonts/ヒラギノ明朝 ProN.ttc"
+FONT_MINCHO_W3 = 0
+FONT_MINCHO_W6 = 2
 
-# Font paths (macOS) - English
-FONT_BOLD_EN = "/System/Library/Fonts/Helvetica.ttc"
-FONT_REGULAR_EN = "/System/Library/Fonts/Helvetica.ttc"
+# App palette (light appearance, Assets.xcassets)
+WASHI = (243, 235, 220)
+INK = (43, 38, 34)
+INK_SECONDARY = (107, 95, 82)
+SHU = (181, 69, 47)
 
-# Themes per language
+# Headings per language, in screenshot order
 THEMES_JA = [
-    {
-        "bg_top": (230, 81, 0),        # Orange - warm, inviting
-        "bg_bottom": (153, 51, 0),
-        "title": "AIがくずし字を読み取る",
-        "subtitle": "カメラで撮るだけ、テキストに変換",
-    },
-    {
-        "bg_top": (41, 98, 255),       # Blue
-        "bg_bottom": (0, 48, 135),
-        "title": "7000文字以上に対応",
-        "subtitle": "国立国会図書館のAIモデル搭載",
-    },
-    {
-        "bg_top": (123, 44, 191),      # Purple
-        "bg_bottom": (66, 15, 120),
-        "title": "完全オフラインで動作",
-        "subtitle": "すべての処理をデバイス上で完結",
-    },
+    {"title": "撮るだけで、くずし字が文字に", "subtitle": "行ごとに枠を付けて読み取ります"},
+    {"title": "7000文字以上に対応", "subtitle": "国立国会図書館のAIモデル搭載"},
+    {"title": "完全オフラインで動作", "subtitle": "すべての処理を端末の中で"},
 ]
 
 THEMES_EN = [
-    {
-        "bg_top": (230, 81, 0),
-        "bg_bottom": (153, 51, 0),
-        "title": "AI Reads Classical Japanese",
-        "subtitle": "Just snap a photo to get text",
-    },
-    {
-        "bg_top": (41, 98, 255),
-        "bg_bottom": (0, 48, 135),
-        "title": "7,000+ Characters Supported",
-        "subtitle": "Powered by NDL's AI model",
-    },
-    {
-        "bg_top": (123, 44, 191),
-        "bg_bottom": (66, 15, 120),
-        "title": "Fully Offline",
-        "subtitle": "All processing on-device",
-    },
+    {"title": "Snap a page, read the kuzushiji", "subtitle": "Every line boxed and transcribed"},
+    {"title": "7,000+ characters", "subtitle": "Powered by NDL's AI model"},
+    {"title": "Fully offline", "subtitle": "Everything stays on your device"},
 ]
 
-# Priority order: which screenshot files to use (prefer result screen first)
-SCREENSHOT_PRIORITY = ["04_result", "05_translation", "02_home", "06_settings", "02_crop", "03_confirm"]
+# Priority order: intro animation, result, home
+SCREENSHOT_PRIORITY = ["00_intro", "04_result", "02_home", "05_translation", "06_settings"]
 
 
-def create_gradient(size, color_top, color_bottom):
-    """Create a vertical gradient image."""
-    img = Image.new("RGB", size)
-    draw = ImageDraw.Draw(img)
+def create_paper(size):
+    """Washi background with a faint darker edge, like a sheet under light."""
     w, h = size
-    for y in range(h):
-        ratio = y / h
-        r = int(color_top[0] + (color_bottom[0] - color_top[0]) * ratio)
-        g = int(color_top[1] + (color_bottom[1] - color_top[1]) * ratio)
-        b = int(color_top[2] + (color_bottom[2] - color_top[2]) * ratio)
-        draw.line([(0, y), (w, y)], fill=(r, g, b))
-    return img
+    bg = Image.new("RGB", size, WASHI)
+    edge = Image.new("L", size, 0)
+    ImageDraw.Draw(edge).rectangle([(0, 0), size], outline=255, width=max(w, h) // 30)
+    edge = edge.filter(ImageFilter.GaussianBlur(max(w, h) // 25))
+    darker = Image.new("RGB", size, tuple(int(c * 0.93) for c in WASHI))
+    return Image.composite(darker, bg, edge)
 
 
 def add_rounded_corners(img, radius):
@@ -167,35 +138,27 @@ def create_marketing_image(screenshot_path, theme, output_size, lang="ja"):
         max_scale_w_pct = 0.88
         bleed_fraction = 0.35
 
-    # Language-specific fonts
-    if lang == "en":
-        font_bold_path = FONT_BOLD_EN
-        font_regular_path = FONT_REGULAR_EN
-    else:
-        font_bold_path = FONT_BOLD
-        font_regular_path = FONT_REGULAR
-
-    # Create gradient background
-    bg = create_gradient(output_size, theme["bg_top"], theme["bg_bottom"])
-    bg = bg.convert("RGBA")
+    bg = create_paper(output_size).convert("RGBA")
 
     # --- Calculate text layout first ---
-    try:
-        font_title = ImageFont.truetype(font_bold_path, int(w * title_font_pct))
-        font_subtitle = ImageFont.truetype(font_regular_path, int(w * sub_font_pct))
-    except OSError:
-        font_title = ImageFont.load_default()
-        font_subtitle = ImageFont.load_default()
-
+    title_size = int(w * title_font_pct)
+    font_title = ImageFont.truetype(FONT_MINCHO, title_size, index=FONT_MINCHO_W6)
     draw = ImageDraw.Draw(bg)
+    # Shrink a long (English) heading to fit the width.
+    while draw.textlength(theme["title"], font=font_title) > w * 0.88:
+        title_size -= 4
+        font_title = ImageFont.truetype(FONT_MINCHO, title_size, index=FONT_MINCHO_W6)
+    font_subtitle = ImageFont.truetype(FONT_MINCHO, int(w * sub_font_pct), index=FONT_MINCHO_W3)
 
     title_bbox = draw.textbbox((0, 0), theme["title"], font=font_title)
     title_h = title_bbox[3] - title_bbox[1]
     sub_bbox = draw.textbbox((0, 0), theme["subtitle"], font=font_subtitle)
     sub_h = sub_bbox[3] - sub_bbox[1]
 
-    title_y = int(h * 0.10)
-    sub_y = title_y + title_h + int(h * 0.012)
+    title_y = int(h * 0.09)
+    rule_y = title_y + title_h + int(h * 0.022)
+    rule_h = max(3, int(w * 0.004))
+    sub_y = rule_y + rule_h + int(h * 0.018)
     text_bottom = sub_y + sub_h
 
     # --- Load and scale screenshot to fill available space ---
@@ -226,17 +189,22 @@ def create_marketing_image(screenshot_path, theme, output_size, lang="ja"):
     ss_x = (w - framed.width) // 2
     ss_y = ss_y + int(h * 0.06)  # extra space below subtitle
 
-    bg.paste(framed, (ss_x, ss_y), framed)
+    shadowed = add_shadow(framed, offset=(0, int(h * 0.008)), blur_radius=int(w * 0.03),
+                          shadow_color=(80, 60, 30, 70))
+    blur = int(w * 0.03)
+    bg.paste(shadowed, (ss_x - blur, ss_y - blur), shadowed)
 
     # --- Draw text on top ---
     title_w = title_bbox[2] - title_bbox[0]
     title_x = (w - title_w) // 2
-    draw.text((title_x, title_y), theme["title"], fill=(255, 255, 255), font=font_title)
+    draw.text((title_x, title_y - title_bbox[1]), theme["title"], fill=INK, font=font_title)
+
+    rule_w = int(w * 0.06)
+    draw.rectangle([((w - rule_w) // 2, rule_y), ((w + rule_w) // 2, rule_y + rule_h)], fill=SHU)
 
     sub_w = sub_bbox[2] - sub_bbox[0]
     sub_x = (w - sub_w) // 2
-    draw.text((sub_x, sub_y), theme["subtitle"],
-              fill=(255, 255, 255, 220), font=font_subtitle)
+    draw.text((sub_x, sub_y - sub_bbox[1]), theme["subtitle"], fill=INK_SECONDARY, font=font_subtitle)
 
     # Convert back to RGB
     final = Image.new("RGB", output_size, (0, 0, 0))

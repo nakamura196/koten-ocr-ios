@@ -9,7 +9,9 @@ final class ScreenshotTests: XCTestCase {
     private var app: XCUIApplication!
     private let screenshotDir = ProcessInfo.processInfo.environment["SCREENSHOT_DIR"]
         ?? "/tmp/kotenocr_screenshots"
-    private let projectRoot = "/Users/nakamura/git/hi/miyako/koten-ocr-ios"
+    // This checkout (works from any worktree), derived from this file's location.
+    private let projectRoot = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent().deletingLastPathComponent().path
 
     // Path to test image for 古典籍 (kuzushiji) mode
     private var testImagePath: String {
@@ -17,7 +19,8 @@ final class ScreenshotTests: XCTestCase {
            !envPath.isEmpty {
             return envPath
         }
-        return "\(projectRoot)/KotenOCRUITests/Resources/test_koten_sample.jpg"
+        // The written page only (the spread's other page is blank), so the store shot shows it large.
+        return "\(projectRoot)/KotenOCRUITests/Resources/test_koten_sample_page.jpg"
     }
 
     // Path to test image for 近代 (NDL) mode — 校異源氏物語
@@ -273,14 +276,17 @@ final class ScreenshotTests: XCTestCase {
         sleep(1)
     }
 
-    /// Capture onboarding screenshots
+    /// Capture onboarding screenshots. The intro's last frame is the first store image.
     func testCaptureOnboarding() throws {
-        app.launchArguments = ["-hasCompletedOnboarding", "NO"]
+        if let i = app.launchArguments.firstIndex(of: "-hasCompletedOnboarding") {
+            app.launchArguments[i + 1] = "NO"
+        }
         app.launchEnvironment["TEST_IMAGE_PATH"] = ""
         app.launch()
-        sleep(3)
+        // The scan, boxes and lines finish at about 3 s.
+        sleep(5)
 
-        saveScreenshot(name: "07_onboarding_intro")
+        saveScreenshot(name: "00_intro")
         app.swipeLeft()
         sleep(1)
         saveScreenshot(name: "08_onboarding_howto")
