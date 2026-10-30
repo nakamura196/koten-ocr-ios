@@ -20,12 +20,14 @@
 		3214E29F307A0A26E81B7011 /* TranslationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CBDBB27CB79CDA19787F6DE /* TranslationSettingsView.swift */; };
 		347BE39601D13C313482F9FD /* TranslationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F700500728D38B14885CDFE3 /* TranslationServiceTests.swift */; };
 		3771321C98AE0D170C397897 /* RTMDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56AB805A57FC795B0DC85FF4 /* RTMDetector.swift */; };
+		379CC8FB141AB82E3BF69EEB /* LineTiltTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17AB23FE438535D6DAC09DF7 /* LineTiltTests.swift */; };
 		4E252DB4F2D4933153D52FC0 /* ReadingOrderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64BE69A1A5ED772D43AC3BCC /* ReadingOrderTests.swift */; };
 		51D3D846E8BD58665B59A081 /* OCREngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B375ECB40C38D777102F59BC /* OCREngine.swift */; };
 		543D92C50A84D38DCFC78C4E /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0C02138D36BD4637583CC4 /* OnboardingView.swift */; };
 		5611919E371D5CA2CC2675B8 /* PARSEQRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C71D29B2E05CAE6C27D498 /* PARSEQRecognizer.swift */; };
 		59FE9F6100B0045A383CA90C /* ResultOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B4379D31980B50B6E4167FC /* ResultOverlayView.swift */; };
 		5C3585476060A8BF727F38D2 /* Deskew.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCA570CF941C051863852D96 /* Deskew.swift */; };
+		5D00D91B543577BF04F1CD7A /* LineTilt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FA8CC88F0474E848E51CCD7 /* LineTilt.swift */; };
 		5F971906D31580A0E45441BA /* OCRPerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC5416D90C0C61B387A7EA3 /* OCRPerformanceTests.swift */; };
 		65E8D11410FF385A0964FB27 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34EEFFD47152BA87642516F1 /* KeychainHelper.swift */; };
 		728E5483FE3AADF2413203FA /* ExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A229657613D69582B3F74B4D /* ExportManager.swift */; };
@@ -49,6 +51,7 @@
 		DD3C1024DFD4E4B744B5E900 /* OCREngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFCF575F1A8FE24D8DD5780E /* OCREngineTests.swift */; };
 		E08D99583FA14352749CCF1A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 76A6BD467DEA7229DFCBB191 /* Assets.xcassets */; };
 		EA6132D99688DA796D3498AE /* MetricKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A2B8FC9F37AF7ABC52CE712 /* MetricKitManager.swift */; };
+		F70CD1D63CB6A73E60252248 /* koten_page.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 4803ABA4D8E4DE1EECF7141A /* koten_page.jpg */; };
 		F90AF6B5F88C2159FED81F00 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 7078A6C58B9E131D0C86B41E /* Localizable.strings */; };
 /* End PBXBuildFile section */
 
@@ -75,16 +78,19 @@
 		04E391BFF7A576B58D3F6056 /* KotenOCRTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = KotenOCRTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0CAD2DC2969703CFCAA54EA1 /* ExportManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportManagerTests.swift; sourceTree = "<group>"; };
 		12D6ADEDDD0734CA628912DE /* TipJarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJarManager.swift; sourceTree = "<group>"; };
+		17AB23FE438535D6DAC09DF7 /* LineTiltTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineTiltTests.swift; sourceTree = "<group>"; };
 		1A4629A0F5DA8EE91C6DB6D6 /* KotenOCR.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = KotenOCR.entitlements; sourceTree = "<group>"; };
 		1FD6672AFFCFE2471102B652 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		247E98FA5B2F2413221FD51D /* UIImage+Orientation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIImage+Orientation.swift"; sourceTree = "<group>"; };
 		270641011EB727A6FC52AD0B /* KotenOCRApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KotenOCRApp.swift; sourceTree = "<group>"; };
 		27E1D8978CB07EFAA65E6FC6 /* CropView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CropView.swift; sourceTree = "<group>"; };
 		2F947C41CFADDC63593FEB47 /* CascadePARSEQRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CascadePARSEQRecognizer.swift; sourceTree = "<group>"; };
+		2FA8CC88F0474E848E51CCD7 /* LineTilt.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineTilt.swift; sourceTree = "<group>"; };
 		33E0D72EA37B2FC8AEAAB9C3 /* ReadingOrder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadingOrder.swift; sourceTree = "<group>"; };
 		34EEFFD47152BA87642516F1 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		413F9EA8A3AF49B4FC18AF1C /* KotenOCR.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = KotenOCR.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		43761597E39AC3C62D31C9E8 /* TipJarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJarView.swift; sourceTree = "<group>"; };
+		4803ABA4D8E4DE1EECF7141A /* koten_page.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = koten_page.jpg; sourceTree = "<group>"; };
 		4DE94F4988B24C1250C6F20D /* HistoryItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryItem.swift; sourceTree = "<group>"; };
 		56AB805A57FC795B0DC85FF4 /* RTMDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTMDetector.swift; sourceTree = "<group>"; };
 		5B4379D31980B50B6E4167FC /* ResultOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultOverlayView.swift; sourceTree = "<group>"; };
@@ -166,11 +172,13 @@
 				91ECD227D650332CC3FA89B7 /* DetectionTests.swift */,
 				0CAD2DC2969703CFCAA54EA1 /* ExportManagerTests.swift */,
 				9044A5844F791981ECF958E8 /* HistoryItemTests.swift */,
+				17AB23FE438535D6DAC09DF7 /* LineTiltTests.swift */,
 				EFCF575F1A8FE24D8DD5780E /* OCREngineTests.swift */,
 				BAC5416D90C0C61B387A7EA3 /* OCRPerformanceTests.swift */,
 				878990E0E6B16FF96510AED7 /* PARSEQRecognizerTests.swift */,
 				64BE69A1A5ED772D43AC3BCC /* ReadingOrderTests.swift */,
 				F700500728D38B14885CDFE3 /* TranslationServiceTests.swift */,
+				973CDA2BDCD05215D19116AB /* Resources */,
 			);
 			path = KotenOCRTests;
 			sourceTree = "<group>";
@@ -189,6 +197,7 @@
 				2F947C41CFADDC63593FEB47 /* CascadePARSEQRecognizer.swift */,
 				B89DD48A8B561A9D52076309 /* DEIMDetector.swift */,
 				BCA570CF941C051863852D96 /* Deskew.swift */,
+				2FA8CC88F0474E848E51CCD7 /* LineTilt.swift */,
 				B375ECB40C38D777102F59BC /* OCREngine.swift */,
 				D9DAC4DF520D46A2BB54757A /* OCRMode.swift */,
 				E1C71D29B2E05CAE6C27D498 /* PARSEQRecognizer.swift */,
@@ -212,6 +221,14 @@
 				5CBDBB27CB79CDA19787F6DE /* TranslationSettingsView.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		973CDA2BDCD05215D19116AB /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				4803ABA4D8E4DE1EECF7141A /* koten_page.jpg */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		9CAA0F69467B09C305F308AC /* Store */ = {
@@ -310,6 +327,7 @@
 			buildConfigurationList = 5B1E4036875AE5D5DF88D93F /* Build configuration list for PBXNativeTarget "KotenOCRTests" */;
 			buildPhases = (
 				4E0C4C43328A51B38E460BEC /* Sources */,
+				96F743E31A38B3EE1674DB1E /* Resources */,
 			);
 			buildRules = (
 			);
@@ -397,6 +415,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		96F743E31A38B3EE1674DB1E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F70CD1D63CB6A73E60252248 /* koten_page.jpg in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
@@ -438,6 +464,7 @@
 				1BE4FE0AC063CE4218405FBB /* HistoryManager.swift in Sources */,
 				65E8D11410FF385A0964FB27 /* KeychainHelper.swift in Sources */,
 				D2ADA4E7EFCF4A35211E3ACF /* KotenOCRApp.swift in Sources */,
+				5D00D91B543577BF04F1CD7A /* LineTilt.swift in Sources */,
 				EA6132D99688DA796D3498AE /* MetricKitManager.swift in Sources */,
 				51D3D846E8BD58665B59A081 /* OCREngine.swift in Sources */,
 				038900677AB943A552FBA0DC /* OCRMode.swift in Sources */,
@@ -463,6 +490,7 @@
 				B08FDACE53C363DD87842F4E /* DetectionTests.swift in Sources */,
 				08940BF57F1C78A284A499E9 /* ExportManagerTests.swift in Sources */,
 				22D3F53C8527D84E9F5DB888 /* HistoryItemTests.swift in Sources */,
+				379CC8FB141AB82E3BF69EEB /* LineTiltTests.swift in Sources */,
 				DD3C1024DFD4E4B744B5E900 /* OCREngineTests.swift in Sources */,
 				5F971906D31580A0E45441BA /* OCRPerformanceTests.swift in Sources */,
 				9DDB6B10ADADB178D31304B3 /* PARSEQRecognizerTests.swift in Sources */,

@@ -284,37 +284,10 @@ class OCREngine: ObservableObject {
 
         try Task.checkCancellation()
 
-        // Step 2: Text recognition for each detection (parallel, batched)
-        var recognized = detections
-        let maxConcurrency = 4
-        for batchStart in stride(from: 0, to: recognized.count, by: maxConcurrency) {
-            let batchEnd = min(batchStart + maxConcurrency, recognized.count)
-            let batchResults = try await withThrowingTaskGroup(of: (Int, String).self) { group in
-                for i in batchStart..<batchEnd {
-                    let box = recognized[i].box
-                    guard box.count >= 4 else { continue }
-                    let cropRect = CGRect(
-                        x: max(0, box[0]),
-                        y: max(0, box[1]),
-                        width: max(1, box[2] - box[0]),
-                        height: max(1, box[3] - box[1])
-                    )
-                    guard let cropped = image.cropping(to: cropRect) else { continue }
-                    group.addTask {
-                        let text = try recognizer.recognize(image: cropped)
-                        return (i, text)
-                    }
-                }
-                var texts: [(Int, String)] = []
-                for try await result in group {
-                    texts.append(result)
-                }
-                return texts
-            }
-            for (i, text) in batchResults {
-                recognized[i].text = text
-            }
-        }
+        // Step 2: Text recognition for each detection (parallel, batched). Leaning columns are read
+        // from oriented crops; duplicate and placeholder-only lines are dropped.
+        let recognized = try await Self.recognizeKotenLines(
+            image: image, detections: detections, recognizer: recognizer, lineTilt: Deskew.isEnabled)
 
         try Task.checkCancellation()
 
@@ -328,6 +301,56 @@ class OCREngine: ObservableObject {
         // Step 4: Combine text
         let combinedText = ordered.map(\.text).joined(separator: "\n")
         return OCRResult(detections: ordered, text: combinedText)
+    }
+
+    /// Koten recognition step: reads every detection with PARSeq (4 at a time). When `lineTilt` is on,
+    /// a tall box whose column leans is read from an oriented crop that follows the column
+    /// (`LineTilt`). Lines that read as placeholders only (□□□…) and lines that duplicate part of
+    /// another detected line are dropped.
+    static func recognizeKotenLines(image: CGImage, detections: [Detection],
+                                    recognizer: PARSEQRecognizer, lineTilt: Bool) async throws -> [Detection] {
+        var recognized = detections
+        let maxConcurrency = 4
+        for batchStart in stride(from: 0, to: recognized.count, by: maxConcurrency) {
+            let batchEnd = min(batchStart + maxConcurrency, recognized.count)
+            let batchResults = try await withThrowingTaskGroup(of: (Int, String).self) { group in
+                for i in batchStart..<batchEnd {
+                    let box = recognized[i].box
+                    guard box.count >= 4 else { continue }
+                    group.addTask {
+                        let plainRect = CGRect(x: max(0, box[0]), y: max(0, box[1]),
+                                               width: max(1, box[2] - box[0]), height: max(1, box[3] - box[1]))
+                        guard lineTilt else {
+                            guard let plain = image.cropping(to: plainRect) else { return (i, "") }
+                            return (i, try recognizer.recognize(image: plain))
+                        }
+                        let tilted = LineTilt.crop(image, box: box)
+                        guard let cropped = tilted.image else { return (i, "") }
+                        var text = try recognizer.recognize(image: cropped)
+                        // PARSeq occasionally collapses into "□□□…" on a crop; if the oriented crop does,
+                        // read the plain box as well and keep whichever is less garbled.
+                        if tilted.plan != nil, LineTilt.placeholderCount(text) >= 3,
+                           let plain = image.cropping(to: plainRect) {
+                            let alternative = try recognizer.recognize(image: plain)
+                            if LineTilt.placeholderCount(alternative) < LineTilt.placeholderCount(text) {
+                                text = alternative
+                            }
+                        }
+                        return (i, text)
+                    }
+                }
+                var texts: [(Int, String)] = []
+                for try await result in group {
+                    texts.append(result)
+                }
+                return texts
+            }
+            for (i, text) in batchResults {
+                recognized[i].text = text
+            }
+        }
+        recognized.removeAll { LineTilt.isPlaceholderOnly($0.text) }
+        return LineTilt.dropSameLineDuplicates(recognized)
     }
 
     private func processNDL(image: CGImage) async throws -> OCRResult {
@@ -381,6 +404,7 @@ class OCREngine: ObservableObject {
                 recognized[i].text = text
             }
         }
+        recognized.removeAll { LineTilt.isPlaceholderOnly($0.text) }
 
         try Task.checkCancellation()
 

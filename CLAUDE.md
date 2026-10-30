@@ -52,6 +52,7 @@ No linter configured.
 #### Koten（古典籍）モード
 1. **Detection** — `RTMDetector` runs RTMDet-S model (1024x1024 input)
 2. **Recognition** — `PARSEQRecognizer` runs PARSeq-Tiny (384x32 input), NDLmoji charset (7141 chars)
+   - `LineTilt`（`OCR/LineTilt.swift`）: 縦長の枠ごとに行の傾き（±6°）を推定し、0.5°以上傾いた行は行に沿った回転切り出しで読む（「傾きを自動補正」がONのとき）。認識後、同じ行を二重に検出した重複行と「□」だけの行を除く
 3. **Reading Order** — `ReadingOrderProcessor` applies block_xy_cut
 
 #### NDL（近代）モード
