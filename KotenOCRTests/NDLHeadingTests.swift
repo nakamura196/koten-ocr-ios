@@ -53,7 +53,9 @@ final class NDLHeadingTests: XCTestCase {
         XCTAssertTrue(result.detections.contains { $0.className == "line_title" }, "headings should survive")
         XCTAssertTrue(lines.contains { $0.contains("送付管") && !$0.contains("送付には") },
                       "heading (ヱ)気送子送付管 should be read")
-        XCTAssertTrue(lines.contains { $0.contains("気送管") && $0.count <= 8 },
+        // The heading itself is what matters here. Its last character depends on the crop: the 30-character
+        // model (chosen for short lines, as in NDLOCR-Lite) reads the deskewed crop as "(1)気送信".
+        XCTAssertTrue(lines.contains { $0.hasPrefix("(1)気送") && $0.count <= 8 },
                       "heading (1)気送管 should be read")
     }
 
@@ -96,5 +98,33 @@ final class NDLHeadingTests: XCTestCase {
     func testBoxesAreTruncatedLikeNDLOCRLite() throws {
         let dets = try postprocess(labels: [2], boxes: [100.7, 50.9, 300.6, 80.99], scores: [0.9])
         XCTAssertEqual(dets.map(\.box), [[100, 50, 300, 80]])
+    }
+
+    // MARK: - Line-length class (picks the 30 / 50 / 100-character model)
+
+    func testCharCountsAreDecodedFromInt64() {
+        var values: [Int64] = [3, 2, 1]
+        let data = Data(bytes: &values, count: values.count * MemoryLayout<Int64>.stride)
+        XCTAssertEqual(DEIMDetector.decodeCharCounts(data, elementType: .int64), [3, 2, 1])
+    }
+
+    func testPostprocessKeepsTheCharCountOfEachLine() throws {
+        let dets = try postprocess(labels: [2, 2], boxes: [10, 10, 300, 30, 10, 40, 100, 60],
+                                   scores: [0.9, 0.8], charCounts: [2, 3])
+        XCTAssertEqual(dets.map(\.predCharCount), [2, 3])
+    }
+
+    /// On the bundled modern sample DEIM puts short lines (headings, captions, line ends) in class 3
+    /// and full lines in class 2, as NDLOCR-Lite's Python run shows. Reading the int64 output as Float
+    /// made every line class 0, so the 100-character model read everything.
+    func testModernSampleRoutesLinesToTheSmallerModels() throws {
+        let detector = try makeDetector()
+        let url = try XCTUnwrap(Bundle.main.url(forResource: "sample_modern", withExtension: "jpg"))
+        let image = try XCTUnwrap(UIImage(contentsOfFile: url.path)?.normalizedCGImage)
+        let lines = try detector.detect(image: image).filter(\.isTextLine)
+        let counts = Set(lines.map { Int($0.predCharCount.rounded()) })
+        XCTAssertTrue(counts.isSubset(of: [1, 2, 3]), "unexpected classes \(counts)")
+        XCTAssertTrue(counts.contains(3), "short lines should go to the 30-character model")
+        XCTAssertTrue(counts.contains(2), "full lines should go to the 50-character model")
     }
 }

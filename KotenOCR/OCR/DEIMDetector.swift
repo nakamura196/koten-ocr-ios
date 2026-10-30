@@ -171,7 +171,8 @@ class DEIMDetector: @unchecked Sendable {
         var charCounts: [Float]?
         if outputNames.count >= 4, let charCountValue = outputs[outputNames[3]] {
             let charCountData = try charCountValue.tensorData() as Data
-            charCounts = charCountData.withUnsafeBytes { Array($0.bindMemory(to: Float.self)) }
+            let elementType = try charCountValue.tensorTypeAndShapeInfo().elementType
+            charCounts = DEIMDetector.decodeCharCounts(charCountData, elementType: elementType)
         }
 
         let numDetections = scores.count
@@ -225,6 +226,20 @@ class DEIMDetector: @unchecked Sendable {
         let nmsResult = DEIMDetector.applyNMS(sorted, iouThreshold: iouThreshold)
 
         return Array(nmsResult.prefix(maxDetections))
+    }
+
+    /// The char_count output is the line-length class (1 = long, 2 = medium, 3 = short) that picks the
+    /// 100 / 50 / 30-character PARSeq model. DEIMv2 exports it as int64; reading those bytes as Float
+    /// gave denormals (≈0), so every line fell through to the 100-character model.
+    static func decodeCharCounts(_ data: Data, elementType: ORTTensorElementDataType) -> [Float] {
+        switch elementType {
+        case .int64:
+            return data.withUnsafeBytes { $0.bindMemory(to: Int64.self).map { Float($0) } }
+        case .int32:
+            return data.withUnsafeBytes { $0.bindMemory(to: Int32.self).map { Float($0) } }
+        default:
+            return data.withUnsafeBytes { Array($0.bindMemory(to: Float.self)) }
+        }
     }
 
     // MARK: - NMS
