@@ -1,4 +1,5 @@
 import XCTest
+import OnnxRuntimeBindings
 @testable import KotenOCR
 
 /// Modern (NDL) mode must keep one-line headings and captions.
@@ -54,5 +55,46 @@ final class NDLHeadingTests: XCTestCase {
                       "heading (ヱ)気送子送付管 should be read")
         XCTAssertTrue(lines.contains { $0.contains("気送管") && $0.count <= 8 },
                       "heading (1)気送管 should be read")
+    }
+
+    // MARK: - DEIM post-processing on hand-made model outputs
+
+    private func makeDetector() throws -> DEIMDetector {
+        guard let deimPath = Bundle.main.path(forResource: "deim-s-1024x1024", ofType: "onnx", inDirectory: "Models"),
+              let configPath = Bundle.main.path(forResource: "ndl-deim", ofType: "yaml", inDirectory: "Models") else {
+            throw XCTSkip("Models not available")
+        }
+        return try DEIMDetector(env: try ORTEnv(loggingLevel: .warning), modelPath: deimPath, configPath: configPath,
+                                iouThreshold: 0.2, maxDetections: 1000)
+    }
+
+    private func tensor<T>(_ values: [T], _ type: ORTTensorElementDataType, _ shape: [Int]) throws -> ORTValue {
+        var v = values
+        let data = NSMutableData(bytes: &v, length: v.count * MemoryLayout<T>.stride)
+        return try ORTValue(tensorData: data, elementType: type, shape: shape.map { NSNumber(value: $0) })
+    }
+
+    /// Runs `postprocess` on an 800×800 page (model coordinates = image coordinates).
+    private func postprocess(labels: [Int64], boxes: [Float], scores: [Float], charCounts: [Int64]? = nil,
+                             size: Int = 800) throws -> [Detection] {
+        let detector = try makeDetector()
+        var outputs: [String: ORTValue] = [
+            "labels": try tensor(labels, .int64, [1, labels.count]),
+            "boxes": try tensor(boxes, .float, [1, boxes.count / 4, 4]),
+            "scores": try tensor(scores, .float, [1, scores.count])
+        ]
+        var names = ["labels", "boxes", "scores"]
+        if let charCounts {
+            outputs["char_count"] = try tensor(charCounts, .int64, [1, charCounts.count])
+            names.append("char_count")
+        }
+        return try detector.postprocess(outputs: outputs, outputNames: names,
+                                        metadata: .init(originalWidth: size, originalHeight: size, maxWH: 800))
+    }
+
+    /// NDLOCR-Lite truncates box coordinates; rounding shifted short lines by a pixel.
+    func testBoxesAreTruncatedLikeNDLOCRLite() throws {
+        let dets = try postprocess(labels: [2], boxes: [100.7, 50.9, 300.6, 80.99], scores: [0.9])
+        XCTAssertEqual(dets.map(\.box), [[100, 50, 300, 80]])
     }
 }
