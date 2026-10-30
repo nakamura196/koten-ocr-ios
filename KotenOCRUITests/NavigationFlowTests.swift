@@ -65,7 +65,7 @@ final class NavigationFlowTests: XCTestCase {
     func testIntroductionReplaysFromSettings() throws {
         app.launchArguments += coachMarksShown
         app.launch()
-        let settings = app.buttons["settings_button"]
+        let settings = app.buttons["home_settings_button"]
         XCTAssertTrue(settings.waitForExistence(timeout: 120))
         settings.tap()
 
