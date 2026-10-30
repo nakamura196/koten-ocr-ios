@@ -55,4 +55,24 @@ final class OCREngineTests: XCTestCase {
         } catch {}
         XCTAssertEqual(engine.currentMode, .koten)
     }
+
+    // MARK: - Line direction
+
+    func testPageDirectionIsTheMajorityOfLines() {
+        let tall = Detection(box: [0, 0, 20, 200], score: 0.9, classId: 0, className: "text")
+        let wide = Detection(box: [0, 0, 200, 20], score: 0.9, classId: 0, className: "text")
+        XCTAssertTrue(OCREngine.isVerticalPage([tall, tall, wide]))
+        XCTAssertFalse(OCREngine.isVerticalPage([tall, wide, wide]))
+    }
+
+    /// One or two characters (a near-square box) follow the page; long boxes follow their own shape.
+    func testShortBoxesFollowThePageDirection() {
+        // A single wide kana on a vertical page is still read as vertical text.
+        XCTAssertTrue(OCREngine.readsVertically(box: [100, 100, 160, 150], pageVertical: true))
+        // A narrow "1" on a horizontal page is read horizontally (it used to be rotated).
+        XCTAssertFalse(OCREngine.readsVertically(box: [100, 100, 120, 128], pageVertical: false))
+        // Long lines keep their own direction whatever the page.
+        XCTAssertTrue(OCREngine.readsVertically(box: [100, 100, 130, 400], pageVertical: false))
+        XCTAssertFalse(OCREngine.readsVertically(box: [100, 100, 400, 130], pageVertical: true))
+    }
 }

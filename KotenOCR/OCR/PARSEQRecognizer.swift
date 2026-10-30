@@ -60,12 +60,14 @@ class PARSEQRecognizer: @unchecked Sendable {
     /// The ORT values, output dictionary and tensor data are autoreleased Objective-C objects.
     /// Swift concurrency threads drain their autorelease pool rarely, so without a pool per run
     /// every run's output buffers stayed alive and the footprint grew with each image.
-    func recognize(image: CGImage) throws -> String {
-        try autoreleasepool { try recognizeUnpooled(image: image) }
+    /// `vertical`: read the crop as a vertical line (rotated before recognition). nil decides from the
+    /// crop's shape (taller than wide = vertical).
+    func recognize(image: CGImage, vertical: Bool? = nil) throws -> String {
+        try autoreleasepool { try recognizeUnpooled(image: image, vertical: vertical) }
     }
 
-    private func recognizeUnpooled(image: CGImage) throws -> String {
-        let tensor = preprocess(image: image)
+    private func recognizeUnpooled(image: CGImage, vertical: Bool?) throws -> String {
+        let tensor = preprocess(image: image, vertical: vertical)
         let inputData = NSMutableData(bytes: tensor, length: tensor.count * MemoryLayout<Float>.stride)
         let shape: [NSNumber] = [1, 3, NSNumber(value: inputHeight), NSNumber(value: inputWidth)]
         let inputTensor = try ORTValue(tensorData: inputData, elementType: .float, shape: shape)
@@ -83,13 +85,13 @@ class PARSEQRecognizer: @unchecked Sendable {
 
     // MARK: - Preprocessing
 
-    func preprocess(image: CGImage) -> [Float] {
+    func preprocess(image: CGImage, vertical: Bool? = nil) -> [Float] {
         var width = image.width
         var height = image.height
         var pixels = extractPixels(from: image)
 
-        // Rotate if image is taller than wide (vertical text)
-        if height > width {
+        // Rotate vertical text (by default: an image taller than wide)
+        if vertical ?? (height > width) {
             (pixels, width, height) = rotatePixels90CCW(pixels: pixels, width: width, height: height)
         }
 
