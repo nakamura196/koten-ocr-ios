@@ -298,8 +298,14 @@ struct ResultOverlayView: View {
 
     // MARK: - Edit Sheet
 
+    private func startEditing(_ index: Int) {
+        guard index < detections.count else { return }
+        editText = detections[index].text
+        editingIndex = index
+    }
+
     private func editSheet(for index: Int) -> some View {
-        NavigationView {
+        NavigationStack {
             VStack {
                 TextEditor(text: $editText)
                     .font(.system(.body, design: .serif))
@@ -317,6 +323,9 @@ struct ResultOverlayView: View {
                     Button(String(localized: "edit_save", defaultValue: "Save")) {
                         if let idx = editingIndex, idx < detections.count {
                             detections[idx].text = editText
+                            if let id = historyItemID {
+                                HistoryManager.shared.updateDetections(id: id, detections: detections)
+                            }
                         }
                         editingIndex = nil
                     }
@@ -335,35 +344,54 @@ struct ResultOverlayView: View {
                         let isSelected = selectedIndex == index
                         let color = boxColor(for: index)
 
-                        HStack(alignment: .top, spacing: 8) {
-                            Text("\(index + 1)")
-                                .font(.system(size: 12, weight: .medium, design: .monospaced))
-                                .foregroundColor(isSelected ? color : .secondary)
-                                .frame(width: 24, alignment: .trailing)
+                        HStack(alignment: .top, spacing: 4) {
+                            HStack(alignment: .top, spacing: 8) {
+                                Text("\(index + 1)")
+                                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                                    .foregroundColor(isSelected ? color : .secondary)
+                                    .frame(width: 24, alignment: .trailing)
 
-                            Text(det.text.isEmpty ? "---" : det.text)
-                                .font(.system(.body, design: .serif))
-                                .foregroundColor(det.text.isEmpty ? .secondary : .primary)
+                                Text(det.text.isEmpty ? "---" : det.text)
+                                    .font(.system(.body, design: .serif))
+                                    .foregroundColor(det.text.isEmpty ? .secondary : .primary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    selectedIndex = selectedIndex == index ? nil : index
+                                }
+                            }
+                            .onLongPressGesture {
+                                startEditing(index)
+                            }
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel(Text("\(index + 1): \(det.text)"))
+                            .accessibilityAddTraits(.isButton)
+                            .accessibilityAction(named: Text("edit_text")) {
+                                startEditing(index)
+                            }
+
+                            Button {
+                                startEditing(index)
+                            } label: {
+                                Image(systemName: "pencil")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.secondary)
+                                    .frame(width: 36, height: 36)
+                            }
+                            .buttonStyle(.borderless)
+                            .accessibilityLabel(Text("edit_text"))
+                            .accessibilityIdentifier("edit_detection_\(index)")
                         }
                         .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, 4)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(
                             RoundedRectangle(cornerRadius: 6)
                                 .fill(isSelected ? color.opacity(0.2) : Color.clear)
                         )
                         .id(index)
-                        .onTapGesture {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                selectedIndex = selectedIndex == index ? nil : index
-                            }
-                        }
-                        .onLongPressGesture {
-                            editingIndex = index
-                            editText = det.text
-                        }
-                        .accessibilityLabel(Text("\(index + 1): \(det.text)"))
-                        .accessibilityHint(Text("edit_text"))
                     }
                 }
                 .padding(.horizontal, 8)

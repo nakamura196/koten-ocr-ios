@@ -4,10 +4,11 @@ struct HistoryListView: View {
     @ObservedObject var historyManager = HistoryManager.shared
     @Environment(\.dismiss) private var dismiss
     @State private var showDeleteAllConfirm = false
+    @State private var itemToDelete: HistoryItem?
     var onSelect: (HistoryItem) -> Void
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Group {
                 if historyManager.items.isEmpty {
                     VStack(spacing: 16) {
@@ -21,66 +22,57 @@ struct HistoryListView: View {
                 } else {
                     List {
                         ForEach(historyManager.items) { item in
-                            Button {
-                                onSelect(item)
-                                dismiss()
-                            } label: {
-                                HStack(spacing: 12) {
-                                    if let uiImage = loadThumbnail(for: item) {
-                                        Image(uiImage: uiImage)
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(width: 56, height: 56)
-                                            .cornerRadius(8)
-                                            .clipped()
-                                    } else {
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(Color.secondary.opacity(0.2))
-                                            .frame(width: 56, height: 56)
-                                            .overlay {
-                                                Image(systemName: "doc.text")
-                                                    .foregroundColor(.secondary)
-                                            }
-                                    }
+                            HStack(spacing: 8) {
+                                Button {
+                                    onSelect(item)
+                                    dismiss()
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        HistoryThumbnailView(item: item)
 
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(item.text.prefix(50).replacingOccurrences(of: "\n", with: " "))
-                                            .font(.subheadline)
-                                            .lineLimit(2)
-                                        Text(item.date, style: .date)
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                        HStack(spacing: 6) {
-                                            Text("\(item.detections.count) " + String(localized: "history_regions", defaultValue: "regions"))
-                                                .font(.caption2)
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(item.text.prefix(50).replacingOccurrences(of: "\n", with: " "))
+                                                .font(.subheadline)
+                                                .lineLimit(2)
+                                                .multilineTextAlignment(.leading)
+                                            Text(item.date, style: .date)
+                                                .font(.caption)
                                                 .foregroundColor(.secondary)
-                                            if item.translatedText != nil {
-                                                Text(String(localized: "history_translated_badge", defaultValue: "翻訳済"))
+                                            HStack(spacing: 6) {
+                                                Text("\(item.detections.count) " + String(localized: "history_regions", defaultValue: "regions"))
                                                     .font(.caption2)
-                                                    .foregroundColor(.blue)
-                                                    .padding(.horizontal, 4)
-                                                    .padding(.vertical, 1)
-                                                    .background(Color.blue.opacity(0.1))
-                                                    .cornerRadius(3)
+                                                    .foregroundColor(.secondary)
+                                                if item.translatedText != nil {
+                                                    Text(String(localized: "history_translated_badge", defaultValue: "翻訳済"))
+                                                        .font(.caption2)
+                                                        .foregroundColor(.blue)
+                                                        .padding(.horizontal, 4)
+                                                        .padding(.vertical, 1)
+                                                        .background(Color.blue.opacity(0.1))
+                                                        .cornerRadius(3)
+                                                }
                                             }
                                         }
-                                    }
 
-                                    Spacer()
-
-                                    Button(role: .destructive) {
-                                        historyManager.delete(item: item)
-                                    } label: {
-                                        Image(systemName: "trash")
-                                            .font(.caption)
-                                            .foregroundColor(.red)
+                                        Spacer()
                                     }
-                                    .buttonStyle(.borderless)
-                                    .accessibilityLabel(Text("history_delete_item"))
+                                    .contentShape(Rectangle())
                                 }
-                                .padding(.vertical, 4)
+                                .buttonStyle(.plain)
+                                .accessibilityLabel(Text(Self.accessibilityLabel(for: item)))
+
+                                Button {
+                                    itemToDelete = item
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .font(.caption)
+                                        .foregroundColor(.red)
+                                        .frame(width: 36, height: 36)
+                                }
+                                .buttonStyle(.borderless)
+                                .accessibilityLabel(Text("history_delete_item"))
                             }
-                            .accessibilityLabel(Text("history_item_label"))
+                            .padding(.vertical, 4)
                         }
                         .onDelete { indexSet in
                             for index in indexSet {
@@ -90,6 +82,7 @@ struct HistoryListView: View {
                     }
                 }
             }
+            .accessibilityIdentifier("history_list")
             .navigationTitle(String(localized: "history_title", defaultValue: "履歴"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -112,6 +105,17 @@ struct HistoryListView: View {
                 }
             }
         }
+        .confirmationDialog(
+            String(localized: "history_delete_item_title", defaultValue: "この履歴を削除しますか？"),
+            isPresented: Binding(get: { itemToDelete != nil }, set: { if !$0 { itemToDelete = nil } }),
+            titleVisibility: .visible
+        ) {
+            Button(String(localized: "history_delete_item", defaultValue: "削除"), role: .destructive) {
+                if let item = itemToDelete { historyManager.delete(item: item) }
+                itemToDelete = nil
+            }
+            Button(String(localized: "cancel", defaultValue: "Cancel"), role: .cancel) { itemToDelete = nil }
+        }
         .alert(String(localized: "history_delete_all_title", defaultValue: "Delete All History"),
                isPresented: $showDeleteAllConfirm) {
             Button(String(localized: "history_delete_all", defaultValue: "Delete All"), role: .destructive) {
@@ -123,9 +127,42 @@ struct HistoryListView: View {
         }
     }
 
-    private func loadThumbnail(for item: HistoryItem) -> UIImage? {
-        guard let data = try? Data(contentsOf: item.imagePath),
-              let image = UIImage(data: data) else { return nil }
-        return image
+    /// "<date>, <first line of text>" so VoiceOver users can tell rows apart.
+    static func accessibilityLabel(for item: HistoryItem, locale: Locale = .current) -> String {
+        let date = item.date.formatted(.dateTime.year().month().day().hour().minute().locale(locale))
+        let firstLine = item.text.split(whereSeparator: \.isNewline).first.map { String($0.prefix(50)) } ?? ""
+        let base = String(localized: "history_item_label", defaultValue: "スキャン結果")
+        return [base, date, firstLine].filter { !$0.isEmpty }.joined(separator: ", ")
+    }
+}
+
+/// Loads the downsampled thumbnail off the main thread.
+private struct HistoryThumbnailView: View {
+    let item: HistoryItem
+    @State private var image: UIImage?
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 56, height: 56)
+                    .cornerRadius(8)
+                    .clipped()
+            } else {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.secondary.opacity(0.2))
+                    .frame(width: 56, height: 56)
+                    .overlay {
+                        Image(systemName: "doc.text")
+                            .foregroundColor(.secondary)
+                    }
+            }
+        }
+        .accessibilityHidden(true)
+        .task(id: item.id) {
+            image = await HistoryManager.shared.thumbnail(for: item)
+        }
     }
 }

@@ -242,12 +242,15 @@ struct ContentView: View {
             if let img = preCropImage {
                 CropView(
                     image: img,
-                    onCrop: { cropped in
+                    onCrop: { cropped, source in
+                        // Keep any rotation done in the crop screen for "Re-crop"
+                        preCropImage = source
                         croppedPreview = cropped
                         appState = .confirmCrop
                     },
-                    onSkip: {
-                        croppedPreview = img
+                    onSkip: { displayed in
+                        preCropImage = displayed
+                        croppedPreview = displayed
                         appState = .confirmCrop
                     },
                     onCancel: {
@@ -391,7 +394,12 @@ struct ContentView: View {
                 try await ocrEngine.switchMode(to: mode)
             } catch {
                 await MainActor.run {
-                    self.errorMessage = error.localizedDescription
+                    // Drop any image left over from an earlier scan so it is not shown next to the error
+                    self.capturedImage = nil
+                    self.ocrResult = nil
+                    self.editableDetections = []
+                    self.currentHistoryItemID = nil
+                    self.errorMessage = Self.userFacingMessage(for: error, modelLoading: true)
                     self.appState = .result
                 }
                 return
@@ -472,7 +480,9 @@ struct ContentView: View {
             .padding()
             .background(Color(.systemBackground).opacity(0.8))
 
-            if let image = capturedImage {
+            if let error = errorMessage {
+                errorPanel(error)
+            } else if let image = capturedImage {
                 ResultOverlayView(
                     image: image,
                     detections: $editableDetections,
@@ -482,14 +492,34 @@ struct ContentView: View {
                     onOpenSettings: { showSettings = true }
                 )
             }
-
-            if let error = errorMessage {
-                Text(error)
-                    .foregroundColor(.red)
-                    .font(.caption)
-                    .padding()
-            }
         }
+    }
+
+    private func errorPanel(_ message: String) -> some View {
+        VStack(spacing: 16) {
+            Spacer()
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 44))
+                .foregroundColor(.orange)
+                .accessibilityHidden(true)
+            Text(message)
+                .font(.body)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+                .accessibilityIdentifier("ocr_error_message")
+            Button(action: resetToCamera) {
+                Text(String(localized: "ocr_error_retake", defaultValue: "撮り直す"))
+                    .font(.headline)
+                    .foregroundColor(Color(.systemBackground))
+                    .padding(.horizontal, 32)
+                    .padding(.vertical, 12)
+                    .background(Color.primary)
+                    .cornerRadius(10)
+            }
+            .accessibilityIdentifier("retake_button")
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Actions
@@ -519,6 +549,7 @@ struct ContentView: View {
         appState = .processing
         errorMessage = nil
         cameFromHistory = false
+        currentHistoryItemID = nil
 
         processingTask = Task {
             do {
@@ -536,12 +567,11 @@ struct ContentView: View {
                     self.appState = .result
 
                     // Auto-save to history
-                    HistoryManager.shared.save(
+                    self.currentHistoryItemID = HistoryManager.shared.save(
                         image: cgImage,
                         detections: result.detections,
                         text: result.text
                     )
-                    self.currentHistoryItemID = HistoryManager.shared.items.first?.id
 
                     // Request review after 3rd and 10th successful OCR
                     self.ocrSuccessCount += 1
@@ -555,11 +585,20 @@ struct ContentView: View {
                 }
             } catch {
                 await MainActor.run {
-                    self.errorMessage = error.localizedDescription
+                    self.errorMessage = Self.userFacingMessage(for: error, modelLoading: false)
                     self.appState = .result
                 }
             }
         }
+    }
+
+    /// OCR errors are English developer strings. Show a localized, readable message instead.
+    private static func userFacingMessage(for error: Error, modelLoading: Bool) -> String {
+        print("OCR error: \(error)")
+        if modelLoading {
+            return String(localized: "ocr_error_model", defaultValue: "文字認識の準備に失敗しました。アプリを再起動してもう一度お試しください。")
+        }
+        return String(localized: "ocr_error_generic", defaultValue: "文字を読み取れませんでした。画像を撮り直してもう一度お試しください。")
     }
 
     private func retrimImage() {
