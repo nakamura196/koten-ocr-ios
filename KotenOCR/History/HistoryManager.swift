@@ -24,7 +24,7 @@ class HistoryManager: ObservableObject {
     let directory: URL
 
     /// Serial queue for all disk writes, so a delete can never race a pending save.
-    private let ioQueue = DispatchQueue(label: "com.nakamura196.kotenocr.history-io", qos: .utility)
+    private let ioQueue = DispatchQueue(label: "com.nakamura196.kotenocr.history-io", qos: .userInitiated)
 
     private convenience init() {
         self.init(directory: Self.historyDirectory)
@@ -75,15 +75,23 @@ class HistoryManager: ObservableObject {
         let imagePath = imageURL(for: item)
         let thumbPath = thumbnailURL(for: item)
         let jsonPath = jsonURL(for: id)
+        // Ask iOS for a little extra time so the files are complete if the user leaves the app right
+        // after a scan. (A swipe-away kill cannot be intercepted; there the entry is simply not saved.)
+        let bgTask = UIApplication.shared.beginBackgroundTask(withName: "history-save")
         ioQueue.async {
+            // Order matters: the JSON record goes last, so a record never points at a missing image.
+            // Atomic writes (temp file + rename) mean a kill mid-write cannot leave a half-written file.
             if let data = UIImage(cgImage: image).jpegData(compressionQuality: 0.8) {
-                try? data.write(to: imagePath)
+                try? data.write(to: imagePath, options: .atomic)
                 if let thumb = Self.makeThumbnailJPEG(from: data) {
-                    try? thumb.write(to: thumbPath)
+                    try? thumb.write(to: thumbPath, options: .atomic)
                 }
             }
             if let data = try? JSONEncoder().encode(item) {
-                try? data.write(to: jsonPath)
+                try? data.write(to: jsonPath, options: .atomic)
+            }
+            if bgTask != .invalid {
+                DispatchQueue.main.async { UIApplication.shared.endBackgroundTask(bgTask) }
             }
         }
         return id
@@ -133,7 +141,7 @@ class HistoryManager: ObservableObject {
         let jsonPath = jsonURL(for: item.id)
         ioQueue.async {
             if let data = try? JSONEncoder().encode(item) {
-                try? data.write(to: jsonPath)
+                try? data.write(to: jsonPath, options: .atomic)
             }
         }
     }
@@ -196,7 +204,7 @@ class HistoryManager: ObservableObject {
                     cont.resume(returning: nil)
                     return
                 }
-                try? data.write(to: thumbPath)
+                try? data.write(to: thumbPath, options: .atomic)
                 cont.resume(returning: UIImage(data: data))
             }
         }

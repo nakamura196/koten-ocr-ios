@@ -111,4 +111,25 @@ final class HistoryManagerTests: XCTestCase {
         XCTAssertFalse(label.contains("第二行"))
         XCTAssertTrue(label.contains("2024"))
     }
+
+    /// Simulates quitting after a scan: once the queued writes are done, a fresh manager
+    /// (app relaunch) sees the item and its image decodes. No temp files are left behind.
+    func testSavedItemSurvivesRelaunchWithReadableImage() throws {
+        let id = manager.save(image: makeImage(), detections: [det("一")], text: "一")
+        manager.flush()
+
+        let relaunched = HistoryManager(directory: dir)
+        let item = try XCTUnwrap(relaunched.items.first { $0.id == id })
+        let data = try Data(contentsOf: relaunched.imageURL(for: item))
+        XCTAssertNotNil(UIImage(data: data))
+        let names = try FileManager.default.contentsOfDirectory(atPath: dir.path)
+        XCTAssertEqual(names.count, 3, "json + image + thumbnail only: \(names)")
+    }
+
+    /// An image without its JSON record (killed before the record was written) must not crash loading.
+    func testOrphanImageWithoutRecordIsIgnored() throws {
+        try Data([0xFF, 0xD8, 0xFF]).write(to: dir.appendingPathComponent("\(UUID().uuidString).jpg"))
+        let relaunched = HistoryManager(directory: dir)
+        XCTAssertTrue(relaunched.items.isEmpty)
+    }
 }
