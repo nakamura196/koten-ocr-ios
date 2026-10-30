@@ -60,4 +60,33 @@ final class NavigationFlowTests: XCTestCase {
         XCTAssertTrue(app.buttons["home_button"].waitForExistence(timeout: 10))
         XCTAssertFalse(coach.waitForExistence(timeout: 2), "hint should not show a second time")
     }
+
+    /// Settings can replay the first-launch introduction, and "Start" closes it again.
+    func testIntroductionReplaysFromSettings() throws {
+        app.launchArguments += coachMarksShown
+        app.launch()
+        let settings = app.buttons["settings_button"]
+        XCTAssertTrue(settings.waitForExistence(timeout: 120))
+        settings.tap()
+
+        let replay = app.buttons["settings_show_onboarding"]
+        XCTAssertTrue(replay.waitForExistence(timeout: 10))
+        replay.tap()
+
+        let next = app.buttons["onboarding_next_button"]
+        XCTAssertTrue(next.waitForExistence(timeout: 10), "introduction should open")
+        // The first page's button fades in after the short intro animation.
+        let hittable = NSPredicate(format: "isHittable == true")
+        expectation(for: hittable, evaluatedWith: next)
+        waitForExpectations(timeout: 10)
+        next.tap()
+        XCTAssertTrue(next.waitForExistence(timeout: 5))
+        next.tap()
+
+        let start = app.buttons["onboarding_start_button"]
+        XCTAssertTrue(start.waitForExistence(timeout: 5))
+        start.tap()
+        XCTAssertTrue(start.waitForNonExistence(timeout: 5), "Start should close the introduction")
+        XCTAssertTrue(replay.waitForExistence(timeout: 5), "should be back in Settings")
+    }
 }

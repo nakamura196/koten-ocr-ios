@@ -204,6 +204,7 @@
 "history_empty_title" = "No scans yet";
 "history_empty_body" = "Documents you read will be kept here.";
 "onboarding_next" = "Next";
+"settings_show_onboarding" = "View Introduction Again";
 "settings_show_tips_again" = "Show Tips Again";
 "settings_tips_footer" = "Shows the one-time hints on the shutter button and the crop corner again.";
 "ocr_finished_announcement" = "Reading finished";

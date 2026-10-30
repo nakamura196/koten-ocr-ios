@@ -10,6 +10,7 @@ struct SettingsView: View {
     @AppStorage(Deskew.settingsKey) private var autoDeskew = true
     @State private var showRestartAlert = false
     @State private var tipsReset = false
+    @State private var showOnboarding = false
     @State private var cameraStatus: AVAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)
 
     private var appVersion: String {
@@ -66,6 +67,20 @@ struct SettingsView: View {
 
     private var tipsSection: some View {
         Section(footer: Text("settings_tips_footer")) {
+            Button {
+                showOnboarding = true
+            } label: {
+                Text("settings_show_onboarding")
+            }
+            .accessibilityIdentifier("settings_show_onboarding")
+            .fullScreenCover(isPresented: $showOnboarding) {
+                // Replays the first-launch introduction; "Start" just closes it.
+                OnboardingView(hasCompletedOnboarding: Binding(
+                    get: { !showOnboarding },
+                    set: { if $0 { showOnboarding = false } }
+                ))
+            }
+
             Button {
                 CoachMark.resetAll()
                 tipsReset = true

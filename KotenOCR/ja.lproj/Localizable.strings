@@ -204,6 +204,7 @@
 "history_empty_title" = "まだ記録はありません";
 "history_empty_body" = "読み取った資料はここに残ります。";
 "onboarding_next" = "次へ";
+"settings_show_onboarding" = "使い方をもう一度見る";
 "settings_show_tips_again" = "操作のヒントをもう一度表示";
 "settings_tips_footer" = "撮影ボタンと範囲の角に、初回だけ出る吹き出しをもう一度表示します。";
 "ocr_finished_announcement" = "読み取りが完了しました";
