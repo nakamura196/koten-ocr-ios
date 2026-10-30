@@ -30,3 +30,5 @@ analytics/
 
 # ONNX models (download via setup.sh)
 KotenOCR/Models/*.onnx
+eval/tilt/data/
+eval/tilt/results/*.hyp.jsonl
