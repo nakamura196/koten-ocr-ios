@@ -103,3 +103,9 @@ This project is released under the [MIT License](LICENSE).
 
 ### 依存ライブラリ / Dependencies
 - **ONNX Runtime** — [MIT License](https://github.com/microsoft/onnxruntime/blob/main/LICENSE) (Microsoft)
+
+### アイコンのフォント・画像 / Icon fonts and images
+- アプリアイコンの「典」は **Noto Serif JP**、背景の仮名は **Yuji Syuku** を使い、画像に変換して収録しています。どちらも [SIL Open Font License 1.1](https://openfontlicense.org)。フォントファイル自体はアプリに含みません（生成手順: `scripts/render_app_icon.py`）。
+  The 典 in the app icon uses **Noto Serif JP** and the background kana use **Yuji Syuku**, both under the [SIL Open Font License 1.1](https://openfontlicense.org). They are rendered into the icon images; the font files are not shipped (see `scripts/render_app_icon.py`).
+- 初回説明の写本画像は、東京大学総合図書館所蔵『源氏物語』の画像（テスト用サンプルと同じもの）を切り出したものです。
+  The manuscript image in the first-run introduction is a crop of the Tale of Genji page from the University of Tokyo General Library used as the test sample.

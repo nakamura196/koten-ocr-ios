@@ -13,6 +13,14 @@
 - VoiceOver: 履歴行に日付と先頭の文を追加、結果画面にテキスト編集ボタンを追加、拡大リセットにラベルを追加 / Accessibility: history rows include date and first line, visible edit button for recognized text, label for the reset-zoom button
 - 書き出しファイル名に日時を付与（例: KotenOCR_20261029_2154.txt） / Export file names now include date and time
 - 不足していたローカライズ文字列と権限説明（InfoPlist.strings）を追加 / Added missing localized strings and localized permission descriptions
+- デザインを一新：文書と読み取った文字は和紙の色・明朝体・朱で表示し、操作ボタンは iOS 26 の Liquid Glass（iOS 16〜25 では白と朱の板）に / New design: documents and recognized text use washi paper colours, Mincho type and vermilion (朱) accents; controls use Liquid Glass on iOS 26 and solid white / 朱 plates on iOS 16–25
+- アプリアイコンを和紙・墨・朱の配色に変更（ダーク・色付きアイコンにも対応） / App icon recoloured to washi, ink and 朱, with dark and tinted variants
+- ホームに「最近の読み取り」を最大3件表示。押すとその結果を開く / Home shows up to three recent scans; tap one to open it
+- 読み取り中に朱の光が進み具合に合わせて動き、見つかった行が読む順に現れる。完了時に朱印を押す動きと触覚 / While reading, a vermilion beam follows the progress and found lines appear in reading order; a seal stamp and haptic mark completion
+- 初回の説明に、写本に朱の枠が描かれて文字が浮かぶ短い動きを追加。撮影ボタンと範囲の角に一度だけの吹き出し（設定から再表示可） / First-run introduction animation on a manuscript page; one-time hints on the shutter and the crop corner (can be shown again from Settings)
+- 履歴が空のときの絵、文字が見つからなかったときのコツ、カメラが使えないときの案内画面を追加 / Added an empty-history illustration, tips when no text is found, and a camera-unavailable screen
+- 範囲選択の後は「古典籍／近代」を選んで「読み取る」を押す形に変更。コピーは右下のボタンから、完了は上に短く表示 / After cropping, choose Classical or Modern and tap Read; Copy is a floating button with a short “Copied” toast
+- 「視差効果を減らす」設定では動きをフェードに置き換え。文字の大きさ設定（アクセシビリティサイズを含む）に合わせて配置を調整 / Reduce Motion replaces movement with cross-fades; layouts adapt to Dynamic Type including accessibility sizes
 
 ## 1.3.2 (2026-03-24)
 
