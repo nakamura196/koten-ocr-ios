@@ -495,7 +495,10 @@ struct ContentView: View {
         processingTask = Task {
             do {
                 let result = try await ocrEngine.process(image: cgImage)
+                // Boxes refer to the (possibly deskewed) image OCR ran on
+                let processedImage = result.image ?? cgImage
                 await MainActor.run {
+                    self.capturedImage = processedImage
                     self.ocrResult = result
                     self.editableDetections = result.detections
                     // Inject dummy translation for screenshot automation
@@ -509,7 +512,7 @@ struct ContentView: View {
 
                     // Auto-save to history
                     HistoryManager.shared.save(
-                        image: cgImage,
+                        image: processedImage,
                         detections: result.detections,
                         text: result.text
                     )

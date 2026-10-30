@@ -25,6 +25,7 @@
 		543D92C50A84D38DCFC78C4E /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0C02138D36BD4637583CC4 /* OnboardingView.swift */; };
 		5611919E371D5CA2CC2675B8 /* PARSEQRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C71D29B2E05CAE6C27D498 /* PARSEQRecognizer.swift */; };
 		59FE9F6100B0045A383CA90C /* ResultOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B4379D31980B50B6E4167FC /* ResultOverlayView.swift */; };
+		5C3585476060A8BF727F38D2 /* Deskew.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCA570CF941C051863852D96 /* Deskew.swift */; };
 		5F971906D31580A0E45441BA /* OCRPerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC5416D90C0C61B387A7EA3 /* OCRPerformanceTests.swift */; };
 		65E8D11410FF385A0964FB27 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34EEFFD47152BA87642516F1 /* KeychainHelper.swift */; };
 		728E5483FE3AADF2413203FA /* ExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A229657613D69582B3F74B4D /* ExportManager.swift */; };
@@ -34,6 +35,7 @@
 		A187818DBBEBE23B4E72ECAA /* UIImage+Orientation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 247E98FA5B2F2413221FD51D /* UIImage+Orientation.swift */; };
 		A3AC83B11BD87194218B7E04 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 042CA1185DB0ADB541DECC16 /* AppTheme.swift */; };
 		A812012515F81DD1710B8FF8 /* ReadingOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33E0D72EA37B2FC8AEAAB9C3 /* ReadingOrder.swift */; };
+		A837047A0506557D5318480E /* DeskewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B09C946B5776D24214D069B /* DeskewTests.swift */; };
 		B08FDACE53C363DD87842F4E /* DetectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91ECD227D650332CC3FA89B7 /* DetectionTests.swift */; };
 		B6268A1DEF5C02AC116B13D9 /* onnxruntime in Frameworks */ = {isa = PBXBuildFile; productRef = CEBA04EDE9D84A4D05C1D2FC /* onnxruntime */; };
 		B774EF502B536678D39CBC6D /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6CFDE78282D74C1F90DD69F /* SettingsView.swift */; };
@@ -93,6 +95,7 @@
 		7D5CD36F65D4B7D385BBCA9C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		82EE586A4C199D4AD67ED1AE /* HistoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryManager.swift; sourceTree = "<group>"; };
 		878990E0E6B16FF96510AED7 /* PARSEQRecognizerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PARSEQRecognizerTests.swift; sourceTree = "<group>"; };
+		8B09C946B5776D24214D069B /* DeskewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeskewTests.swift; sourceTree = "<group>"; };
 		9044A5844F791981ECF958E8 /* HistoryItemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryItemTests.swift; sourceTree = "<group>"; };
 		91ECD227D650332CC3FA89B7 /* DetectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetectionTests.swift; sourceTree = "<group>"; };
 		9A139A6962601902EBDFB6DD /* HistoryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryListView.swift; sourceTree = "<group>"; };
@@ -103,6 +106,7 @@
 		B89DD48A8B561A9D52076309 /* DEIMDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DEIMDetector.swift; sourceTree = "<group>"; };
 		BA814C03E81A0F5068CB0AB1 /* TranslationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationService.swift; sourceTree = "<group>"; };
 		BAC5416D90C0C61B387A7EA3 /* OCRPerformanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRPerformanceTests.swift; sourceTree = "<group>"; };
+		BCA570CF941C051863852D96 /* Deskew.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deskew.swift; sourceTree = "<group>"; };
 		CB2B82B10DC4DA4582D96186 /* KotenOCRUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = KotenOCRUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CBDF15C34D6661310197B75E /* Models */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Models; path = KotenOCR/Models; sourceTree = SOURCE_ROOT; };
 		D02D5F325A2BFEFF88F7A6EA /* ScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotTests.swift; sourceTree = "<group>"; };
@@ -158,6 +162,7 @@
 		31AB1326BC6C9A97C1A15933 /* KotenOCRTests */ = {
 			isa = PBXGroup;
 			children = (
+				8B09C946B5776D24214D069B /* DeskewTests.swift */,
 				91ECD227D650332CC3FA89B7 /* DetectionTests.swift */,
 				0CAD2DC2969703CFCAA54EA1 /* ExportManagerTests.swift */,
 				9044A5844F791981ECF958E8 /* HistoryItemTests.swift */,
@@ -183,6 +188,7 @@
 			children = (
 				2F947C41CFADDC63593FEB47 /* CascadePARSEQRecognizer.swift */,
 				B89DD48A8B561A9D52076309 /* DEIMDetector.swift */,
+				BCA570CF941C051863852D96 /* Deskew.swift */,
 				B375ECB40C38D777102F59BC /* OCREngine.swift */,
 				D9DAC4DF520D46A2BB54757A /* OCRMode.swift */,
 				E1C71D29B2E05CAE6C27D498 /* PARSEQRecognizer.swift */,
@@ -425,6 +431,7 @@
 				309188DFD1D2448CEE895A92 /* ContentView.swift in Sources */,
 				75B2863EC2D302ACE062A056 /* CropView.swift in Sources */,
 				D0406D8EA89C3A5C31270431 /* DEIMDetector.swift in Sources */,
+				5C3585476060A8BF727F38D2 /* Deskew.swift in Sources */,
 				728E5483FE3AADF2413203FA /* ExportManager.swift in Sources */,
 				1E257D31C55F486C70B827A7 /* HistoryItem.swift in Sources */,
 				D6709D356E1F7B2EB7FFB166 /* HistoryListView.swift in Sources */,
@@ -452,6 +459,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A837047A0506557D5318480E /* DeskewTests.swift in Sources */,
 				B08FDACE53C363DD87842F4E /* DetectionTests.swift in Sources */,
 				08940BF57F1C78A284A499E9 /* ExportManagerTests.swift in Sources */,
 				22D3F53C8527D84E9F5DB888 /* HistoryItemTests.swift in Sources */,

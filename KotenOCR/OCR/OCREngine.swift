@@ -15,6 +15,9 @@ enum OCREngineState: Equatable {
 struct OCRResult {
     let detections: [Detection]
     let text: String
+    /// The image OCR actually ran on (deskewed if auto-deskew rotated it). Box coordinates refer to
+    /// this image, so it must be the one displayed, saved to history and exported.
+    var image: CGImage? = nil
 }
 
 class OCREngine: ObservableObject {
@@ -246,12 +249,25 @@ class OCREngine: ObservableObject {
     func process(image: CGImage) async throws -> OCRResult {
         let mode = currentMode
 
+        // Step 0: small-angle deskew (before detection, so boxes follow the text lines)
+        var input = image
+        if Deskew.isEnabled {
+            let orientation: Deskew.TextOrientation = mode == .koten ? .vertical : .auto
+            input = await Task.detached(priority: .userInitiated) {
+                Deskew.deskew(image, orientation: orientation).image
+            }.value
+            try Task.checkCancellation()
+        }
+
+        var result: OCRResult
         switch mode {
         case .koten:
-            return try await processKoten(image: image)
+            result = try await processKoten(image: input)
         case .ndl:
-            return try await processNDL(image: image)
+            result = try await processNDL(image: input)
         }
+        result.image = input
+        return result
     }
 
     private func processKoten(image: CGImage) async throws -> OCRResult {

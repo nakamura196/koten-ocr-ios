@@ -151,6 +151,7 @@
 "onboarding_camera_granted" = "Camera access is authorized";
 "onboarding_camera_denied" = "Camera access is not authorized";
 "settings_save_to_library" = "Save to Photo Library";
+"settings_auto_deskew" = "Auto-correct tilt";
 
 /* OCR Engine */
 "settings_ocr_engine" = "OCR Engine";
