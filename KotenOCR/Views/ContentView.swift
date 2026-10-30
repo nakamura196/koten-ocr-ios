@@ -325,9 +325,8 @@ struct ContentView: View {
                         .font(.headline)
                     Spacer()
                     Button(action: {
-                        croppedPreview = nil
-                        preCropImage = nil
-                        appState = .camera
+                        // Also drops the earlier result kept for "Back" (it holds the deskewed page)
+                        resetToCamera()
                     }) {
                         Text(String(localized: "cancel", defaultValue: "Cancel"))
                             .foregroundColor(.secondary)
@@ -566,7 +565,10 @@ struct ContentView: View {
     }
 
     private func showCropping(_ cgImage: CGImage, fromCamera: Bool = false) {
-        preCropImage = cgImage
+        // A new page starts: drop every image of the previous one first, so two full-size pages
+        // are never held at once (the "crashes on the 2nd image" report).
+        releasePreviousPage()
+        preCropImage = ImageIntake.limit(cgImage)
         appState = .cropping
 
         // Save original capture to photo library if enabled (only for camera captures)
@@ -585,7 +587,27 @@ struct ContentView: View {
         }
     }
 
+    /// Releases the images and results of the page shown before (OCR result, deskewed image,
+    /// crop preview, any unfinished run).
+    private func releasePreviousPage() {
+        processingTask?.cancel()
+        processingTask = nil
+        capturedImage = nil
+        ocrResult = nil
+        editableDetections = []
+        selectedDetectionIndex = nil
+        errorMessage = nil
+        translatedText = nil
+        currentHistoryItemID = nil
+        cameFromHistory = false
+        croppedPreview = nil
+        preCropImage = nil
+    }
+
     private func processImage(_ cgImage: CGImage) {
+        processingTask?.cancel()
+        ocrResult = nil
+        editableDetections = []
         capturedImage = cgImage
         appState = .processing
         errorMessage = nil
@@ -598,6 +620,8 @@ struct ContentView: View {
                 // Boxes refer to the (possibly deskewed) image OCR ran on
                 let processedImage = result.image ?? cgImage
                 await MainActor.run {
+                    // A cancelled run (Cancel, or a newer page) must not overwrite the current screen.
+                    guard !Task.isCancelled else { return }
                     self.capturedImage = processedImage
                     self.ocrResult = result
                     self.editableDetections = result.detections
@@ -624,11 +648,10 @@ struct ContentView: View {
                     }
                 }
             } catch is CancellationError {
-                await MainActor.run {
-                    self.appState = .camera
-                }
+                // Whoever cancelled (Cancel button, new page) has already set the screen.
             } catch {
                 await MainActor.run {
+                    guard !Task.isCancelled else { return }
                     self.errorMessage = Self.userFacingMessage(for: error, modelLoading: false)
                     self.appState = .result
                 }
@@ -659,6 +682,9 @@ struct ContentView: View {
     private func cancelProcessing() {
         processingTask?.cancel()
         processingTask = nil
+        capturedImage = nil
+        ocrResult = nil
+        editableDetections = []
         appState = .camera
     }
 
@@ -666,9 +692,10 @@ struct ContentView: View {
         guard let item = item else { return }
         selectedPhotoItem = nil
         Task {
+            // Decode straight to ≤ ImageIntake.maxLongSide px: library photos from recent iPhones
+            // are 24 or 48 MP.
             if let data = try? await item.loadTransferable(type: Data.self),
-               let uiImage = UIImage(data: data),
-               let cgImage = uiImage.normalizedCGImage {
+               let cgImage = ImageIntake.decode(data) {
                 await MainActor.run { showCropping(cgImage) }
             }
         }
@@ -703,8 +730,7 @@ struct ContentView: View {
         testImageLoadCount = 1
 
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: testImagePath)),
-              let uiImage = UIImage(data: data),
-              let cgImage = uiImage.normalizedCGImage else { return }
+              let cgImage = ImageIntake.decode(data) else { return }
 
         if ProcessInfo.processInfo.environment["TEST_SHOW_CROP"] == "YES" {
             showCropping(cgImage)
@@ -723,8 +749,7 @@ struct ContentView: View {
         testImageLoadCount = 2
 
         guard let data = try? Data(contentsOf: URL(fileURLWithPath: secondPath)),
-              let uiImage = UIImage(data: data),
-              let cgImage = uiImage.normalizedCGImage else { return }
+              let cgImage = ImageIntake.decode(data) else { return }
 
         showCropping(cgImage)
     }
