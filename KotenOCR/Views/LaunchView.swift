@@ -1,10 +1,9 @@
 import SwiftUI
 
 /// Launch → home (storyboard a). Washi appears, the 典 seal is pressed (1.25 → 1.0, light
-/// haptic), the name rises, a short pause, then the seal and name move into the home header
-/// (matched geometry with HomeView). Later launches skip the press and take about 0.5 s.
+/// haptic), the name rises, a short pause, then the screen cross-fades to home, where the
+/// header settles in first. Later launches skip the press and take about 0.5 s.
 struct LaunchView: View {
-    let namespace: Namespace.ID
     /// Play the full stamp sequence (first launch only).
     let fullStamp: Bool
     /// Show a spinner when the models are still loading after the animation.
@@ -21,14 +20,12 @@ struct LaunchView: View {
             KotenSeal(size: 120, rotation: -3)
                 .scaleEffect(stage >= 1 ? 1 : 1.25)
                 .opacity(stage >= 1 ? 1 : 0)
-                .matchedGeometryEffect(id: "brandSeal", in: namespace, properties: .position)
             Text("KotenOCR")
                 .font(.mincho(34, relativeTo: .largeTitle, bold: true))
                 .tracking(2)
                 .foregroundColor(KotenColor.ink)
                 .opacity(stage >= 2 ? 1 : 0)
                 .offset(y: stage >= 2 || reduceMotion ? 0 : 8)
-                .matchedGeometryEffect(id: "brandName", in: namespace, properties: .position)
                 .padding(.top, 28)
             Text("brand_tagline")
                 .font(.mincho(17, relativeTo: .body))

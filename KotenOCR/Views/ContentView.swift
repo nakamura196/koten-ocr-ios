@@ -46,7 +46,6 @@ struct ContentView: View {
     @State private var selectedOCRMode: OCRMode = .koten
     @State private var cameraAuth: AVAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)
     @State private var showShutterCoach = false
-    @Namespace private var brandNamespace
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @AppStorage("appTheme") private var appThemeRaw: String = AppTheme.system.rawValue
     @AppStorage("saveToLibrary") private var saveToLibrary = false
@@ -81,15 +80,19 @@ struct ContentView: View {
             WashiBackground()
 
             if !hasCompletedOnboarding {
-                LaunchView(namespace: brandNamespace, fullStamp: false, showsProgress: false, onFinished: {})
+                LaunchView(fullStamp: false, showsProgress: false, onFinished: {})
             } else if case .error(let msg) = ocrEngine.state {
                 errorView(msg)
             } else if !isEngineReady || (!launchAnimationDone && appState == .home) {
-                LaunchView(namespace: brandNamespace, fullStamp: !hasSeenLaunchStamp,
+                LaunchView(fullStamp: !hasSeenLaunchStamp,
                            showsProgress: !isEngineReady) {
                     hasSeenLaunchStamp = true
                     launchAnimationDone = true
                 }
+                // Kept above home (whose washi is opaque) so the fade is seen. The seal recedes
+                // slightly as it fades, so it reads as settling into the header.
+                .zIndex(1)
+                .transition(reduceMotion ? .opacity : .opacity.combined(with: .scale(scale: 0.94)))
             } else {
                 mainContent
                     .onAppear { loadTestImageIfNeeded() }
@@ -100,7 +103,8 @@ struct ContentView: View {
                     }
             }
         }
-        .animation(KotenMotion.spring(0.45, reduceMotion: reduceMotion), value: launchAnimationDone)
+        // Launch → home is a plain cross-fade; HomeView then settles its header and cards in.
+        .animation(.easeInOut(duration: reduceMotion ? 0.25 : 0.4), value: launchAnimationDone)
         .animation(.easeOut(duration: 0.3), value: isEngineReady)
         .preferredColorScheme(appTheme.colorScheme)
         .fullScreenCover(isPresented: Binding(
@@ -160,8 +164,7 @@ struct ContentView: View {
                     onCamera: { appState = .camera },
                     onHistory: { showHistory = true },
                     onSettings: { showSettings = true },
-                    onOpenHistoryItem: { item in loadHistoryItem(item) },
-                    brandNamespace: brandNamespace
+                    onOpenHistoryItem: { item in loadHistoryItem(item) }
                 )
                 .transition(.opacity)
             case .camera:
