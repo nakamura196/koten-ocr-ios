@@ -4,6 +4,15 @@
 
 - 起動時にホーム画面を表示（撮影する／写真から選ぶ／履歴／設定）。いきなりカメラが開かないように変更 / Added a home (start) screen on launch with Take Photo, Choose from Photos, History and Settings, instead of opening straight into the camera
 - カメラ画面にホームへ戻るボタンを追加 / Added a Home button on the camera screen
+- 翻訳が別の履歴に保存されることがある不具合を修正 / Fixed translations sometimes being saved to the wrong history item
+- 結果画面で編集したテキストが履歴に保存されない不具合を修正 / Fixed manual text edits not being saved to history
+- 回転後に「スキップ」すると回転が失われる不具合、切り抜き枠の移動が加速する不具合を修正 / Fixed rotation being lost on Skip in the crop screen, and the crop box accelerating while dragged
+- カメラの撮影ボタンの二重タップ防止、撮影失敗時のエラー表示、カメラ未許可時の案内と設定ボタンを追加 / Camera: prevent double capture, show an error when capture fails, and show guidance with an Open Settings button when access is denied
+- OCRエラーを日本語/英語のわかりやすい文言と「撮り直す」ボタンで表示 / OCR errors now show a readable localized message with a Retake button
+- 履歴一覧をサムネイル化して高速化。削除前に確認を表示 / Faster history list using small thumbnails; added delete confirmation
+- VoiceOver: 履歴行に日付と先頭の文を追加、結果画面にテキスト編集ボタンを追加、拡大リセットにラベルを追加 / Accessibility: history rows include date and first line, visible edit button for recognized text, label for the reset-zoom button
+- 書き出しファイル名に日時を付与（例: KotenOCR_20261029_2154.txt） / Export file names now include date and time
+- 不足していたローカライズ文字列と権限説明（InfoPlist.strings）を追加 / Added missing localized strings and localized permission descriptions
 
 ## 1.3.2 (2026-03-24)
 

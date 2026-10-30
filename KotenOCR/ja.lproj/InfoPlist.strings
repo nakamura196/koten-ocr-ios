@@ -1,0 +1,3 @@
+"NSCameraUsageDescription" = "古典籍の文字を認識するため、撮影にカメラを使用します。";
+"NSPhotoLibraryAddUsageDescription" = "撮影した画像をフォトライブラリに保存するために使用します。";
+"NSPhotoLibraryUsageDescription" = "文字認識する画像をフォトライブラリから選ぶために使用します。";

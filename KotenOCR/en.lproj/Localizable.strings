@@ -164,3 +164,15 @@
 "home_choose_photo" = "Choose from Photos";
 "home_how_to" = "Capture → Select area → Read text";
 "home_button" = "Home";
+
+/* Fixes: history, errors, camera permission */
+"history_delete_item" = "Delete this item";
+"history_delete_item_title" = "Delete this history item?";
+"settings_provider" = "Translation Provider";
+"tipjar_unavailable" = "Products are currently unavailable.";
+"ocr_error_model" = "Failed to prepare text recognition. Please restart the app and try again.";
+"ocr_error_generic" = "Could not read the text. Please retake the image and try again.";
+"ocr_error_retake" = "Retake";
+"camera_permission_denied" = "Camera access is not allowed. Please allow camera access in Settings. You can also choose an image from your photo library.";
+"camera_capture_failed" = "Capture failed. Please try again.";
+"crop_reset_zoom" = "Reset zoom";

@@ -164,3 +164,15 @@
 "home_choose_photo" = "写真から選ぶ";
 "home_how_to" = "撮影 → 範囲を選ぶ → 文字を読み取り";
 "home_button" = "ホーム";
+
+/* Fixes: history, errors, camera permission */
+"history_delete_item" = "この履歴を削除";
+"history_delete_item_title" = "この履歴を削除しますか？";
+"settings_provider" = "翻訳プロバイダー";
+"tipjar_unavailable" = "現在、商品を取得できません。";
+"ocr_error_model" = "文字認識の準備に失敗しました。アプリを再起動してもう一度お試しください。";
+"ocr_error_generic" = "文字を読み取れませんでした。画像を撮り直してもう一度お試しください。";
+"ocr_error_retake" = "撮り直す";
+"camera_permission_denied" = "カメラが許可されていません。設定アプリでカメラへのアクセスを許可してください。写真ライブラリから画像を選ぶこともできます。";
+"camera_capture_failed" = "撮影に失敗しました。もう一度お試しください。";
+"crop_reset_zoom" = "拡大をリセット";

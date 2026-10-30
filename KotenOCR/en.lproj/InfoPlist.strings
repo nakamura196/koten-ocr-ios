@@ -1,0 +1,3 @@
+"NSCameraUsageDescription" = "Camera access is needed to capture images for OCR text recognition.";
+"NSPhotoLibraryAddUsageDescription" = "Photo library access is needed to save captured images.";
+"NSPhotoLibraryUsageDescription" = "Photo library access is needed to select images for OCR text recognition.";
