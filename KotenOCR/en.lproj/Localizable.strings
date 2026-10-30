@@ -151,6 +151,7 @@
 "onboarding_camera_granted" = "Camera access is authorized";
 "onboarding_camera_denied" = "Camera access is not authorized";
 "settings_save_to_library" = "Save to Photo Library";
+"settings_auto_deskew" = "Auto-correct tilt";
 
 /* OCR Engine */
 "settings_ocr_engine" = "OCR Engine";
@@ -207,3 +208,9 @@
 "settings_tips_footer" = "Shows the one-time hints on the shutter button and the crop corner again.";
 "ocr_finished_announcement" = "Reading finished";
 "onboarding_heading" = "Read kuzushiji,\nright where you are";
+"scan_document" = "Scan document";
+"tilt_hint" = "Hold the phone parallel to the page";
+"tilt_try_scanner" = "Try Scan document";
+"settings_show_tilt_guide" = "Show tilt guide";
+"crop_mode_rect" = "Rectangle";
+"crop_mode_quad" = "4 corners";

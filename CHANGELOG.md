@@ -13,6 +13,13 @@
 - VoiceOver: 履歴行に日付と先頭の文を追加、結果画面にテキスト編集ボタンを追加、拡大リセットにラベルを追加 / Accessibility: history rows include date and first line, visible edit button for recognized text, label for the reset-zoom button
 - 書き出しファイル名に日時を付与（例: KotenOCR_20261029_2154.txt） / Export file names now include date and time
 - 不足していたローカライズ文字列と権限説明（InfoPlist.strings）を追加 / Added missing localized strings and localized permission descriptions
+- カメラ画面に「書類スキャン」を追加（VisionKit）。ページの端を自動検出し、斜めに撮っても補正。最後に使った方式を次回も使用 / Added Scan document on the camera screen (VisionKit): detects page edges and corrects perspective; remembers the last used capture mode
+- カメラに傾きガイドを追加（水平器と「資料と平行に構えてください」）。設定でオフにできます / Added a tilt guide on the camera (level indicator and a "hold parallel" hint), switchable in Settings
+- 切り抜き画面に4点補正モードを追加。四隅を個別に動かして台形ゆがみを補正 / Added a four-corner crop mode that corrects keystone distortion
+- 撮影した資料の小さな傾き（±10°以内）を自動で補正してから行を検出するように。傾いたページで枠が隣の行と重なり、隣の行の文字が混ざる問題を軽減 / Automatic small-angle deskew (within ±10°) before line detection, reducing overlapping boxes and text leaking from adjacent lines on tilted pages
+- 設定に「傾きを自動補正」を追加（既定ON） / Added "Auto-correct tilt" setting (on by default)
+- OCR結果・履歴・書き出しの画像は、補正後の（OCRを実行した）画像に統一 / Result, history and export now use the deskewed image that OCR actually ran on
+- 古典籍モードで、斜めから撮ったページの行ごとの傾きに対応。傾いた行は行に沿って切り出して読むため、隣の行の文字が混ざりにくい。同じ行を二重に検出した場合の重複行と、「□□□□」だけの行も表示しない / Classical mode now handles lines that lean by different amounts (pages shot at an angle): leaning lines are read from crops that follow the line, so neighbouring text no longer leaks in. Duplicate lines from detecting the same column twice, and lines that read only as "□□□□", are dropped
 - デザインを一新：文書と読み取った文字は和紙の色・明朝体・朱で表示し、操作ボタンは iOS 26 の Liquid Glass（iOS 16〜25 では白と朱の板）に / New design: documents and recognized text use washi paper colours, Mincho type and vermilion (朱) accents; controls use Liquid Glass on iOS 26 and solid white / 朱 plates on iOS 16–25
 - アプリアイコンを和紙・墨・朱の配色に変更（ダーク・色付きアイコンにも対応） / App icon recoloured to washi, ink and 朱, with dark and tinted variants
 - ホームに「最近の読み取り」を最大3件表示。押すとその結果を開く / Home shows up to three recent scans; tap one to open it

@@ -29,6 +29,8 @@ struct ContentView: View {
     @State private var translatedText: String?
     @State private var cameFromHistory = false
     @State private var preCropImage: CGImage?
+    @State private var showScanner = false
+    @State private var tiltHintShowing = false
     @State private var croppedPreview: CGImage?
     @State private var cropSessionID = UUID()
     @State private var testImageLoadCount = 0
@@ -191,6 +193,7 @@ struct ContentView: View {
     private var cameraView: some View {
         ZStack {
             CameraView(onCapture: { cgImage in
+                CaptureMode.camera.save()
                 showCropping(cgImage, fromCamera: true)
             })
             .ignoresSafeArea()
@@ -232,15 +235,24 @@ struct ContentView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
 
-                Text("camera_frame_hint")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .kotenGlass(.onCamera, in: Capsule())
-                    .padding(.horizontal, 40)
-                    .allowsHitTesting(false)
+                // Level guide above; the frame hint gives way while the tilt hint is shown.
+                if !showScanner {
+                    LevelGuideView(onTryScanner: DocumentScannerView.isSupported ? { openScanner() } : nil,
+                                   isHintShowing: $tiltHintShowing)
+                }
+
+                if !tiltHintShowing {
+                    Text("camera_frame_hint")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .kotenGlass(.onCamera, in: Capsule())
+                        .padding(.horizontal, 40)
+                        .allowsHitTesting(false)
+                        .transition(.opacity)
+                }
 
                 Spacer()
 
@@ -253,12 +265,21 @@ struct ContentView: View {
                     .accessibilityIdentifier("gallery_button")
                     .accessibilityLabel(Text("gallery_button"))
                     Spacer()
+
+                    if DocumentScannerView.isSupported {
+                        Button(action: openScanner) {
+                            KotenIconLabel(systemName: "doc.viewfinder", size: 56)
+                        }
+                        .buttonStyle(.kotenCameraCircle)
+                        .accessibilityIdentifier("scan_document_button")
+                        .accessibilityLabel(Text(String(localized: "scan_document", defaultValue: "書類スキャン")))
+                    }
                 }
                 .padding(.horizontal, 30)
                 .padding(.bottom, 37)
             }
 
-            if showShutterCoach && !cameraDenied {
+            if showShutterCoach && !cameraDenied && !showScanner {
                 ZStack(alignment: .bottom) {
                     Color.black.opacity(0.35).ignoresSafeArea()
                     CoachBubble(text: String(localized: "coach_shutter", defaultValue: "ここを押して撮影"), pointer: .down)
@@ -282,18 +303,42 @@ struct ContentView: View {
         .onAppear {
             cameraAuth = AVCaptureDevice.authorizationStatus(for: .video)
             if cameraDenied { KotenHaptics.notify(.warning) }
-            if !CoachMark.shutter.isShown && !isAutomatedRun {
-                withAnimation(.easeOut(duration: 0.3).delay(0.5)) { showShutterCoach = true }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 6) { dismissShutterCoach() }
+            if CaptureMode.load() == .scan && DocumentScannerView.isSupported && !cameraDenied {
+                // The scanner opens by itself; the shutter hint waits until the camera is really shown.
+                openScanner()
+            } else {
+                startShutterCoachIfNeeded()
             }
         }
         .onDisappear { dismissShutterCoach() }
+        .animation(.easeInOut(duration: 0.15), value: tiltHintShowing)
+        .fullScreenCover(isPresented: $showScanner) {
+            DocumentScannerView(
+                onScan: { cg in
+                    showScanner = false
+                    CaptureMode.scan.save()
+                    showCropping(cg, fromCamera: true)
+                },
+                onCancel: {
+                    showScanner = false
+                    CaptureMode.camera.save()
+                    startShutterCoachIfNeeded()
+                }
+            )
+            .ignoresSafeArea()
+        }
     }
 
     /// Screenshot/demo automation loads images itself; hints would cover the screenshots.
     private var isAutomatedRun: Bool {
         if let path = ProcessInfo.processInfo.environment["TEST_IMAGE_PATH"], !path.isEmpty { return true }
         return false
+    }
+
+    private func startShutterCoachIfNeeded() {
+        guard !CoachMark.shutter.isShown, !isAutomatedRun, !showScanner, !cameraDenied else { return }
+        withAnimation(.easeOut(duration: 0.3).delay(0.5)) { showShutterCoach = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 6) { dismissShutterCoach() }
     }
 
     private func dismissShutterCoach() {
@@ -662,6 +707,11 @@ struct ContentView: View {
 
     // MARK: - Actions
 
+    private func openScanner() {
+        CaptureMode.scan.save()
+        showScanner = true
+    }
+
     private func showCropping(_ cgImage: CGImage, fromCamera: Bool = false) {
         preCropImage = cgImage
         appState = .cropping
@@ -698,7 +748,10 @@ struct ContentView: View {
         processingTask = Task {
             do {
                 let result = try await ocrEngine.process(image: cgImage)
+                // Boxes refer to the (possibly deskewed) image OCR ran on
+                let processedImage = result.image ?? cgImage
                 await MainActor.run {
+                    self.capturedImage = processedImage
                     self.ocrResult = result
                     self.editableDetections = result.detections
                     // Inject dummy translation for screenshot automation
@@ -712,7 +765,7 @@ struct ContentView: View {
 
                     // Auto-save to history
                     self.currentHistoryItemID = HistoryManager.shared.save(
-                        image: cgImage,
+                        image: processedImage,
                         detections: result.detections,
                         text: result.text
                     )

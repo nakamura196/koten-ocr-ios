@@ -151,6 +151,7 @@
 "onboarding_camera_granted" = "カメラは許可済みです";
 "onboarding_camera_denied" = "カメラが許可されていません";
 "settings_save_to_library" = "フォトライブラリに保存";
+"settings_auto_deskew" = "傾きを自動補正";
 
 /* OCR Engine */
 "settings_ocr_engine" = "OCRエンジン";
@@ -207,3 +208,9 @@
 "settings_tips_footer" = "撮影ボタンと範囲の角に、初回だけ出る吹き出しをもう一度表示します。";
 "ocr_finished_announcement" = "読み取りが完了しました";
 "onboarding_heading" = "くずし字を、\nその場で読む";
+"scan_document" = "書類スキャン";
+"tilt_hint" = "資料と平行に構えてください";
+"tilt_try_scanner" = "書類スキャンも使えます";
+"settings_show_tilt_guide" = "傾きの案内を表示";
+"crop_mode_rect" = "矩形";
+"crop_mode_quad" = "4点補正";
