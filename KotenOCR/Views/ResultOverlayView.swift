@@ -745,10 +745,11 @@ struct ResultOverlayView: View {
 }
 
 /// Places line-number tags at the start of their lines, just outside the box: above a
-/// vertical line, left of a horizontal one. A tag is never wider than its line, so tags of
+/// vertical line, left of a horizontal one. A tag is first sized to its line's width, so tags of
 /// neighbouring lines stay apart however crowded the page is; on a dense page they are small
-/// until the reader zooms in (tags zoom with the image). When there is no room before the
-/// image edge the tag goes inside the start of its box.
+/// until the reader zooms in (tags zoom with the image). A tag much smaller than the page's
+/// typical one (a thin side note) is then grown where it covers no other box or tag. When there
+/// is no room before the image edge the tag goes inside the start of its box.
 enum LineTagLayout {
     /// Clear space between a tag and its box. Not shrunk with small tags: the tag's rim and the
     /// box line would otherwise close it (two-digit tags, shrunk most, looked stuck to the box).
@@ -772,21 +773,52 @@ enum LineTagLayout {
     static func frames(for rects: [CGRect], in bounds: CGRect? = nil) -> [CGRect] {
         let area = bounds ?? CGRect(x: 0, y: 0, width: CGFloat.greatestFiniteMagnitude,
                                     height: CGFloat.greatestFiniteMagnitude)
-        return rects.enumerated().map { index, rect in
+        var tags = rects.enumerated().map { index, rect in
             let regular = regularSize(for: index + 1)
             let vertical = rect.height >= rect.width
             let scale = min(1, vertical ? rect.width / regular.width : rect.height / regular.height)
-            let size = CGSize(width: regular.width * scale, height: regular.height * scale)
-            let outside = vertical
-                ? CGRect(x: rect.midX - size.width / 2, y: rect.minY - gap - size.height,
-                         width: size.width, height: size.height)
-                : CGRect(x: rect.minX - gap - size.width, y: rect.midY - size.height / 2,
-                         width: size.width, height: size.height)
-            if area.contains(outside) { return outside }
-            return vertical
-                ? CGRect(x: rect.midX - size.width / 2, y: rect.minY + gap, width: size.width, height: size.height)
-                : CGRect(x: rect.minX + gap, y: rect.midY - size.height / 2, width: size.width, height: size.height)
+            return place(CGSize(width: regular.width * scale, height: regular.height * scale), at: rect, in: area)
         }
+        // A thin line among regular ones (a side note, 傍書) would get a tag far smaller than its
+        // neighbours'. Grow it toward the page's typical tag height, as far as it stays clear of
+        // the other boxes and tags.
+        let heights = tags.map(\.height).sorted()
+        guard !heights.isEmpty else { return tags }
+        let typical = heights[heights.count / 2]
+        for (index, rect) in rects.enumerated() where tags[index].height < typical - 0.001 {
+            let regular = regularSize(for: index + 1)
+            let natural = tags[index].height
+            for step in 0..<4 {
+                let height = typical - (typical - natural) * CGFloat(step) / 4
+                let size = CGSize(width: regular.width * height / regular.height, height: height)
+                let tag = place(size, at: rect, in: area)
+                // Half the box gap of clear space, so a grown tag never squeezes up against a neighbour.
+                let room = tag.insetBy(dx: -gap / 2, dy: -gap / 2)
+                let blocked = rects.indices.contains { other in
+                    other != index && (rects[other].intersects(room) || tags[other].intersects(room))
+                }
+                // Only outside the box: a larger tag inside it would hide more of the first characters.
+                if !blocked && !tag.intersects(rect) {
+                    tags[index] = tag
+                    break
+                }
+            }
+        }
+        return tags
+    }
+
+    /// Outside the start of the line, or inside it when there is no room before the image edge.
+    private static func place(_ size: CGSize, at rect: CGRect, in area: CGRect) -> CGRect {
+        let vertical = rect.height >= rect.width
+        let outside = vertical
+            ? CGRect(x: rect.midX - size.width / 2, y: rect.minY - gap - size.height,
+                     width: size.width, height: size.height)
+            : CGRect(x: rect.minX - gap - size.width, y: rect.midY - size.height / 2,
+                     width: size.width, height: size.height)
+        if area.contains(outside) { return outside }
+        return vertical
+            ? CGRect(x: rect.midX - size.width / 2, y: rect.minY + gap, width: size.width, height: size.height)
+            : CGRect(x: rect.minX + gap, y: rect.midY - size.height / 2, width: size.width, height: size.height)
     }
 }
 

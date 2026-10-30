@@ -55,6 +55,31 @@ final class LineTagLayoutTests: XCTestCase {
         }
     }
 
+    /// A thin side note (傍書) between regular columns: its tag grows to the page's typical size
+    /// where there is room, and still covers no box or other tag.
+    func testThinSideNoteTagGrowsToTheTypicalSize() {
+        let columns = (0..<5).map { CGRect(x: 320 - CGFloat($0) * 50, y: 40, width: 20, height: 220) }
+        let note = CGRect(x: 297, y: 80, width: 4, height: 60)   // between the first two columns, starting lower
+        let boxes = columns + [note]
+        let tags = LineTagLayout.frames(for: boxes, in: page)
+        XCTAssertEqual(tags[5].height, tags[0].height, accuracy: 0.001)
+        XCTAssertEqual(tags[5].midX, note.midX, accuracy: 0.001)
+        XCTAssertLessThanOrEqual(tags[5].maxY, note.minY - LineTagLayout.gap + 0.001)
+        for (i, box) in boxes.enumerated() { XCTAssertFalse(tags[5].intersects(box), "covers box \(i + 1)") }
+        for i in 0..<5 { XCTAssertFalse(tags[5].intersects(tags[i]), "overlaps tag \(i + 1)") }
+    }
+
+    /// A side note squeezed against a column keeps a tag no wider than the gap allows.
+    func testSideNoteTagStaysSmallWithoutRoom() {
+        let column = CGRect(x: 100, y: 40, width: 20, height: 220)
+        let other = CGRect(x: 160, y: 40, width: 20, height: 220)
+        let note = CGRect(x: 121, y: 48, width: 4, height: 60)   // touching the column, a larger tag would cover it
+        let tags = LineTagLayout.frames(for: [column, other, note], in: page)
+        XCTAssertFalse(tags[2].intersects(column))
+        XCTAssertFalse(tags[2].intersects(tags[0]))
+        XCTAssertLessThan(tags[2].height, tags[0].height)
+    }
+
     func testFallsBackInsideWhenNoRoomAtTheTop() {
         let box = CGRect(x: 100, y: 2, width: 30, height: 200)
         let tag = LineTagLayout.frames(for: [box], in: page)[0]
