@@ -78,6 +78,7 @@
 		BCEC5A7E7C54907F9F6DEAB0 /* TipJarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43761597E39AC3C62D31C9E8 /* TipJarView.swift */; };
 		C1A47D6ABC8BC5A2AD8D09B0 /* PaperBenchmarkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E941BE5BEF425A74DC6413C4 /* PaperBenchmarkTests.swift */; };
 		C35820BC207DFDAD0AAC7247 /* ImageIntake.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F6E663C280D8B9D21DAE8FD /* ImageIntake.swift */; };
+		C4688F740EC9B2DAF87E19CF /* KeychainHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E61F0541B384E1124CF9D5B4 /* KeychainHelperTests.swift */; };
 		C97FE648011FCF06DC82597D /* NavigationFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ADB3679F99034CCC9249D7C /* NavigationFlowTests.swift */; };
 		CF7FAC4E24F0D9377DC130D5 /* BoxEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F15DC60E1FA911EEFE9AD65 /* BoxEditor.swift */; };
 		D0406D8EA89C3A5C31270431 /* DEIMDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = B89DD48A8B561A9D52076309 /* DEIMDetector.swift */; };
@@ -209,6 +210,7 @@
 		D9DAC4DF520D46A2BB54757A /* OCRMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OCRMode.swift; sourceTree = "<group>"; };
 		E1C71D29B2E05CAE6C27D498 /* PARSEQRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PARSEQRecognizer.swift; sourceTree = "<group>"; };
 		E42BA653965C493A22A7F003 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
+		E61F0541B384E1124CF9D5B4 /* KeychainHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelperTests.swift; sourceTree = "<group>"; };
 		E76B178531D6D825116DCAF9 /* NDLHeadingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NDLHeadingTests.swift; sourceTree = "<group>"; };
 		E941BE5BEF425A74DC6413C4 /* PaperBenchmarkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaperBenchmarkTests.swift; sourceTree = "<group>"; };
 		EDD7D7F5C2FE6F1C56B3425B /* sample_genji.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = sample_genji.jpg; sourceTree = "<group>"; };
@@ -283,6 +285,7 @@
 				9044A5844F791981ECF958E8 /* HistoryItemTests.swift */,
 				53AD4224B5B9AD280E6B6DE6 /* HistoryManagerTests.swift */,
 				31F29F950762E427492F0AF7 /* ImageIntakeTests.swift */,
+				E61F0541B384E1124CF9D5B4 /* KeychainHelperTests.swift */,
 				B926F18909672A7653976A00 /* LineTagLayoutTests.swift */,
 				17AB23FE438535D6DAC09DF7 /* LineTiltTests.swift */,
 				5C19025035C6716112C60F3A /* MemoryRegressionTests.swift */,
@@ -674,6 +677,7 @@
 				22D3F53C8527D84E9F5DB888 /* HistoryItemTests.swift in Sources */,
 				3EF09F4EDC579CD57A457779 /* HistoryManagerTests.swift in Sources */,
 				DE0917FFBE2E21FD78E1AEED /* ImageIntakeTests.swift in Sources */,
+				C4688F740EC9B2DAF87E19CF /* KeychainHelperTests.swift in Sources */,
 				F11585C40AD540374CA8FF02 /* LineTagLayoutTests.swift in Sources */,
 				379CC8FB141AB82E3BF69EEB /* LineTiltTests.swift in Sources */,
 				5EA0A8C7741681A73FCFF203 /* MemoryRegressionTests.swift in Sources */,
