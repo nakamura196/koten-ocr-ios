@@ -41,6 +41,16 @@ final class BoxEditorTests: XCTestCase {
         XCTAssertEqual(e.detections.map(\.text), ["あ", "い", "う"])
     }
 
+    /// The result header's "N 行" follows `items.count` while editing.
+    func testItemCountTracksEdits() {
+        var e = makeEditor()
+        XCTAssertEqual(e.items.count, 3)
+        e.delete(0)
+        XCTAssertEqual(e.items.count, 2)
+        e.undo()
+        XCTAssertEqual(e.items.count, 3)
+    }
+
     func testAddSelectsNewBoxAndRejectsTinyOnes() {
         var e = makeEditor()
         XCTAssertNil(e.add(CGRect(x: 10, y: 10, width: 5, height: 5)))

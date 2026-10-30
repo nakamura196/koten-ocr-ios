@@ -9,6 +9,8 @@ struct ResultOverlayView: View {
     var onOpenSettings: (() -> Void)?
     /// Set by ContentView when the result comes straight from a scan: the 朱 stamp is pressed once.
     var playCompletionStamp: Binding<Bool> = .constant(false)
+    /// While editing boxes, the current number of lines (nil when not editing). Lets the header count follow edits.
+    var editingLineCount: Binding<Int?> = .constant(nil)
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var ocrEngine: OCREngine
     @StateObject private var edit = BoxEditModel()
@@ -336,6 +338,9 @@ struct ResultOverlayView: View {
             }
         }
         .onAppear(perform: playStampIfNeeded)
+        .onChange(of: edit.editor?.items.count) { newValue in
+            editingLineCount.wrappedValue = newValue
+        }
         .onChange(of: edit.editor?.selected) { newValue in
             if edit.isActive, selectedIndex != newValue { selectedIndex = newValue }
         }

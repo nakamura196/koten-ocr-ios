@@ -19,6 +19,7 @@ struct ContentView: View {
     @State private var capturedImage: CGImage?
     @State private var ocrResult: OCRResult?
     @State private var editableDetections: [Detection] = []
+    @State private var editingLineCount: Int?
     @State private var errorMessage: String?
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var selectedDetectionIndex: Int?
@@ -600,7 +601,7 @@ struct ContentView: View {
             }
             .overlay {
                 if errorMessage == nil && !editableDetections.isEmpty && !typeSize.isAccessibilitySize {
-                    Text(String(format: String(localized: "lines_count_format", defaultValue: "%d 行"), editableDetections.count))
+                    Text(String(format: String(localized: "lines_count_format", defaultValue: "%d 行"), editingLineCount ?? editableDetections.count))
                         .font(.mincho(18, relativeTo: .headline, bold: true))
                         .foregroundColor(KotenColor.ink)
                         .accessibilityAddTraits(.isHeader)
@@ -622,7 +623,8 @@ struct ContentView: View {
                     historyItemID: currentHistoryItemID,
                     translatedText: $translatedText,
                     onOpenSettings: { showSettings = true },
-                    playCompletionStamp: $playCompletionStamp
+                    playCompletionStamp: $playCompletionStamp,
+                    editingLineCount: $editingLineCount
                 )
             }
         }
