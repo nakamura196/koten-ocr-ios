@@ -180,7 +180,7 @@
 
 /* Hybrid design (washi + glass) */
 "brand_tagline" = "Read kuzushiji, right where you are";
-"home_take_photo_sub" = "Photograph a document";
+"home_take_photo_sub" = "Photograph a book or document";
 "home_recent" = "Recent scans";
 "lines_count_format" = "%d lines";
 "camera_frame_hint" = "Fit the whole page inside the frame";

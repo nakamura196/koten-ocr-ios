@@ -180,7 +180,7 @@
 
 /* Hybrid design (washi + glass) */
 "brand_tagline" = "くずし字を、その場で読む";
-"home_take_photo_sub" = "古文書をカメラで撮る";
+"home_take_photo_sub" = "本や文書をカメラで撮る";
 "home_recent" = "最近の読み取り";
 "lines_count_format" = "%d 行";
 "camera_frame_hint" = "ページ全体を枠に入れてください";

@@ -545,9 +545,13 @@ struct CropView: View {
                                  width: cropRect.width / imageFrame.width,
                                  height: cropRect.height / imageFrame.height))
         let img = displayImage
+        let seeded = quad
         DispatchQueue.global(qos: .userInitiated).async {
             guard let found = PerspectiveCrop.detectPage(in: img) else { return }
-            DispatchQueue.main.async { if isQuadMode, displayImage === img { quad = found } }
+            DispatchQueue.main.async {
+                guard isQuadMode, displayImage === img else { return }
+                quad = PerspectiveCrop.adoptDetected(found, current: quad, seeded: seeded)
+            }
         }
     }
 

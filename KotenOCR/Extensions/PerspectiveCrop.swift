@@ -109,6 +109,13 @@ enum PerspectiveCrop {
         return ctx.makeImage() ?? corrected
     }
 
+    /// The page found in the background replaces the corners only while they are still the ones it
+    /// started from. Detection on a large photo can finish after the reader has dragged a corner;
+    /// overwriting then threw their adjustment away, and the crop did not match what they set.
+    static func adoptDetected(_ found: Quad, current: Quad, seeded: Quad) -> Quad {
+        current == seeded ? found : current
+    }
+
     /// Looks for a page-like rectangle. Returns a normalized quad (top-left origin) or nil.
     static func detectPage(in image: CGImage, minimumConfidence: Float = 0.7) -> Quad? {
         let request = VNDetectRectanglesRequest()

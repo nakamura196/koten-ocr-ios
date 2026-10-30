@@ -222,7 +222,9 @@ class OCREngine: ObservableObject {
         let detector = try DEIMDetector(
             env: env, modelPath: detModelPath, configPath: configPath,
             scoreThreshold: 0.2, confThreshold: 0.25,
-            iouThreshold: 0.2, maxDetections: 100
+            // The official NDLOCR-Lite keeps every detection; 100 (lines and blocks together)
+            // dropped lines on dense pages such as newspapers.
+            iouThreshold: 0.2, maxDetections: 1000
         )
         DispatchQueue.main.async { self.progress = 0.5 }
 
@@ -268,7 +270,7 @@ class OCREngine: ObservableObject {
     private struct Config {
         var scoreThreshold: Float = 0.3
         var nmsThreshold: Float = 0.4
-        var maxDetections: Int = 100
+        var maxDetections: Int = 1000
         var verticalMode: Bool = true
     }
 

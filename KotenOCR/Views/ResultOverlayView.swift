@@ -64,26 +64,34 @@ struct ResultOverlayView: View {
                             }
 
                             if showBoxes && !edit.isActive {
+                                // Divided by the zoom so lines keep their on-screen thickness when zoomed.
+                                let lineWidth = LineTagLayout.boxLineWidth(for: rects) / zoom
                                 ForEach(Array(rects.enumerated()), id: \.offset) { index, rect in
                                     let isSelected = selectedIndex == index
                                     let color = boxColor(for: index)
                                     Rectangle()
-                                        .stroke(color, lineWidth: isSelected ? 3 : 1.5)
+                                        .stroke(color, lineWidth: isSelected ? lineWidth * 2 : lineWidth)
                                         .background(color.opacity(isSelected ? 0.3 : 0.08))
                                         .frame(width: rect.width, height: rect.height)
                                         .position(x: rect.midX, y: rect.midY)
                                 }
-                                // Numbers sit outside the boxes so they never hide the first characters.
-                                ForEach(Array(LineTagLayout.centers(for: rects).enumerated()), id: \.offset) { index, center in
+                                // Numbers sit at the start of each line, outside the box, so they never hide the first characters.
+                                let tagBounds = CGRect(origin: .zero, size: geometry.size)
+                                // Tags of crowded lines may touch: a thin white rim keeps them apart and they let
+                                // the page show through a little; the selected line's tag is solid and on top.
+                                ForEach(Array(LineTagLayout.frames(for: rects, in: tagBounds).enumerated()), id: \.offset) { index, tag in
+                                    let isSelected = selectedIndex == index
                                     Text("\(index + 1)")
-                                        .font(.system(size: 9, weight: .bold))
+                                        .font(.system(size: tag.height * 0.75, weight: .bold))
                                         .monospacedDigit()
                                         .foregroundColor(.white)
-                                        .frame(width: LineTagLayout.size(for: index + 1).width,
-                                               height: LineTagLayout.size(for: index + 1).height)
+                                        .frame(width: tag.width, height: tag.height)
                                         .background(Capsule().fill(KotenColor.shuFill))
+                                        .overlay(Capsule().stroke(Color.white, lineWidth: max(0.5, tag.height / 16)))
+                                        .opacity(isSelected ? 1 : 0.85)
                                         .fixedSize()
-                                        .position(center)
+                                        .position(x: tag.midX, y: tag.midY)
+                                        .zIndex(isSelected ? 1 : 0)
                                 }
                             }
                         }
@@ -736,46 +744,49 @@ struct ResultOverlayView: View {
     }
 }
 
-/// Places line-number tags just outside their boxes: above a vertical line, left of a
-/// horizontal one. Tags that would collide with an earlier tag step further out; when
-/// there is no room before the image edge the tag goes back inside the box.
+/// Places line-number tags at the start of their lines, just outside the box: above a
+/// vertical line, left of a horizontal one. A tag is never wider than its line, so tags of
+/// neighbouring lines stay apart however crowded the page is; on a dense page they are small
+/// until the reader zooms in (tags zoom with the image). When there is no room before the
+/// image edge the tag goes inside the start of its box.
 enum LineTagLayout {
-    static let gap: CGFloat = 1.5
-    private static let maxSteps = 3
+    /// Clear space between a tag and its box. Not shrunk with small tags: the tag's rim and the
+    /// box line would otherwise close it (two-digit tags, shrunk most, looked stuck to the box).
+    static let gap: CGFloat = 3
+    /// Regular tag height; the font is three quarters of the tag height.
+    static let regularHeight: CGFloat = 12
 
-    static func size(for number: Int) -> CGSize {
-        let digits = String(number).count
-        return CGSize(width: CGFloat(8 + 5 * digits), height: 12)
+    static func regularSize(for number: Int) -> CGSize {
+        CGSize(width: CGFloat(8 + 5 * String(number).count), height: regularHeight)
     }
 
-    static func centers(for rects: [CGRect]) -> [CGPoint] {
-        var placed: [CGRect] = []
-        var centers: [CGPoint] = []
-        for (index, rect) in rects.enumerated() {
-            let size = size(for: index + 1)
+    /// Box outline width for a page: 8% of its typical line thickness (the median of the
+    /// boxes' short sides), between 0.5 and 1.5 pt. A fixed 1.5 pt took a quarter of a
+    /// 12 pt column.
+    static func boxLineWidth(for rects: [CGRect]) -> CGFloat {
+        let thickness = rects.map { min($0.width, $0.height) }.sorted()
+        guard !thickness.isEmpty else { return 1.5 }
+        return min(1.5, max(0.5, thickness[thickness.count / 2] * 0.08))
+    }
+
+    static func frames(for rects: [CGRect], in bounds: CGRect? = nil) -> [CGRect] {
+        let area = bounds ?? CGRect(x: 0, y: 0, width: CGFloat.greatestFiniteMagnitude,
+                                    height: CGFloat.greatestFiniteMagnitude)
+        return rects.enumerated().map { index, rect in
+            let regular = regularSize(for: index + 1)
             let vertical = rect.height >= rect.width
-            var tag: CGRect?
-            for step in 0..<maxSteps {
-                let outward = CGFloat(step) * (vertical ? size.height : size.width) + gap
-                let candidate = vertical
-                    ? CGRect(x: rect.midX - size.width / 2, y: rect.minY - outward - size.height,
-                             width: size.width, height: size.height)
-                    : CGRect(x: rect.minX - outward - size.width, y: rect.midY - size.height / 2,
-                             width: size.width, height: size.height)
-                if candidate.minX < 0 || candidate.minY < 0 { break }
-                if !placed.contains(where: { $0.intersects(candidate) }) {
-                    tag = candidate
-                    break
-                }
-            }
-            let chosen = tag ?? CGRect(
-                x: vertical ? rect.midX - size.width / 2 : rect.minX + gap,
-                y: vertical ? rect.minY + gap : rect.midY - size.height / 2,
-                width: size.width, height: size.height)
-            placed.append(chosen)
-            centers.append(CGPoint(x: chosen.midX, y: chosen.midY))
+            let scale = min(1, vertical ? rect.width / regular.width : rect.height / regular.height)
+            let size = CGSize(width: regular.width * scale, height: regular.height * scale)
+            let outside = vertical
+                ? CGRect(x: rect.midX - size.width / 2, y: rect.minY - gap - size.height,
+                         width: size.width, height: size.height)
+                : CGRect(x: rect.minX - gap - size.width, y: rect.midY - size.height / 2,
+                         width: size.width, height: size.height)
+            if area.contains(outside) { return outside }
+            return vertical
+                ? CGRect(x: rect.midX - size.width / 2, y: rect.minY + gap, width: size.width, height: size.height)
+                : CGRect(x: rect.minX + gap, y: rect.midY - size.height / 2, width: size.width, height: size.height)
         }
-        return centers
     }
 }
 

@@ -37,6 +37,15 @@ struct QuadCropOverlay: View {
         }
     }
 
+    private static func name(of key: WritableKeyPath<Quad, CGPoint>) -> String {
+        switch key {
+        case \Quad.topLeft: return "topLeft"
+        case \Quad.topRight: return "topRight"
+        case \Quad.bottomRight: return "bottomRight"
+        default: return "bottomLeft"
+        }
+    }
+
     private func handle(_ key: WritableKeyPath<Quad, CGPoint>, at pos: CGPoint) -> some View {
         // Same 朱 dot as the rectangle mode; 44pt touch target.
         Circle()
@@ -47,6 +56,7 @@ struct QuadCropOverlay: View {
             .frame(width: 44, height: 44)
             .contentShape(Circle())
             .position(pos)
+            .accessibilityIdentifier("quad_handle_\(Self.name(of: key))")
             .gesture(
                 DragGesture(coordinateSpace: .named(coordinateSpaceName))
                     .onChanged { value in
