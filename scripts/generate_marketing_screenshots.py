@@ -71,7 +71,7 @@ THEMES_EN = [
 ]
 
 # Priority order: which screenshot files to use (prefer result screen first)
-SCREENSHOT_PRIORITY = ["04_result", "05_translation", "06_settings", "02_crop", "03_confirm"]
+SCREENSHOT_PRIORITY = ["04_result", "05_translation", "02_home", "06_settings", "02_crop", "03_confirm"]
 
 
 def create_gradient(size, color_top, color_bottom):

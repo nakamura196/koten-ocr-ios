@@ -61,7 +61,8 @@ final class ScreenshotTests: XCTestCase {
         ).firstMatch
         let resultLoaded = backButton.waitForExistence(timeout: 300)
         XCTAssertTrue(resultLoaded, "OCR result should appear within 300s")
-        sleep(2)
+        // Let the 朱印 completion stamp finish before the shot.
+        sleep(5)
 
         // Screenshot: OCR result
         saveScreenshot(name: "04_result")
@@ -76,16 +77,32 @@ final class ScreenshotTests: XCTestCase {
             saveScreenshot(name: "05_translation")
         }
 
-        // Go back to camera
+        // Back goes to the confirm screen; Cancel from there returns to the camera.
         backButton.tap()
-        sleep(1)
+        let cancelButton = app.buttons.matching(
+            NSPredicate(format: "label == 'キャンセル' OR label == 'Cancel'")
+        ).firstMatch
+        if cancelButton.waitForExistence(timeout: 5) {
+            cancelButton.tap()
+            sleep(1)
+        }
 
         // Screenshot: Camera view
         saveScreenshot(name: "01_camera")
 
+        // Screenshot: Home (recent scans)
+        let homeButton = app.buttons.matching(
+            NSPredicate(format: "identifier == 'home_button'")
+        ).firstMatch
+        if homeButton.waitForExistence(timeout: 5) {
+            homeButton.tap()
+            sleep(2)
+            saveScreenshot(name: "02_home")
+        }
+
         // Screenshot: Settings
         let settingsButton = app.buttons.matching(
-            NSPredicate(format: "identifier == 'settings_button'")
+            NSPredicate(format: "identifier == 'home_settings_button' OR identifier == 'settings_button'")
         ).firstMatch
         if settingsButton.waitForExistence(timeout: 5) {
             settingsButton.tap()
