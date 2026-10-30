@@ -76,9 +76,7 @@ final class NavigationFlowTests: XCTestCase {
         let next = app.buttons["onboarding_next_button"]
         XCTAssertTrue(next.waitForExistence(timeout: 10), "introduction should open")
         // The first page's button fades in after the short intro animation.
-        let hittable = NSPredicate(format: "isHittable == true")
-        expectation(for: hittable, evaluatedWith: next)
-        waitForExpectations(timeout: 10)
+        sleep(3)
         next.tap()
         XCTAssertTrue(next.waitForExistence(timeout: 5))
         next.tap()
