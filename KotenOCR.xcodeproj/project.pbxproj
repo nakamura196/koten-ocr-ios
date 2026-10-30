@@ -27,6 +27,7 @@
 		51D3D846E8BD58665B59A081 /* OCREngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = B375ECB40C38D777102F59BC /* OCREngine.swift */; };
 		543D92C50A84D38DCFC78C4E /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F0C02138D36BD4637583CC4 /* OnboardingView.swift */; };
 		5611919E371D5CA2CC2675B8 /* PARSEQRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1C71D29B2E05CAE6C27D498 /* PARSEQRecognizer.swift */; };
+		56E2BC9606B92FA940F5B821 /* KotenStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B8356DD72D048FA8FE3C5FC /* KotenStyle.swift */; };
 		59FE9F6100B0045A383CA90C /* ResultOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B4379D31980B50B6E4167FC /* ResultOverlayView.swift */; };
 		5F971906D31580A0E45441BA /* OCRPerformanceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BAC5416D90C0C61B387A7EA3 /* OCRPerformanceTests.swift */; };
 		65E8D11410FF385A0964FB27 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34EEFFD47152BA87642516F1 /* KeychainHelper.swift */; };
@@ -91,6 +92,7 @@
 		413F9EA8A3AF49B4FC18AF1C /* KotenOCR.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = KotenOCR.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		43761597E39AC3C62D31C9E8 /* TipJarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJarView.swift; sourceTree = "<group>"; };
 		4ADB3679F99034CCC9249D7C /* NavigationFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationFlowTests.swift; sourceTree = "<group>"; };
+		4B8356DD72D048FA8FE3C5FC /* KotenStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KotenStyle.swift; sourceTree = "<group>"; };
 		4DE94F4988B24C1250C6F20D /* HistoryItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryItem.swift; sourceTree = "<group>"; };
 		53AD4224B5B9AD280E6B6DE6 /* HistoryManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryManagerTests.swift; sourceTree = "<group>"; };
 		56AB805A57FC795B0DC85FF4 /* RTMDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTMDetector.swift; sourceTree = "<group>"; };
@@ -190,6 +192,7 @@
 			isa = PBXGroup;
 			children = (
 				042CA1185DB0ADB541DECC16 /* AppTheme.swift */,
+				4B8356DD72D048FA8FE3C5FC /* KotenStyle.swift */,
 			);
 			path = Theme;
 			sourceTree = "<group>";
@@ -453,6 +456,7 @@
 				85231A78710C83738E4BDFAF /* HomeView.swift in Sources */,
 				65E8D11410FF385A0964FB27 /* KeychainHelper.swift in Sources */,
 				D2ADA4E7EFCF4A35211E3ACF /* KotenOCRApp.swift in Sources */,
+				56E2BC9606B92FA940F5B821 /* KotenStyle.swift in Sources */,
 				EA6132D99688DA796D3498AE /* MetricKitManager.swift in Sources */,
 				51D3D846E8BD58665B59A081 /* OCREngine.swift in Sources */,
 				038900677AB943A552FBA0DC /* OCRMode.swift in Sources */,
