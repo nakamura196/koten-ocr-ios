@@ -15,6 +15,10 @@ struct CropView: View {
     @State private var containerSize: CGSize = .zero
     @State private var moveStartRect: CGRect?
 
+    // Four-corner mode (normalized image coordinates)
+    @State private var isQuadMode = false
+    @State private var quad: Quad = .unit
+
     // Zoom & Pan
     @State private var zoomScale: CGFloat = 1.0
     @State private var baseZoomScale: CGFloat = 1.0
@@ -88,7 +92,10 @@ struct CropView: View {
                             .position(x: zoomedRect.midX, y: zoomedRect.midY)
 
                         // Crop overlays (only after initialization)
-                        if initializedCrop {
+                        if initializedCrop && isQuadMode {
+                            QuadCropOverlay(quad: $quad, imageFrame: imageFrame, coordinateSpaceName: "cropContainer")
+                        }
+                        if initializedCrop && !isQuadMode {
                             CropDimOverlay(cropRect: cropRect, containerSize: cSize)
                                 .allowsHitTesting(false)
 
@@ -169,6 +176,9 @@ struct CropView: View {
                         updateImageFrameAndCrop(newZoomed: newZoomed)
                     }
                 }
+
+                CropModePicker(isQuad: $isQuadMode)
+                    .onChange(of: isQuadMode) { on in if on { prepareQuad() } }
 
                 // Bottom buttons
                 HStack(spacing: 40) {
@@ -306,6 +316,7 @@ struct CropView: View {
     private func rotateImage() {
         guard let rotated = displayImage.rotated90Clockwise() else { return }
         currentImage = rotated
+        isQuadMode = false
         initializedCrop = false
         zoomScale = 1.0
         baseZoomScale = 1.0
@@ -442,8 +453,26 @@ struct CropView: View {
 
     // MARK: - Crop execution
 
+    /// Seeds the corners from the current rectangle, then tries to snap them to a detected page.
+    private func prepareQuad() {
+        guard imageFrame.width > 0, imageFrame.height > 0 else { return }
+        quad = Quad(rect: CGRect(x: (cropRect.minX - imageFrame.minX) / imageFrame.width,
+                                 y: (cropRect.minY - imageFrame.minY) / imageFrame.height,
+                                 width: cropRect.width / imageFrame.width,
+                                 height: cropRect.height / imageFrame.height))
+        let img = displayImage
+        DispatchQueue.global(qos: .userInitiated).async {
+            guard let found = PerspectiveCrop.detectPage(in: img) else { return }
+            DispatchQueue.main.async { if isQuadMode, displayImage === img { quad = found } }
+        }
+    }
+
     private func performCrop() {
         let img = displayImage
+        if isQuadMode, let rectified = PerspectiveCrop.rectify(img, normalizedQuad: quad) {
+            onCrop(rectified, img)
+            return
+        }
         guard let rect = CropGeometry.pixelRect(
             cropRect: cropRect,
             imageFrame: imageFrame,
