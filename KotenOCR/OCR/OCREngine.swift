@@ -77,10 +77,11 @@ class OCREngine: ObservableObject {
         }
     }
 
-    /// Switch OCR mode, loading models on demand if needed
+    /// Switch OCR mode, loading models on demand if needed.
+    /// The selected mode changes only once its models are in place. It used to change first, so a
+    /// failed load left the engine on a mode it could not run (and, through @AppStorage, the next
+    /// launch tried to load that mode again at startup).
     func switchMode(to mode: OCRMode) async throws {
-        currentModeRaw = mode.rawValue
-
         // Check if models for the target mode are already loaded
         let loaded = locked { () -> Bool in
             switch mode {
@@ -88,7 +89,10 @@ class OCREngine: ObservableObject {
             case .ndl: return ndlDetector != nil && ndlCascadeRecognizer != nil
             }
         }
-        if loaded { return }
+        if loaded {
+            await MainActor.run { self.currentModeRaw = mode.rawValue }
+            return
+        }
 
         // Models need loading
         guard let env = self.env else {
@@ -107,6 +111,7 @@ class OCREngine: ObservableObject {
                 try self.loadNDLModels(env: env)
             }
         }.value
+        await MainActor.run { self.currentModeRaw = mode.rawValue }
     }
 
     /// Handle memory warning by releasing unused mode's models. While an OCR run is in flight

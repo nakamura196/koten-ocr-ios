@@ -36,4 +36,23 @@ final class OCREngineTests: XCTestCase {
         XCTAssertTrue(result.detections.isEmpty)
         XCTAssertEqual(result.text, "")
     }
+
+    // MARK: - Mode switching
+
+    /// A switch whose models cannot be loaded (here: no ONNX Runtime environment yet) must leave the
+    /// engine on the mode it can still run.
+    func testFailedModeSwitchKeepsThePreviousMode() async {
+        let key = "ocrMode"
+        let saved = UserDefaults.standard.object(forKey: key)
+        defer {
+            if let saved { UserDefaults.standard.set(saved, forKey: key) } else { UserDefaults.standard.removeObject(forKey: key) }
+        }
+        let engine = OCREngine()
+        engine.currentModeRaw = OCRMode.koten.rawValue
+        do {
+            try await engine.switchMode(to: .ndl)
+            XCTFail("switching without loaded models should throw")
+        } catch {}
+        XCTAssertEqual(engine.currentMode, .koten)
+    }
 }
