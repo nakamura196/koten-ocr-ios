@@ -2,6 +2,7 @@ import SwiftUI
 import PhotosUI
 import Photos
 import StoreKit
+import AVFoundation
 
 enum AppState {
     case home
@@ -29,14 +30,32 @@ struct ContentView: View {
     @State private var cameFromHistory = false
     @State private var preCropImage: CGImage?
     @State private var showScanner = false
+    @State private var tiltHintShowing = false
     @State private var croppedPreview: CGImage?
     @State private var cropSessionID = UUID()
     @State private var testImageLoadCount = 0
+    // Design: launch, scanning, guidance
+    @State private var launchAnimationDone = false
+    @State private var scanProgress: Float = 0
+    @State private var scanReveal: [Detection] = []
+    @State private var scanRevealCount = 0
+    @State private var scanToken = UUID()
+    @State private var playCompletionStamp = false
+    @State private var isStartingOCR = false
+    @State private var selectedOCRMode: OCRMode = .koten
+    @State private var cameraAuth: AVAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)
+    @State private var showShutterCoach = false
+    @Namespace private var brandNamespace
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @AppStorage("appTheme") private var appThemeRaw: String = AppTheme.system.rawValue
     @AppStorage("saveToLibrary") private var saveToLibrary = false
     @AppStorage("ocrSuccessCount") private var ocrSuccessCount = 0
+    /// The full seal-stamp launch plays once; later launches use the short version.
+    @AppStorage("hasSeenLaunchStamp") private var hasSeenLaunchStamp = false
     @Environment(\.requestReview) private var requestReview
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     /// Home is the default start screen. Screenshot/test automation (TEST_IMAGE_PATH set,
     /// or `-skipHome YES`) goes straight to the camera state as before.
@@ -51,29 +70,37 @@ struct ContentView: View {
         AppTheme(rawValue: appThemeRaw) ?? .system
     }
 
+    private var isEngineReady: Bool {
+        if case .ready = ocrEngine.state { return true }
+        return false
+    }
+
     var body: some View {
         ZStack {
-            Color(.systemBackground).ignoresSafeArea()
+            WashiBackground()
 
             if !hasCompletedOnboarding {
-                loadingView
-            } else {
-                switch ocrEngine.state {
-                case .uninitialized, .loading:
-                    loadingView
-                case .error(let msg):
-                    errorView(msg)
-                case .ready:
-                    mainContent
-                        .onAppear { loadTestImageIfNeeded() }
-                        .onChange(of: appState) { newState in
-                            if newState == .camera {
-                                loadSecondTestImageIfNeeded()
-                            }
-                        }
+                LaunchView(namespace: brandNamespace, fullStamp: false, showsProgress: false, onFinished: {})
+            } else if case .error(let msg) = ocrEngine.state {
+                errorView(msg)
+            } else if !isEngineReady || (!launchAnimationDone && appState == .home) {
+                LaunchView(namespace: brandNamespace, fullStamp: !hasSeenLaunchStamp,
+                           showsProgress: !isEngineReady) {
+                    hasSeenLaunchStamp = true
+                    launchAnimationDone = true
                 }
+            } else {
+                mainContent
+                    .onAppear { loadTestImageIfNeeded() }
+                    .onChange(of: appState) { newState in
+                        if newState == .camera {
+                            loadSecondTestImageIfNeeded()
+                        }
+                    }
             }
         }
+        .animation(KotenMotion.spring(0.45, reduceMotion: reduceMotion), value: launchAnimationDone)
+        .animation(.easeOut(duration: 0.3), value: isEngineReady)
         .preferredColorScheme(appTheme.colorScheme)
         .fullScreenCover(isPresented: Binding(
             get: { !hasCompletedOnboarding },
@@ -85,37 +112,21 @@ struct ContentView: View {
             SettingsView()
         }
         .sheet(isPresented: $showHistory) {
-            HistoryListView { item in
+            HistoryListView(onSelect: { item in
                 loadHistoryItem(item)
-            }
+            }, onStartCamera: {
+                resetToCamera()
+            })
         }
-    }
-
-    // MARK: - Loading View
-
-    private var loadingView: some View {
-        VStack(spacing: 0) {
-            Spacer()
-            Image("AppIconDisplay")
-                .resizable()
-                .frame(width: 120, height: 120)
-                .cornerRadius(26)
-                .shadow(color: .black.opacity(0.15), radius: 10, y: 5)
-            Text("KotenOCR")
-                .font(.system(size: 28, weight: .semibold, design: .rounded))
-                .foregroundColor(.primary)
-                .padding(.top, 16)
-            Text(String(localized: "app_tagline", defaultValue: "くずし字をAIで読み取る"))
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .padding(.top, 4)
-            Spacer()
-            ProgressView()
-                .padding(.bottom, 60)
+        .onReceive(ocrEngine.$progress) { value in
+            // The engine reports 1.0 while idle; only follow values from the running scan.
+            guard appState == .processing, scanReveal.isEmpty, value < 1 else { return }
+            scanProgress = max(scanProgress, value)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(Text("loading_models"))
+        .onChange(of: scenePhase) { phase in
+            // Coming back from the Settings app after allowing the camera.
+            if phase == .active { cameraAuth = AVCaptureDevice.authorizationStatus(for: .video) }
+        }
     }
 
     // MARK: - Error View
@@ -124,13 +135,14 @@ struct ContentView: View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 48))
-                .foregroundColor(.yellow)
+                .foregroundColor(KotenColor.shu)
+                .accessibilityHidden(true)
             Text(String(localized: "init_error", defaultValue: "Initialization Error"))
-                .font(.headline)
-                .foregroundColor(.primary)
+                .font(.mincho(22, relativeTo: .title2, bold: true))
+                .foregroundColor(KotenColor.ink)
             Text(message)
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .font(.callout)
+                .foregroundColor(KotenColor.inkSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
         }
@@ -146,26 +158,37 @@ struct ContentView: View {
                     selectedPhotoItem: $selectedPhotoItem,
                     onCamera: { appState = .camera },
                     onHistory: { showHistory = true },
-                    onSettings: { showSettings = true }
+                    onSettings: { showSettings = true },
+                    onOpenHistoryItem: { item in loadHistoryItem(item) },
+                    brandNamespace: brandNamespace
                 )
+                .transition(.opacity)
             case .camera:
                 cameraView
+                    .transition(KotenMotion.screenTransition(reduceMotion: reduceMotion))
             case .cropping:
                 croppingView
+                    .transition(KotenMotion.screenTransition(reduceMotion: reduceMotion))
             case .confirmCrop:
                 confirmCropView
+                    .transition(.opacity)
             case .processing:
                 processingView
+                    .transition(.opacity)
             case .result:
                 resultView
+                    .transition(KotenMotion.rise(24, reduceMotion: reduceMotion))
             }
         }
+        .animation(KotenMotion.spring(0.35, reduceMotion: reduceMotion), value: appState)
         .onChange(of: selectedPhotoItem) { newItem in
             loadPhotoItem(newItem)
         }
     }
 
     // MARK: - Camera View
+
+    private var cameraDenied: Bool { cameraAuth == .denied || cameraAuth == .restricted }
 
     private var cameraView: some View {
         ZStack {
@@ -175,86 +198,120 @@ struct ContentView: View {
             })
             .ignoresSafeArea()
 
-            VStack {
-                HStack {
+            // 朱 corners: where to put the page. Content side, so the same on every iOS.
+            ScanCorners(length: 34, radius: 4)
+                .stroke(KotenColor.shu, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                .padding(.horizontal, 40)
+                .padding(.top, 120)
+                .padding(.bottom, 190) // stays clear of the flash and shutter buttons
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+
+            VStack(spacing: 12) {
+                HStack(spacing: 10) {
                     Button(action: { appState = .home }) {
-                        Image(systemName: "house.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(.white)
-                            .frame(width: 44, height: 44)
-                            .background(Color.white.opacity(0.2))
-                            .clipShape(Circle())
+                        KotenIconLabel(systemName: "house")
                     }
+                    .buttonStyle(.kotenCameraCircle)
                     .accessibilityIdentifier("home_button")
                     .accessibilityLabel(Text("home_button"))
 
                     Button(action: { showHistory = true }) {
-                        Image(systemName: "clock.arrow.circlepath")
-                            .font(.system(size: 20))
-                            .foregroundColor(.white)
-                            .frame(width: 44, height: 44)
-                            .background(Color.white.opacity(0.2))
-                            .clipShape(Circle())
+                        KotenIconLabel(systemName: "clock.arrow.circlepath")
                     }
+                    .buttonStyle(.kotenCameraCircle)
                     .accessibilityIdentifier("history_button")
                     .accessibilityLabel(Text("history_button"))
 
                     Spacer()
 
                     Button(action: { showSettings = true }) {
-                        Image(systemName: "gearshape.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(.white)
-                            .frame(width: 44, height: 44)
-                            .background(Color.white.opacity(0.2))
-                            .clipShape(Circle())
+                        KotenIconLabel(systemName: "gearshape")
                     }
+                    .buttonStyle(.kotenCameraCircle)
                     .accessibilityIdentifier("settings_button")
                     .accessibilityLabel(Text("settings_button"))
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
 
+                // Level guide above; the frame hint gives way while the tilt hint is shown.
                 if !showScanner {
-                    LevelGuideView(onTryScanner: DocumentScannerView.isSupported ? { openScanner() } : nil)
-                        .padding(.top, 12)
+                    LevelGuideView(onTryScanner: DocumentScannerView.isSupported ? { openScanner() } : nil,
+                                   isHintShowing: $tiltHintShowing)
                 }
+
+                if !tiltHintShowing {
+                    Text("camera_frame_hint")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .kotenGlass(.onCamera, in: Capsule())
+                        .padding(.horizontal, 40)
+                        .allowsHitTesting(false)
+                        .transition(.opacity)
+                }
+
                 Spacer()
-                HStack(spacing: 40) {
-                    // Gallery button
+
+                HStack {
+                    // Gallery button, level with the (UIKit) shutter: shutter centre is 65pt above the safe area.
                     PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                        Image(systemName: "photo.on.rectangle")
-                            .font(.system(size: 24))
-                            .foregroundColor(.white)
-                            .frame(width: 60, height: 60)
-                            .background(Color.white.opacity(0.2))
-                            .clipShape(Circle())
+                        KotenIconLabel(systemName: "photo.on.rectangle", size: 56)
                     }
+                    .buttonStyle(.kotenCameraCircle)
                     .accessibilityIdentifier("gallery_button")
                     .accessibilityLabel(Text("gallery_button"))
-
                     Spacer()
 
                     if DocumentScannerView.isSupported {
                         Button(action: openScanner) {
-                            Image(systemName: "doc.viewfinder")
-                                .font(.system(size: 24))
-                                .foregroundColor(.white)
-                                .frame(width: 60, height: 60)
-                                .background(Color.white.opacity(0.2))
-                                .clipShape(Circle())
+                            KotenIconLabel(systemName: "doc.viewfinder", size: 56)
                         }
+                        .buttonStyle(.kotenCameraCircle)
                         .accessibilityIdentifier("scan_document_button")
                         .accessibilityLabel(Text(String(localized: "scan_document", defaultValue: "書類スキャン")))
                     }
                 }
                 .padding(.horizontal, 30)
-                .padding(.bottom, 40)
+                .padding(.bottom, 37)
+            }
+
+            if showShutterCoach && !cameraDenied && !showScanner {
+                ZStack(alignment: .bottom) {
+                    Color.black.opacity(0.35).ignoresSafeArea()
+                    CoachBubble(text: String(localized: "coach_shutter", defaultValue: "ここを押して撮影"), pointer: .down)
+                        .padding(.horizontal, 40)
+                        .padding(.bottom, 108)
+                }
+                // A touch anywhere dismisses the one-time hint.
+                .contentShape(Rectangle())
+                .onTapGesture { dismissShutterCoach() }
+                .transition(.opacity)
+                .accessibilityElement(children: .combine)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityIdentifier("coach_shutter")
+            }
+
+            if cameraDenied {
+                CameraDeniedView(selectedPhotoItem: $selectedPhotoItem, onHome: { appState = .home })
+                    .transition(KotenMotion.rise(16, reduceMotion: reduceMotion))
             }
         }
         .onAppear {
-            if CaptureMode.load() == .scan && DocumentScannerView.isSupported { openScanner() }
+            cameraAuth = AVCaptureDevice.authorizationStatus(for: .video)
+            if cameraDenied { KotenHaptics.notify(.warning) }
+            if CaptureMode.load() == .scan && DocumentScannerView.isSupported && !cameraDenied {
+                // The scanner opens by itself; the shutter hint waits until the camera is really shown.
+                openScanner()
+            } else {
+                startShutterCoachIfNeeded()
+            }
         }
+        .onDisappear { dismissShutterCoach() }
+        .animation(.easeInOut(duration: 0.15), value: tiltHintShowing)
         .fullScreenCover(isPresented: $showScanner) {
             DocumentScannerView(
                 onScan: { cg in
@@ -265,10 +322,29 @@ struct ContentView: View {
                 onCancel: {
                     showScanner = false
                     CaptureMode.camera.save()
+                    startShutterCoachIfNeeded()
                 }
             )
             .ignoresSafeArea()
         }
+    }
+
+    /// Screenshot/demo automation loads images itself; hints would cover the screenshots.
+    private var isAutomatedRun: Bool {
+        if let path = ProcessInfo.processInfo.environment["TEST_IMAGE_PATH"], !path.isEmpty { return true }
+        return false
+    }
+
+    private func startShutterCoachIfNeeded() {
+        guard !CoachMark.shutter.isShown, !isAutomatedRun, !showScanner, !cameraDenied else { return }
+        withAnimation(.easeOut(duration: 0.3).delay(0.5)) { showShutterCoach = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 6) { dismissShutterCoach() }
+    }
+
+    private func dismissShutterCoach() {
+        guard showShutterCoach else { return }
+        CoachMark.shutter.markShown()
+        withAnimation(.easeOut(duration: 0.2)) { showShutterCoach = false }
     }
 
     // MARK: - Cropping View
@@ -304,8 +380,6 @@ struct ContentView: View {
 
     private var confirmCropView: some View {
         ZStack {
-            Color(.systemBackground).ignoresSafeArea()
-
             VStack(spacing: 0) {
                 // Top bar
                 HStack {
@@ -314,44 +388,50 @@ struct ContentView: View {
                         cropSessionID = UUID()
                         appState = .cropping
                     }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "chevron.left")
-                            Text(String(localized: "retrim", defaultValue: "Re-crop"))
-                        }
-                        .foregroundColor(.primary)
+                        KotenBackLabel(title: String(localized: "retrim", defaultValue: "Re-crop"))
                     }
-                    Spacer()
-                    Text(String(localized: "confirm_crop_title", defaultValue: "Confirm"))
-                        .font(.headline)
-                    Spacer()
+                    .buttonStyle(.kotenGlass)
+                    .accessibilityIdentifier("retrim_button")
+                    Spacer(minLength: 8)
                     Button(action: {
                         croppedPreview = nil
                         preCropImage = nil
                         appState = .camera
                     }) {
                         Text(String(localized: "cancel", defaultValue: "Cancel"))
-                            .foregroundColor(.secondary)
+                            .font(.body.weight(.semibold))
+                            .padding(.horizontal, 16)
+                            .frame(minHeight: 44)
+                    }
+                    .buttonStyle(.kotenGlass)
+                }
+                .overlay {
+                    if !typeSize.isAccessibilitySize {
+                        Text(String(localized: "confirm_crop_title", defaultValue: "Confirm"))
+                            .font(.mincho(18, relativeTo: .headline, bold: true))
+                            .foregroundColor(KotenColor.ink)
+                            .accessibilityAddTraits(.isHeader)
                     }
                 }
-                .padding()
+                .padding(.horizontal, 14)
+                .padding(.top, 6)
 
-                Spacer()
+                Spacer(minLength: 12)
 
                 if let preview = croppedPreview {
                     Image(decorative: preview, scale: 1.0)
                         .resizable()
                         .scaledToFit()
-                        .cornerRadius(12)
+                        .kotenMount()
                         .padding(.horizontal, 20)
                 }
 
-                Spacer()
+                Spacer(minLength: 12)
 
-                // OCR mode buttons
-                ocrModeButtons
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 40)
-                    .disabled(ocrEngine.isLoadingModels)
+                ocrModeToolbar
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 16)
+                    .disabled(ocrEngine.isLoadingModels || isStartingOCR)
             }
 
             if ocrEngine.isLoadingModels {
@@ -361,76 +441,102 @@ struct ContentView: View {
                         .scaleEffect(1.2)
                     Text(String(localized: "loading_models", defaultValue: "Loading models..."))
                         .font(.subheadline)
-                        .foregroundColor(.white)
+                        .foregroundColor(KotenColor.ink)
                 }
                 .padding(24)
-                .background(Color.black.opacity(0.7))
-                .cornerRadius(12)
+                .kotenGlass(.regular, in: RoundedRectangle(cornerRadius: 20))
             }
+        }
+        .onAppear {
+            selectedOCRMode = ocrEngine.currentMode
+            isStartingOCR = false
         }
     }
 
-    // MARK: - OCR Mode Buttons
+    // MARK: - OCR Mode Toolbar
 
-    private var ocrModeButtons: some View {
-        HStack(spacing: 16) {
-            Button(action: {
-                runOCRWithMode(.koten)
-            }) {
+    /// Glass toolbar: text type switch (古典籍 / 近代) and the 朱 "Read" button.
+    private var ocrModeToolbar: some View {
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: 10))
+            : AnyLayout(HStackLayout(spacing: 10))
+        return layout {
+            HStack(spacing: 0) {
+                modeSegment(.koten, title: String(localized: "ocr_mode_koten", defaultValue: "古典籍"),
+                            subtitle: String(localized: "ocr_mode_koten_short", defaultValue: "くずし字"),
+                            id: "koten_ocr_button")
+                modeSegment(.ndl, title: String(localized: "ocr_mode_ndl", defaultValue: "近代"),
+                            subtitle: String(localized: "ocr_mode_ndl_short", defaultValue: "活字・手書き"),
+                            id: "ndl_ocr_button")
+            }
+            .padding(3)
+            .background(Capsule().fill(KotenColor.ink.opacity(0.08)))
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel(Text("ocr_mode_picker"))
+
+            Button(action: { runOCRWithMode(selectedOCRMode) }) {
                 HStack(spacing: 8) {
-                    Image(systemName: "scroll")
-                        .font(.title3)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(String(localized: "run_ocr_koten", defaultValue: "古典籍 OCR"))
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                        Text(String(localized: "ocr_mode_koten_short", defaultValue: "くずし字"))
-                            .font(.caption2)
-                            .opacity(0.8)
+                    if isStartingOCR {
+                        ProgressView().tint(.white)
+                        Text("reading_in_progress")
+                    } else {
+                        Text("run_ocr")
                     }
                 }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(Color.orange)
-                .cornerRadius(12)
+                .font(.headline.weight(.heavy))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .padding(.horizontal, 22)
+                .frame(minWidth: 120, minHeight: 50)
+                .frame(maxWidth: typeSize.isAccessibilitySize ? .infinity : nil)
             }
-            .accessibilityIdentifier("koten_ocr_button")
-
-            Button(action: {
-                runOCRWithMode(.ndl)
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "doc.text")
-                        .font(.title3)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(String(localized: "run_ocr_ndl", defaultValue: "近代 OCR"))
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                        Text(String(localized: "ocr_mode_ndl_short", defaultValue: "活字・手書き"))
-                            .font(.caption2)
-                            .opacity(0.8)
-                    }
-                }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(Color.blue)
-                .cornerRadius(12)
-            }
-            .accessibilityIdentifier("ndl_ocr_button")
+            .buttonStyle(.kotenProminent)
+            .accessibilityIdentifier("run_ocr_button")
         }
+        .padding(10)
+        .kotenGlass(.regular, in: RoundedRectangle(cornerRadius: 36, style: .continuous))
+        .animation(KotenMotion.spring(0.3, reduceMotion: reduceMotion), value: isStartingOCR)
+    }
+
+    private func modeSegment(_ mode: OCRMode, title: String, subtitle: String, id: String) -> some View {
+        let selected = selectedOCRMode == mode
+        return Button {
+            withAnimation(KotenMotion.spring(0.3, reduceMotion: reduceMotion)) { selectedOCRMode = mode }
+        } label: {
+            VStack(spacing: 1) {
+                Text(title).font(.subheadline.weight(.bold))
+                Text(subtitle).font(.caption2).opacity(0.8)
+            }
+            .foregroundColor(selected ? KotenColor.ink : KotenColor.inkSecondary)
+            .lineLimit(2)
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .background {
+                if selected {
+                    Capsule().fill(KotenColor.washiCard)
+                        .shadow(color: .black.opacity(0.15), radius: 2, y: 1)
+                }
+            }
+            .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier(id)
+        .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
 
     private func runOCRWithMode(_ mode: OCRMode) {
-        guard let img = croppedPreview else { return }
-        croppedPreview = nil
+        guard let img = croppedPreview, !isStartingOCR else { return }
+        isStartingOCR = true
         Task {
             do {
                 try await ocrEngine.switchMode(to: mode)
             } catch {
                 await MainActor.run {
                     // Drop any image left over from an earlier scan so it is not shown next to the error
+                    self.isStartingOCR = false
+                    self.croppedPreview = nil
                     self.capturedImage = nil
                     self.ocrResult = nil
                     self.editableDetections = []
@@ -441,6 +547,7 @@ struct ContentView: View {
                 return
             }
             await MainActor.run {
+                self.croppedPreview = nil
                 processImage(img)
             }
         }
@@ -449,32 +556,17 @@ struct ContentView: View {
     // MARK: - Processing View
 
     private var processingView: some View {
-        VStack(spacing: 20) {
+        Group {
             if let image = capturedImage {
-                Image(decorative: image, scale: 1.0)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxHeight: 300)
-                    .cornerRadius(12)
+                ScanningView(
+                    image: image,
+                    progress: scanProgress,
+                    detections: scanReveal,
+                    revealedCount: scanRevealCount,
+                    onCancel: cancelProcessing
+                )
             }
-            ProgressView()
-                .scaleEffect(1.5)
-            Text(String(localized: "recognizing_text", defaultValue: "Recognizing text..."))
-                .foregroundColor(.primary)
-                .font(.headline)
-
-            Button(action: cancelProcessing) {
-                Text(String(localized: "cancel", defaultValue: "Cancel"))
-                    .font(.subheadline)
-                    .foregroundColor(.red)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 10)
-                    .background(Color.red.opacity(0.1))
-                    .cornerRadius(8)
-            }
-            .accessibilityLabel(Text("cancel"))
         }
-        .padding()
     }
 
     // MARK: - Result View
@@ -482,7 +574,7 @@ struct ContentView: View {
     private var resultView: some View {
         VStack(spacing: 0) {
             // Top bar
-            HStack {
+            HStack(spacing: 10) {
                 Button(action: {
                     if cameFromHistory {
                         resetToCamera()
@@ -491,33 +583,38 @@ struct ContentView: View {
                         backFromResult()
                     }
                 }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "chevron.left")
-                        Text(cameFromHistory
-                             ? String(localized: "history_title", defaultValue: "履歴")
-                             : String(localized: "back", defaultValue: "Back"))
-                    }
-                    .foregroundColor(.primary)
+                    KotenBackLabel(title: cameFromHistory
+                                   ? String(localized: "history_title", defaultValue: "履歴")
+                                   : String(localized: "back", defaultValue: "Back"))
                 }
+                .buttonStyle(.kotenGlass)
                 .accessibilityIdentifier("back_button")
                 .accessibilityLabel(Text("back"))
-                Spacer()
+                Spacer(minLength: 8)
                 if preCropImage != nil && !cameFromHistory {
                     Button(action: retrimImage) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "crop")
-                            Text(String(localized: "retrim", defaultValue: "Re-crop"))
-                        }
-                        .foregroundColor(.primary)
+                        KotenIconLabel(systemName: "crop")
                     }
+                    .buttonStyle(.kotenGlassCircle)
                     .accessibilityLabel(Text("retrim"))
                 }
             }
-            .padding()
-            .background(Color(.systemBackground).opacity(0.8))
+            .overlay {
+                if errorMessage == nil && !editableDetections.isEmpty && !typeSize.isAccessibilitySize {
+                    Text(String(format: String(localized: "lines_count_format", defaultValue: "%d 行"), editableDetections.count))
+                        .font(.mincho(18, relativeTo: .headline, bold: true))
+                        .foregroundColor(KotenColor.ink)
+                        .accessibilityAddTraits(.isHeader)
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.top, 6)
+            .padding(.bottom, 4)
 
             if let error = errorMessage {
                 errorPanel(error)
+            } else if let image = capturedImage, editableDetections.isEmpty, !cameFromHistory {
+                noLinesPanel(image)
             } else if let image = capturedImage {
                 ResultOverlayView(
                     image: image,
@@ -525,37 +622,87 @@ struct ContentView: View {
                     selectedIndex: $selectedDetectionIndex,
                     historyItemID: currentHistoryItemID,
                     translatedText: $translatedText,
-                    onOpenSettings: { showSettings = true }
+                    onOpenSettings: { showSettings = true },
+                    playCompletionStamp: $playCompletionStamp
                 )
             }
         }
+        .washiBackground()
     }
 
     private func errorPanel(_ message: String) -> some View {
-        VStack(spacing: 16) {
-            Spacer()
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 44))
-                .foregroundColor(.orange)
+        ScrollView {
+            VStack(spacing: 16) {
+                ZStack {
+                    Circle().fill(KotenColor.washiCard)
+                    Circle().stroke(KotenColor.shu, lineWidth: 4)
+                    Image(systemName: "exclamationmark")
+                        .font(.system(size: 48, weight: .light))
+                        .foregroundColor(KotenColor.shu)
+                }
+                .frame(width: 110, height: 110)
                 .accessibilityHidden(true)
-            Text(message)
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-                .accessibilityIdentifier("ocr_error_message")
-            Button(action: resetToCamera) {
-                Text(String(localized: "ocr_error_retake", defaultValue: "撮り直す"))
-                    .font(.headline)
-                    .foregroundColor(Color(.systemBackground))
+                .padding(.top, 60)
+                Text(message)
+                    .font(.mincho(18, relativeTo: .body))
+                    .foregroundColor(KotenColor.ink)
+                    .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
-                    .padding(.vertical, 12)
-                    .background(Color.primary)
-                    .cornerRadius(10)
+                    .accessibilityIdentifier("ocr_error_message")
             }
-            .accessibilityIdentifier("retake_button")
-            Spacer()
+            .frame(maxWidth: .infinity)
         }
-        .frame(maxWidth: .infinity)
+        .safeAreaInset(edge: .bottom) { retakeButton }
+        .onAppear { KotenHaptics.notify(.warning) }
+    }
+
+    /// Storyboard e: OCR finished but found no lines. Tips, then one big Retake button.
+    private func noLinesPanel(_ image: CGImage) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                Image(decorative: image, scale: 1.0)
+                    .resizable()
+                    .scaledToFit()
+                    .grayscale(0.6)
+                    .frame(maxHeight: 200)
+                    .frame(maxWidth: .infinity)
+                    .kotenMount()
+                    .padding(.horizontal, 14)
+                    .padding(.top, 8)
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("no_lines_title")
+                        .font(.mincho(24, relativeTo: .title2, bold: true))
+                        .foregroundColor(KotenColor.ink)
+                        .accessibilityIdentifier("ocr_error_message")
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(["no_lines_tip_page", "no_lines_tip_light", "no_lines_tip_modern"], id: \.self) { key in
+                            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                                Text("・")
+                                Text(LocalizedStringKey(key))
+                            }
+                            .font(.callout.weight(.semibold))
+                            .foregroundColor(KotenColor.inkSecondary)
+                        }
+                    }
+                }
+                .padding(.horizontal, 26)
+                .padding(.top, 24)
+            }
+        }
+        .safeAreaInset(edge: .bottom) { retakeButton }
+        .onAppear { KotenHaptics.notify(.warning) }
+    }
+
+    private var retakeButton: some View {
+        Button(action: resetToCamera) {
+            Text(String(localized: "ocr_error_retake", defaultValue: "撮り直す"))
+                .font(.title3.weight(.heavy))
+                .frame(maxWidth: .infinity, minHeight: 58)
+        }
+        .buttonStyle(.kotenProminent)
+        .accessibilityIdentifier("retake_button")
+        .padding(.horizontal, 24)
+        .padding(.bottom, 16)
     }
 
     // MARK: - Actions
@@ -587,6 +734,12 @@ struct ContentView: View {
 
     private func processImage(_ cgImage: CGImage) {
         capturedImage = cgImage
+        scanProgress = 0
+        scanReveal = []
+        scanRevealCount = 0
+        scanToken = UUID()
+        playCompletionStamp = false
+        isStartingOCR = false
         appState = .processing
         errorMessage = nil
         cameFromHistory = false
@@ -608,7 +761,7 @@ struct ContentView: View {
                     } else {
                         self.translatedText = nil
                     }
-                    self.appState = .result
+                    self.finishScan(with: result.detections)
 
                     // Auto-save to history
                     self.currentHistoryItemID = HistoryManager.shared.save(
@@ -656,7 +809,46 @@ struct ContentView: View {
         appState = .cropping
     }
 
+    /// Storyboard c, last step: the found lines appear one by one in reading order
+    /// (about 40 ms each, at most ~0.8 s in total), then the result opens with the 朱 stamp.
+    private func finishScan(with detections: [Detection]) {
+        let token = UUID()
+        scanToken = token
+        scanProgress = 1
+        guard !detections.isEmpty, !reduceMotion else {
+            showScanResult()
+            return
+        }
+        scanReveal = detections
+        scanRevealCount = 0
+        let step = min(0.04, 0.8 / Double(detections.count))
+        for i in 1...detections.count {
+            DispatchQueue.main.asyncAfter(deadline: .now() + step * Double(i)) {
+                guard scanToken == token, appState == .processing else { return }
+                withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) { scanRevealCount = i }
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + step * Double(detections.count) + 0.45) {
+            guard scanToken == token, appState == .processing else { return }
+            showScanResult()
+        }
+    }
+
+    private func showScanResult() {
+        playCompletionStamp = !editableDetections.isEmpty
+        appState = .result
+        scanReveal = []
+        scanRevealCount = 0
+        if !editableDetections.isEmpty {
+            UIAccessibility.post(notification: .announcement,
+                                 argument: String(localized: "ocr_finished_announcement", defaultValue: "読み取りが完了しました"))
+        }
+    }
+
     private func cancelProcessing() {
+        scanToken = UUID()
+        scanReveal = []
+        scanRevealCount = 0
         processingTask?.cancel()
         processingTask = nil
         appState = .camera

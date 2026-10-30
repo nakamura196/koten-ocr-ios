@@ -195,12 +195,20 @@ class CameraViewController: UIViewController {
 
     private func setupUI() {
         // Shutter button
-        let button = UIButton(type: .system)
+        // White ring with a white disc inside (hybrid storyboard b); press shrinks it.
+        let button = UIButton(type: .custom)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.backgroundColor = .white
+        button.backgroundColor = .clear
         button.layer.cornerRadius = 35
         button.layer.borderWidth = 4
-        button.layer.borderColor = UIColor.white.withAlphaComponent(0.5).cgColor
+        button.layer.borderColor = UIColor.white.cgColor
+        let disc = UIView(frame: CGRect(x: 7, y: 7, width: 56, height: 56))
+        disc.backgroundColor = .white
+        disc.layer.cornerRadius = 28
+        disc.isUserInteractionEnabled = false
+        button.addSubview(disc)
+        button.addTarget(self, action: #selector(shutterDown), for: [.touchDown, .touchDragEnter])
+        button.addTarget(self, action: #selector(shutterUp), for: [.touchUpInside, .touchUpOutside, .touchCancel, .touchDragExit])
         button.addTarget(self, action: #selector(capturePhoto), for: .touchUpInside)
         button.accessibilityLabel = String(localized: "capture_button", defaultValue: "Capture")
         button.accessibilityIdentifier = "shutter_button"
@@ -220,7 +228,7 @@ class CameraViewController: UIViewController {
         flash.translatesAutoresizingMaskIntoConstraints = false
         flash.setImage(UIImage(systemName: "bolt.slash.fill"), for: .normal)
         flash.tintColor = .white
-        flash.backgroundColor = UIColor.white.withAlphaComponent(0.2)
+        flash.backgroundColor = UIColor(red: 0.17, green: 0.165, blue: 0.157, alpha: 0.85)
         flash.layer.cornerRadius = 22
         flash.addTarget(self, action: #selector(toggleFlash), for: .touchUpInside)
         flash.accessibilityLabel = String(localized: "flash_off", defaultValue: "Flash Off")
@@ -395,9 +403,33 @@ class CameraViewController: UIViewController {
         }
     }
 
+    @objc private func shutterDown() {
+        UIView.animate(withDuration: 0.1) { self.shutterButton?.transform = CGAffineTransform(scaleX: 0.88, y: 0.88) }
+    }
+
+    @objc private func shutterUp() {
+        UIView.animate(withDuration: 0.15) { self.shutterButton?.transform = .identity }
+    }
+
+    /// White flash for 120 ms with a firm haptic (storyboard b).
+    private func playShutterFeedback() {
+        UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+        let flash = UIView(frame: view.bounds)
+        flash.backgroundColor = UIColor.white.withAlphaComponent(0.85)
+        flash.isUserInteractionEnabled = false
+        view.addSubview(flash)
+        let reduceMotion = UIAccessibility.isReduceMotionEnabled
+        UIView.animate(withDuration: reduceMotion ? 0.2 : 0.12, delay: 0, options: [.curveEaseOut]) {
+            flash.alpha = 0
+        } completion: { _ in
+            flash.removeFromSuperview()
+        }
+    }
+
     @objc private func capturePhoto() {
         guard cameraAvailable, !isCapturing else { return }
         setCapturing(true)
+        playShutterFeedback()
         // Set video orientation based on current device orientation
         if let connection = photoOutput.connection(with: .video) {
             connection.videoOrientation = videoOrientation(for: currentDeviceOrientation)

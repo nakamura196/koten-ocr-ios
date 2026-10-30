@@ -8,6 +8,10 @@ struct LevelGuideView: View {
     @StateObject private var monitor = TiltMonitor()
     /// Shown as a tappable secondary line under the hint when non-nil.
     var onTryScanner: (() -> Void)?
+    /// Reports whether the tilt hint is on screen, so the camera can hide its frame hint meanwhile.
+    var isHintShowing: Binding<Bool>? = nil
+
+    private var hintVisible: Bool { enabled && monitor.state.isActive && monitor.state.showsHint }
 
     var body: some View {
         VStack(spacing: 8) {
@@ -15,22 +19,21 @@ struct LevelGuideView: View {
                 bubble
                 if monitor.state.showsHint {
                     Text(String(localized: "tilt_hint", defaultValue: "資料と平行に構えてください"))
-                        .font(.footnote.weight(.medium))
+                        .font(.subheadline.weight(.semibold))
                         .foregroundColor(.white)
-                        .padding(.horizontal, 12).padding(.vertical, 6)
-                        .background(Color.black.opacity(0.55))
-                        .clipShape(Capsule())
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16).padding(.vertical, 8)
+                        .kotenGlass(.onCamera, in: Capsule())
                         .accessibilityIdentifier("tilt_hint")
                     if let onTryScanner {
                         Button(action: onTryScanner) {
-                            Text(String(localized: "tilt_try_scanner", defaultValue: "書類スキャンも使えます"))
-                                .font(.caption)
-                                .underline()
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 10).padding(.vertical, 4)
-                                .background(Color.black.opacity(0.45))
-                                .clipShape(Capsule())
+                            Label(String(localized: "tilt_try_scanner", defaultValue: "書類スキャンも使えます"),
+                                  systemImage: "doc.viewfinder")
+                                .font(.footnote.weight(.semibold))
+                                .padding(.horizontal, 14)
+                                .frame(minHeight: 36)
                         }
+                        .buttonStyle(.kotenCamera)
                         .accessibilityIdentifier("tilt_try_scanner")
                     }
                 }
@@ -38,7 +41,11 @@ struct LevelGuideView: View {
         }
         .animation(.easeInOut(duration: 0.15), value: monitor.state.showsHint)
         .onAppear { if enabled { monitor.start() } }
-        .onDisappear { monitor.stop() }
+        .onDisappear {
+            monitor.stop()
+            isHintShowing?.wrappedValue = false
+        }
+        .onChange(of: hintVisible) { isHintShowing?.wrappedValue = $0 }
         .onChange(of: enabled) { on in on ? monitor.start() : monitor.stop() }
     }
 
@@ -54,14 +61,16 @@ struct LevelGuideView: View {
         }
         dx = max(-1, min(1, dx * 3)); dy = max(-1, min(1, dy * 3))
         return ZStack {
-            Circle().stroke(Color.white.opacity(0.7), lineWidth: 1.5).frame(width: r * 2, height: r * 2)
-            Rectangle().fill(Color.white.opacity(0.4)).frame(width: r * 2, height: 0.5)
-            Rectangle().fill(Color.white.opacity(0.4)).frame(width: 0.5, height: r * 2)
-            Circle().fill(ok ? Color.green : Color.orange).frame(width: 12, height: 12)
-                .offset(x: dx * (r - 6), y: dy * (r - 6))
+            Circle().stroke(Color.white.opacity(0.7), lineWidth: 1.5).frame(width: r * 2 - 6, height: r * 2 - 6)
+            Rectangle().fill(Color.white.opacity(0.4)).frame(width: r * 2 - 6, height: 0.5)
+            Rectangle().fill(Color.white.opacity(0.4)).frame(width: 0.5, height: r * 2 - 6)
+            // Level: white dot. Tilted: 朱 (bright variant, readable on the camera image).
+            Circle().fill(ok ? Color.white : Color(red: 0.878, green: 0.408, blue: 0.298))
+                .frame(width: 12, height: 12)
+                .offset(x: dx * (r - 9), y: dy * (r - 9))
         }
         .frame(width: r * 2, height: r * 2)
-        .background(Color.black.opacity(0.35).clipShape(Circle()))
+        .kotenGlass(.onCamera, in: Circle())
         .accessibilityHidden(true)
     }
 }

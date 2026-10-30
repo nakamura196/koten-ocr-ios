@@ -9,6 +9,8 @@ struct SettingsView: View {
     @AppStorage("showTiltGuide") private var showTiltGuide = true
     @AppStorage(Deskew.settingsKey) private var autoDeskew = true
     @State private var showRestartAlert = false
+    @State private var tipsReset = false
+    @State private var showOnboarding = false
     @State private var cameraStatus: AVAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)
 
     private var appVersion: String {
@@ -24,23 +26,29 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             List {
-                aboutSection
-                translationAPISection
-                cameraSection
-                themeSection
-                languageSection
-                tipJarSection
-                feedbackSection
-                licenseSection
-                linkSection
+                Group {
+                    aboutSection
+                    translationAPISection
+                    cameraSection
+                    themeSection
+                    tipsSection
+                    languageSection
+                    tipJarSection
+                    feedbackSection
+                    licenseSection
+                    linkSection
+                }
+                .listRowBackground(KotenColor.washiCard)
             }
+            .scrollContentBackground(.hidden)
+            .background(WashiBackground())
             .navigationTitle(String(localized: "settings_title", defaultValue: "設定"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { dismiss() }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.secondary)
+                        Image(systemName: "xmark")
+                            .foregroundColor(KotenColor.ink)
                     }
                     .accessibilityLabel(Text("close"))
                 }
@@ -51,7 +59,45 @@ struct SettingsView: View {
                 Text(String(localized: "language_restart_message", defaultValue: "Please restart the app to apply the language change."))
             }
         }
+        .tint(KotenColor.shu)
         .preferredColorScheme(appTheme.colorScheme)
+    }
+
+    // MARK: - Tips
+
+    private var tipsSection: some View {
+        Section(footer: Text("settings_tips_footer")) {
+            Button {
+                showOnboarding = true
+            } label: {
+                Text("settings_show_onboarding")
+            }
+            .accessibilityIdentifier("settings_show_onboarding")
+            .fullScreenCover(isPresented: $showOnboarding) {
+                // Replays the first-launch introduction; "Start" just closes it.
+                OnboardingView(hasCompletedOnboarding: Binding(
+                    get: { !showOnboarding },
+                    set: { if $0 { showOnboarding = false } }
+                ))
+            }
+
+            Button {
+                CoachMark.resetAll()
+                tipsReset = true
+            } label: {
+                HStack {
+                    Text("settings_show_tips_again")
+                    Spacer()
+                    if tipsReset {
+                        Image(systemName: "checkmark")
+                            .foregroundColor(KotenColor.shu)
+                            .accessibilityHidden(true)
+                    }
+                }
+            }
+            .accessibilityIdentifier("settings_show_tips_again")
+            .accessibilityAddTraits(tipsReset ? [.isSelected] : [])
+        }
     }
 
     // MARK: - About

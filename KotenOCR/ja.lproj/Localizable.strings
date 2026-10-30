@@ -133,13 +133,13 @@
 "history_translated_badge" = "翻訳済";
 
 /* Crop */
-"crop_title" = "切り取り";
+"crop_title" = "範囲を選ぶ";
 "crop_apply" = "切り取り";
 "crop_skip" = "スキップ";
 "crop_rotate" = "回転";
 "confirm_crop_title" = "確認";
 "retrim" = "再切り取り";
-"run_ocr" = "OCR実行";
+"run_ocr" = "読み取る";
 
 /* Camera Settings */
 "settings_camera" = "カメラ";
@@ -177,6 +177,38 @@
 "camera_permission_denied" = "カメラが許可されていません。設定アプリでカメラへのアクセスを許可してください。写真ライブラリから画像を選ぶこともできます。";
 "camera_capture_failed" = "撮影に失敗しました。もう一度お試しください。";
 "crop_reset_zoom" = "拡大をリセット";
+
+/* Hybrid design (washi + glass) */
+"brand_tagline" = "くずし字を、その場で読む";
+"home_take_photo_sub" = "古文書をカメラで撮る";
+"home_recent" = "最近の読み取り";
+"lines_count_format" = "%d 行";
+"camera_frame_hint" = "ページ全体を枠に入れてください";
+"coach_shutter" = "ここを押して撮影";
+"coach_crop_corner" = "角を動かして\n範囲を選ぶ";
+"crop_tip" = "四隅の朱の点を動かして、読みたい所を囲みます";
+"ocr_mode_picker" = "読み取りの種類";
+"reading_in_progress" = "読み取り中…";
+"scan_title" = "読み取り中";
+"scan_preparing" = "準備しています…";
+"scan_finding_lines" = "行を探しています…";
+"scan_reading_text" = "文字を読んでいます…";
+"scan_done_format" = "%d 行を読み取りました";
+"copied_toast" = "コピーしました";
+"no_lines_title" = "文字が見つかりませんでした";
+"no_lines_tip_page" = "ページ全体が入るように撮る";
+"no_lines_tip_light" = "明るい場所で、影を避ける";
+"no_lines_tip_modern" = "活字なら「近代」を選ぶ";
+"camera_unavailable_title" = "カメラが使えません";
+"camera_unavailable_body" = "「設定」アプリで、KotenOCR の「カメラ」をオンにしてください。撮った画像は端末の外に出ません。";
+"history_empty_title" = "まだ記録はありません";
+"history_empty_body" = "読み取った資料はここに残ります。";
+"onboarding_next" = "次へ";
+"settings_show_onboarding" = "使い方をもう一度見る";
+"settings_show_tips_again" = "操作のヒントをもう一度表示";
+"settings_tips_footer" = "撮影ボタンと範囲の角に、初回だけ出る吹き出しをもう一度表示します。";
+"ocr_finished_announcement" = "読み取りが完了しました";
+"onboarding_heading" = "くずし字を、\nその場で読む";
 "scan_document" = "書類スキャン";
 "tilt_hint" = "資料と平行に構えてください";
 "tilt_try_scanner" = "書類スキャンも使えます";

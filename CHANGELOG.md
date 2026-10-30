@@ -20,6 +20,14 @@
 - 設定に「傾きを自動補正」を追加（既定ON） / Added "Auto-correct tilt" setting (on by default)
 - OCR結果・履歴・書き出しの画像は、補正後の（OCRを実行した）画像に統一 / Result, history and export now use the deskewed image that OCR actually ran on
 - 古典籍モードで、斜めから撮ったページの行ごとの傾きに対応。傾いた行は行に沿って切り出して読むため、隣の行の文字が混ざりにくい。同じ行を二重に検出した場合の重複行と、「□□□□」だけの行も表示しない / Classical mode now handles lines that lean by different amounts (pages shot at an angle): leaning lines are read from crops that follow the line, so neighbouring text no longer leaks in. Duplicate lines from detecting the same column twice, and lines that read only as "□□□□", are dropped
+- デザインを一新：文書と読み取った文字は和紙の色・明朝体・朱で表示し、操作ボタンは iOS 26 の Liquid Glass（iOS 16〜25 では白と朱の板）に / New design: documents and recognized text use washi paper colours, Mincho type and vermilion (朱) accents; controls use Liquid Glass on iOS 26 and solid white / 朱 plates on iOS 16–25
+- アプリアイコンを和紙・墨・朱の配色に変更（ダーク・色付きアイコンにも対応） / App icon recoloured to washi, ink and 朱, with dark and tinted variants
+- ホームに「最近の読み取り」を最大3件表示。押すとその結果を開く / Home shows up to three recent scans; tap one to open it
+- 読み取り中に朱の光が進み具合に合わせて動き、見つかった行が読む順に現れる。完了時に朱印を押す動きと触覚 / While reading, a vermilion beam follows the progress and found lines appear in reading order; a seal stamp and haptic mark completion
+- 初回の説明で、写本の頁に実際の読み取り結果（枠と文字）を読む順に再生。撮影ボタンと範囲の角に一度だけの吹き出し（設定から再表示可） / The first-run introduction replays a real recognition result (boxes and text) on a manuscript page; one-time hints on the shutter and the crop corner (can be shown again from Settings)
+- 履歴が空のときの絵、文字が見つからなかったときのコツ、カメラが使えないときの案内画面を追加 / Added an empty-history illustration, tips when no text is found, and a camera-unavailable screen
+- 範囲選択の後は「古典籍／近代」を選んで「読み取る」を押す形に変更。コピーは右下のボタンから、完了は上に短く表示 / After cropping, choose Classical or Modern and tap Read; Copy is a floating button with a short “Copied” toast
+- 「視差効果を減らす」設定では動きをフェードに置き換え。文字の大きさ設定（アクセシビリティサイズを含む）に合わせて配置を調整 / Reduce Motion replaces movement with cross-fades; layouts adapt to Dynamic Type including accessibility sizes
 
 ## 1.3.2 (2026-03-24)
 

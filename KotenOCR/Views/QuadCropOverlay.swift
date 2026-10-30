@@ -23,8 +23,10 @@ struct QuadCropOverlay: View {
                 inner.move(to: s.topLeft); inner.addLine(to: s.topRight)
                 inner.addLine(to: s.bottomRight); inner.addLine(to: s.bottomLeft); inner.closeSubpath()
                 outer.addPath(inner)
-                ctx.fill(outer, with: .color(.black.opacity(0.5)), style: FillStyle(eoFill: true))
-                ctx.stroke(inner, with: .color(quad.isConvex ? .white : .red), lineWidth: 2)
+                ctx.fill(outer, with: .color(Color(red: 0.12, green: 0.1, blue: 0.08).opacity(0.55)),
+                         style: FillStyle(eoFill: true))
+                // White edge; 朱 when the shape cannot be corrected (not convex).
+                ctx.stroke(inner, with: .color(quad.isConvex ? .white : KotenColor.shu), lineWidth: 2)
             }
             .allowsHitTesting(false)
 
@@ -36,10 +38,14 @@ struct QuadCropOverlay: View {
     }
 
     private func handle(_ key: WritableKeyPath<Quad, CGPoint>, at pos: CGPoint) -> some View {
+        // Same 朱 dot as the rectangle mode; 44pt touch target.
         Circle()
-            .fill(Color.white)
-            .frame(width: handleSize, height: handleSize)
-            .shadow(radius: 2)
+            .fill(KotenColor.shuFill)
+            .frame(width: 20, height: 20)
+            .overlay(Circle().stroke(Color.white, lineWidth: 3))
+            .shadow(color: .black.opacity(0.4), radius: 3, y: 2)
+            .frame(width: 44, height: 44)
+            .contentShape(Circle())
             .position(pos)
             .gesture(
                 DragGesture(coordinateSpace: .named(coordinateSpaceName))
@@ -62,9 +68,9 @@ struct CropModePicker: View {
             Text(String(localized: "crop_mode_rect", defaultValue: "矩形")).tag(false)
             Text(String(localized: "crop_mode_quad", defaultValue: "4点補正")).tag(true)
         }
-        .pickerStyle(.segmented)
+        .pickerStyle(.segmented) // system control: Liquid Glass on iOS 26, classic on older iOS
         .frame(maxWidth: 260)
-        .padding(.top, 8)
+        .padding(.top, 10)
         .accessibilityIdentifier("crop_mode_picker")
     }
 }
