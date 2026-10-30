@@ -20,6 +20,7 @@
 - 設定に「傾きを自動補正」を追加（既定ON） / Added "Auto-correct tilt" setting (on by default)
 - OCR結果・履歴・書き出しの画像は、補正後の（OCRを実行した）画像に統一 / Result, history and export now use the deskewed image that OCR actually ran on
 - 古典籍モードで、斜めから撮ったページの行ごとの傾きに対応。傾いた行は行に沿って切り出して読むため、隣の行の文字が混ざりにくい。同じ行を二重に検出した場合の重複行と、「□□□□」だけの行も表示しない / Classical mode now handles lines that lean by different amounts (pages shot at an angle): leaning lines are read from crops that follow the line, so neighbouring text no longer leaks in. Duplicate lines from detecting the same column twice, and lines that read only as "□□□□", are dropped
+- 2枚目以降の解析で落ちることがある不具合を修正。解析のたびにメモリ使用量が増え続けていた（文字検出を毎回別のスレッドで実行し、スレッドごとに約100MBの作業領域が残っていた）。撮影・写真の画像は長辺4096pxに縮小して取り込み、新しい撮影の前に前の画像を解放 / Fixed a crash when analysing the 2nd or later image: memory grew with every analysis (line detection ran on a different thread each time and each thread kept ~100 MB of scratch memory). Photos are now taken in at most 4096 px on the long side, and the previous page's images are released before a new capture
 
 ## 1.3.2 (2026-03-24)
 
