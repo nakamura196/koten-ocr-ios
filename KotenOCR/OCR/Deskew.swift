@@ -38,10 +38,24 @@ enum Deskew {
         let inkPixels: Int
         /// Estimated paper colour (RGB 0...1), used to fill the corners after rotation.
         let paperColor: (r: Double, g: Double, b: Double)
+        /// Skew estimated separately on the first / middle / last third of the text area (left, middle, right
+        /// for vertical text). `nil` for a strip with too little ink.
+        var stripAngles: [Double?] = [nil, nil, nil]
 
-        /// Rotate only when the tilt is noticeable and clearly better than leaving the page as is.
+        /// False when the strips disagree: a single global angle does not fit (perspective, curled page).
+        /// The page is then left to the per-line oriented crops instead of being rotated as a whole.
+        var stripsAgree: Bool {
+            let v = stripAngles.compactMap { $0 }
+            guard v.count >= 2, let hi = v.max(), let lo = v.min() else { return true }
+            if hi - lo > Deskew.maxStripSpread + 1e-9 { return false }
+            return !(hi > Deskew.stripSignNoise && lo < -Deskew.stripSignNoise)
+        }
+
+        /// Rotate only when the tilt is noticeable, clearly better than leaving the page as is, and the
+        /// left / middle / right strips agree on it.
         var shouldRotate: Bool {
             abs(angle) >= Deskew.minAngle && gain >= Deskew.minGain && inkPixels >= Deskew.minInkPixels
+                && stripsAgree
         }
     }
 
@@ -51,6 +65,10 @@ enum Deskew {
     static let minInkPixels = 200
     static let workingLongSide = 1000
     static let maxPoints = 80_000
+    /// Strip consistency gate (degrees): max(strip angle) - min(strip angle) above this -> no global rotation.
+    static let maxStripSpread = 2.0
+    /// Strips of opposite sign that both exceed this (degrees) -> no global rotation.
+    static let stripSignNoise = 0.5
 
     // MARK: - Public API
 
@@ -153,7 +171,7 @@ enum Deskew {
         let bins = Int((Double(w * w + h * h)).squareRoot()) + 2
         var hist = [Int32](repeating: 0, count: bins)
 
-        func score(_ deg: Double, vertical: Bool) -> Double {
+        func score(_ deg: Double, vertical: Bool, _ xs: [Float], _ ys: [Float]) -> Double {
             let t = deg * .pi / 180
             let c = Float(cos(t)), s = Float(sin(t))
             let offset = Float(bins / 2)
@@ -161,7 +179,7 @@ enum Deskew {
             xs.withUnsafeBufferPointer { xp in
                 ys.withUnsafeBufferPointer { yp in
                     hist.withUnsafeMutableBufferPointer { hp in
-                        for i in 0..<n {
+                        for i in 0..<xs.count {
                             // vertical lines: u = x cos - y sin is constant along a line tilted by +deg
                             let u = vertical ? (xp[i] * c - yp[i] * s) : (xp[i] * s + yp[i] * c)
                             let k = min(bins - 1, max(0, Int((u + offset).rounded(.down))))
@@ -177,33 +195,54 @@ enum Deskew {
             return sum
         }
 
-        func search(vertical: Bool) -> (angle: Double, best: Double, zero: Double) {
+        func search(vertical: Bool, _ xs: [Float], _ ys: [Float]) -> (angle: Double, best: Double, zero: Double) {
             var bestAngle = 0.0, best = -1.0
             for k in -20...20 {
                 let d = Double(k) * 0.5
-                let sc = score(d, vertical: vertical)
+                let sc = score(d, vertical: vertical, xs, ys)
                 if sc > best { best = sc; bestAngle = d }
             }
             let coarse = bestAngle
             for k in -5...5 where k != 0 {
                 let d = coarse + Double(k) * 0.1
-                let sc = score(d, vertical: vertical)
+                let sc = score(d, vertical: vertical, xs, ys)
                 if sc > best { best = sc; bestAngle = d }
             }
-            let zero = score(0, vertical: vertical)
+            let zero = score(0, vertical: vertical, xs, ys)
             return ((bestAngle * 10).rounded() / 10, best, zero)
         }
 
         let result: (angle: Double, best: Double, zero: Double)
+        let isVertical: Bool
         switch orientation {
-        case .vertical: result = search(vertical: true)
-        case .horizontal: result = search(vertical: false)
+        case .vertical: result = search(vertical: true, xs, ys); isVertical = true
+        case .horizontal: result = search(vertical: false, xs, ys); isVertical = false
         case .auto:
-            let v = search(vertical: true), hz = search(vertical: false)
-            result = v.best >= hz.best ? v : hz
+            let v = search(vertical: true, xs, ys), hz = search(vertical: false, xs, ys)
+            isVertical = v.best >= hz.best
+            result = isVertical ? v : hz
         }
         let gain = result.zero > 0 ? result.best / result.zero : 1
-        return Estimate(angle: result.angle, gain: gain, inkPixels: n, paperColor: paper)
+
+        // Strip consistency: the same estimator on three strips across the text area (2nd...98th percentile of the
+        // ink along the axis that stacks the lines), so that columns leaning in opposite directions can be detected.
+        let along = isVertical ? xs : ys
+        let sorted = along.sorted()
+        func percentile(_ q: Double) -> Float {
+            let pos = q * Double(n - 1), lo = Int(pos.rounded(.down)), hi = min(n - 1, lo + 1)
+            return sorted[lo] + (sorted[hi] - sorted[lo]) * Float(pos - Double(lo))
+        }
+        let lo = percentile(0.02), hi = percentile(0.98)
+        var strips: [Double?] = []
+        for i in 0..<3 {
+            let a = lo + (hi - lo) * Float(i) / 3, b = lo + (hi - lo) * Float(i + 1) / 3
+            var sx: [Float] = [], sy: [Float] = []
+            for k in 0..<n where along[k] >= a && (i < 2 ? along[k] < b : along[k] <= b) {
+                sx.append(xs[k]); sy.append(ys[k])
+            }
+            strips.append(sx.count >= minInkPixels ? search(vertical: isVertical, sx, sy).angle : nil)
+        }
+        return Estimate(angle: result.angle, gain: gain, inkPixels: n, paperColor: paper, stripAngles: strips)
     }
 
     /// Rotate the image visually by `degrees` (positive = counter-clockwise), expanding the canvas so
