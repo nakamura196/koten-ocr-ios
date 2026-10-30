@@ -9,47 +9,53 @@ struct HomeView: View {
     let onHistory: () -> Void
     let onSettings: () -> Void
     var onOpenHistoryItem: (HistoryItem) -> Void = { _ in }
-    /// Shared with the launch screen so the seal and name can move into the header.
-    var brandNamespace: Namespace.ID?
 
     @ObservedObject private var historyManager = HistoryManager.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var typeSize
-    /// Staggered entrance: cards rise one after another, the glass button comes last.
+    /// Two-step entrance after the launch screen fades: the header (1), then the rest (2).
     @State private var appeared = 0
 
     private var recentItems: [HistoryItem] { Array(historyManager.items.prefix(3)) }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                header
-                    // The wordmark is a logo: it stops growing at xxxLarge so it never pushes the layout wide.
-                    .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-                    .padding(.horizontal, 20)
-                    .padding(.top, 8)
+        // The page fills at least the screen: the header at the top, the actions at the bottom
+        // within thumb reach, and recent scans (or a short how-to) centred in between.
+        GeometryReader { geo in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    header
+                        // The wordmark is a logo: it stops growing at xxxLarge so it never pushes the layout wide.
+                        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+                        .padding(.horizontal, 20)
+                        .padding(.top, 8)
+                        .opacity(appeared >= 1 ? 1 : 0)
 
-                mainCard
-                    .rise(appeared >= 1, reduceMotion: reduceMotion)
-                    .padding(.top, 22)
+                    VStack(alignment: .leading, spacing: 0) {
+                        Spacer(minLength: 28)
+                        if recentItems.isEmpty {
+                            steps
+                        } else {
+                            recentSection
+                        }
+                        Spacer(minLength: 28)
 
-                secondaryRow
-                    .rise(appeared >= 2, reduceMotion: reduceMotion)
-                    .padding(.top, 12)
-
-                howTo
-                    .rise(appeared >= 3, reduceMotion: reduceMotion)
-                    .padding(.top, 18)
-
-                if !recentItems.isEmpty {
-                    recentSection
-                        .rise(appeared >= 4, reduceMotion: reduceMotion)
-                        .padding(.top, 20)
+                        if !recentItems.isEmpty {
+                            howTo
+                                .padding(.bottom, 16)
+                        }
+                        mainCard
+                        secondaryRow
+                            .padding(.top, 12)
+                    }
+                    .opacity(appeared >= 2 ? 1 : 0)
+                    .offset(y: appeared >= 2 || reduceMotion ? 0 : 10)
                 }
+                .frame(maxWidth: 520)
+                .frame(maxWidth: .infinity)
+                .padding(.bottom, 16)
+                .frame(minHeight: geo.size.height)
             }
-            .frame(maxWidth: 520)
-            .frame(maxWidth: .infinity)
-            .padding(.bottom, 32)
         }
         .washiBackground()
         .onAppear(perform: playEntrance)
@@ -67,8 +73,6 @@ struct HomeView: View {
             .buttonStyle(.kotenGlassCircle)
             .accessibilityIdentifier("home_settings_button")
             .accessibilityLabel(Text("settings_button"))
-            .scaleEffect(appeared >= 5 || reduceMotion ? 1 : 0.8)
-            .opacity(appeared >= 5 ? 1 : 0)
         }
     }
 
@@ -80,13 +84,8 @@ struct HomeView: View {
             .lineLimit(1)
             .minimumScaleFactor(0.5)
         HStack(spacing: 12) {
-            if let ns = brandNamespace {
-                seal.matchedGeometryEffect(id: "brandSeal", in: ns)
-                name.matchedGeometryEffect(id: "brandName", in: ns)
-            } else {
-                seal
-                name
-            }
+            seal
+            name
         }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
@@ -175,6 +174,40 @@ struct HomeView: View {
             .padding(.horizontal, 20)
     }
 
+    /// Shown while there are no scans yet: the tagline and the three steps, one per line.
+    private var steps: some View {
+        let parts = String(localized: "home_how_to")
+            .components(separatedBy: "→")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        return VStack(spacing: 18) {
+            Text("brand_tagline")
+                .font(.mincho(20, relativeTo: .title3, bold: true))
+                .tracking(1)
+                .foregroundColor(KotenColor.ink)
+                .multilineTextAlignment(.center)
+            KotenColor.shu.opacity(0.6)
+                .frame(width: 32, height: 1.5)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(Array(parts.enumerated()), id: \.offset) { index, part in
+                    HStack(alignment: .firstTextBaseline, spacing: 14) {
+                        Text("\(index + 1)")
+                            .font(.mincho(17, relativeTo: .body, bold: true))
+                            .foregroundColor(KotenColor.shu)
+                            .accessibilityHidden(true)
+                        Text(part)
+                            .font(.mincho(17, relativeTo: .body))
+                            .foregroundColor(KotenColor.inkSecondary)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 32)
+        .accessibilityElement(children: .combine)
+    }
+
     // MARK: - Recent scans
 
     private var recentSection: some View {
@@ -207,24 +240,15 @@ struct HomeView: View {
     private func playEntrance() {
         guard appeared == 0 else { return }
         if reduceMotion {
-            withAnimation(.easeOut(duration: 0.2)) { appeared = 5 }
+            withAnimation(.easeOut(duration: 0.25)) { appeared = 2 }
             return
         }
-        // Cards rise 24pt, 60ms apart, ease-out; the glass settings button comes last.
-        for step in 1...5 {
-            let delay = step == 5 ? 0.3 : 0.06 * Double(step - 1)
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                withAnimation(.easeOut(duration: step == 5 ? 0.2 : 0.3)) { appeared = max(appeared, step) }
-            }
+        // While the launch screen cross-fades out (0.4 s), the header fades in; then the cards
+        // and recent scans rise 10pt together. Everything is still by about 0.75 s.
+        withAnimation(.easeInOut(duration: 0.45)) { appeared = 1 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            withAnimation(.easeOut(duration: 0.55)) { appeared = 2 }
         }
-    }
-}
-
-private extension View {
-    func rise(_ visible: Bool, reduceMotion: Bool) -> some View {
-        self
-            .opacity(visible ? 1 : 0)
-            .offset(y: visible || reduceMotion ? 0 : 24)
     }
 }
 
@@ -238,7 +262,7 @@ private struct RecentThumbnail: View {
             // The thumbnail fills the tile without asking for more width than the tile has.
             KotenColor.mount
                 .frame(maxWidth: .infinity)
-                .frame(height: 96)
+                .frame(height: 112)
                 .overlay {
                     if let image {
                         Image(uiImage: image)
