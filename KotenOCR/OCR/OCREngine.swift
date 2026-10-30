@@ -42,6 +42,21 @@ class OCREngine: ObservableObject {
 
     private var readingOrderProcessor: ReadingOrderProcessor?
 
+    /// Guards the model references above (written by loaders on background threads, by the
+    /// memory-warning handler on main, and read by process() on the cooperative pool) and the
+    /// active-run bookkeeping below.
+    private let modelLock = NSLock()
+    /// Number of process() calls in flight. Models are never released while this is > 0.
+    private var activeProcessCount = 0
+    /// A memory warning arrived during a run; release the unused models when the run ends.
+    private var pendingUnusedModelRelease = false
+
+    private func locked<T>(_ body: () throws -> T) rethrows -> T {
+        modelLock.lock()
+        defer { modelLock.unlock() }
+        return try body()
+    }
+
     func initialize() {
         guard case .uninitialized = state else { return }
         state = .loading
@@ -67,12 +82,13 @@ class OCREngine: ObservableObject {
         currentModeRaw = mode.rawValue
 
         // Check if models for the target mode are already loaded
-        switch mode {
-        case .koten:
-            if kotenDetector != nil && kotenRecognizer != nil { return }
-        case .ndl:
-            if ndlDetector != nil && ndlCascadeRecognizer != nil { return }
+        let loaded = locked { () -> Bool in
+            switch mode {
+            case .koten: return kotenDetector != nil && kotenRecognizer != nil
+            case .ndl: return ndlDetector != nil && ndlCascadeRecognizer != nil
+            }
         }
+        if loaded { return }
 
         // Models need loading
         guard let env = self.env else {
@@ -93,16 +109,49 @@ class OCREngine: ObservableObject {
         }.value
     }
 
-    /// Handle memory warning by releasing unused mode's models
+    /// Handle memory warning by releasing unused mode's models. While an OCR run is in flight
+    /// nothing is released (the run may be using either set); the release happens when it ends.
     func handleMemoryWarning() {
-        if currentMode == .koten {
-            ndlDetector = nil
-            ndlCascadeRecognizer = nil
-        } else {
-            kotenDetector = nil
-            kotenRecognizer = nil
+        let deferred = locked { () -> Bool in
+            if activeProcessCount > 0 {
+                pendingUnusedModelRelease = true
+                return true
+            }
+            return false
+        }
+        if deferred {
+            print("[OCREngine] Memory warning during OCR; releasing unused models after the run")
+            return
+        }
+        releaseUnusedModels()
+    }
+
+    private func releaseUnusedModels() {
+        let mode = currentMode
+        locked {
+            if mode == .koten {
+                ndlDetector = nil
+                ndlCascadeRecognizer = nil
+            } else {
+                kotenDetector = nil
+                kotenRecognizer = nil
+            }
         }
         print("[OCREngine] Released unused models due to memory pressure")
+    }
+
+    private func beginProcess() {
+        locked { activeProcessCount += 1 }
+    }
+
+    private func endProcess() {
+        let release = locked { () -> Bool in
+            activeProcessCount -= 1
+            guard activeProcessCount == 0, pendingUnusedModelRelease else { return false }
+            pendingUnusedModelRelease = false
+            return true
+        }
+        if release { releaseUnusedModels() }
     }
 
     private func loadModels() throws {
@@ -124,7 +173,8 @@ class OCREngine: ObservableObject {
         }
 
         // Reading order (shared)
-        self.readingOrderProcessor = ReadingOrderProcessor()
+        let order = ReadingOrderProcessor()
+        locked { self.readingOrderProcessor = order }
         DispatchQueue.main.async { self.progress = 1.0 }
     }
 
@@ -136,7 +186,7 @@ class OCREngine: ObservableObject {
         }
         DispatchQueue.main.async { self.progress = 0.1 }
 
-        self.kotenDetector = try RTMDetector(
+        let detector = try RTMDetector(
             env: env, modelPath: detModelPath,
             scoreThreshold: config.scoreThreshold,
             nmsThreshold: config.nmsThreshold,
@@ -151,7 +201,11 @@ class OCREngine: ObservableObject {
             throw NSError(domain: "OCR", code: 12, userInfo: [NSLocalizedDescriptionKey: "NDLmoji.yaml not found in bundle"])
         }
 
-        self.kotenRecognizer = try PARSEQRecognizer(env: env, modelPath: recModelPath, charListPath: charListPath)
+        let recognizer = try PARSEQRecognizer(env: env, modelPath: recModelPath, charListPath: charListPath)
+        locked {
+            self.kotenDetector = detector
+            self.kotenRecognizer = recognizer
+        }
         DispatchQueue.main.async { self.progress = 0.3 }
     }
 
@@ -165,7 +219,7 @@ class OCREngine: ObservableObject {
         }
         DispatchQueue.main.async { self.progress = 0.35 }
 
-        self.ndlDetector = try DEIMDetector(
+        let detector = try DEIMDetector(
             env: env, modelPath: detModelPath, configPath: configPath,
             scoreThreshold: 0.2, confThreshold: 0.25,
             iouThreshold: 0.2, maxDetections: 100
@@ -200,9 +254,13 @@ class OCREngine: ObservableObject {
                                                    inputWidth: 768, inputHeight: 16)
         DispatchQueue.main.async { self.progress = 0.9 }
 
-        self.ndlCascadeRecognizer = CascadePARSEQRecognizer(
+        let cascade = CascadePARSEQRecognizer(
             recognizer30: recognizer30, recognizer50: recognizer50, recognizer100: recognizer100
         )
+        locked {
+            self.ndlDetector = detector
+            self.ndlCascadeRecognizer = cascade
+        }
     }
 
     // MARK: - Config
@@ -248,6 +306,8 @@ class OCREngine: ObservableObject {
 
     func process(image: CGImage) async throws -> OCRResult {
         let mode = currentMode
+        beginProcess()
+        defer { endProcess() }
 
         // Step 0: small-angle deskew (before detection, so boxes follow the text lines)
         var input = image
@@ -271,16 +331,17 @@ class OCREngine: ObservableObject {
     }
 
     private func processKoten(image: CGImage) async throws -> OCRResult {
-        guard let detector = self.kotenDetector,
-              let recognizer = self.kotenRecognizer,
-              let readingOrderProcessor = self.readingOrderProcessor else {
+        let models = locked { (kotenDetector, kotenRecognizer, readingOrderProcessor) }
+        guard let detector = models.0,
+              let recognizer = models.1,
+              let readingOrderProcessor = models.2 else {
             throw NSError(domain: "OCR", code: 20, userInfo: [NSLocalizedDescriptionKey: "Koten engine not initialized"])
         }
 
         // Step 1: Layout detection
-        let detections = try await Task.detached(priority: .userInitiated) {
+        let detections = try await InferenceThread.shared.run {
             try detector.detect(image: image)
-        }.value
+        }
 
         try Task.checkCancellation()
 
@@ -318,6 +379,7 @@ class OCREngine: ObservableObject {
                     let box = recognized[i].box
                     guard box.count >= 4 else { continue }
                     group.addTask {
+                        try Task.checkCancellation()
                         let plainRect = CGRect(x: max(0, box[0]), y: max(0, box[1]),
                                                width: max(1, box[2] - box[0]), height: max(1, box[3] - box[1]))
                         guard lineTilt else {
@@ -354,16 +416,17 @@ class OCREngine: ObservableObject {
     }
 
     private func processNDL(image: CGImage) async throws -> OCRResult {
-        guard let detector = self.ndlDetector,
-              let cascadeRecognizer = self.ndlCascadeRecognizer,
-              let readingOrderProcessor = self.readingOrderProcessor else {
+        let models = locked { (ndlDetector, ndlCascadeRecognizer, readingOrderProcessor) }
+        guard let detector = models.0,
+              let cascadeRecognizer = models.1,
+              let readingOrderProcessor = models.2 else {
             throw NSError(domain: "OCR", code: 20, userInfo: [NSLocalizedDescriptionKey: "NDL engine not initialized"])
         }
 
         // Step 1: Layout detection
-        let allDetections = try await Task.detached(priority: .userInitiated) {
+        let allDetections = try await InferenceThread.shared.run {
             try detector.detect(image: image)
-        }.value
+        }
 
         try Task.checkCancellation()
 
@@ -389,6 +452,7 @@ class OCREngine: ObservableObject {
                     let predCharCount = recognized[i].predCharCount
 
                     group.addTask {
+                        try Task.checkCancellation()
                         let text = try cascadeRecognizer.recognize(image: cropped, predCharCount: predCharCount)
                         return (i, text)
                     }
