@@ -290,6 +290,9 @@ final class ScreenshotTests: XCTestCase {
         app.swipeLeft()
         sleep(1)
         saveScreenshot(name: "08_onboarding_howto")
+        app.swipeLeft()
+        sleep(1)
+        saveScreenshot(name: "09_onboarding_steps")
     }
 
     // MARK: - Helpers

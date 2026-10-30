@@ -49,14 +49,14 @@ struct OnboardingView: View {
         ScrollView {
             VStack(spacing: 0) {
                 OnboardingIntroAnimation(finished: $introFinished)
-                    .padding(.top, 32)
+                    .padding(.top, 12)
                 VStack(spacing: 14) {
                     Text("onboarding_heading")
                         .font(.mincho(30, relativeTo: .largeTitle, bold: true))
                         .foregroundColor(KotenColor.ink)
                         .multilineTextAlignment(.center)
                         .accessibilityAddTraits(.isHeader)
-                    Text(String(localized: "onboarding_intro", defaultValue: "古典籍・くずし字の文字認識アプリ。\nカメラで撮影するだけで、くずし字をテキストに変換します。"))
+                    Text(String(localized: "onboarding_intro", defaultValue: "古典籍・くずし字の文字認識アプリ。\nカメラで撮影するか、写真を選ぶだけで、くずし字をテキストに変換します。"))
                         .font(.body)
                         .foregroundColor(KotenColor.inkSecondary)
                         .multilineTextAlignment(.center)
@@ -138,7 +138,7 @@ struct OnboardingView: View {
                 howToStep(
                     icon: "camera.viewfinder",
                     title: String(localized: "onboarding_step1_title", defaultValue: "撮影する"),
-                    description: String(localized: "onboarding_step1_desc", defaultValue: "古典籍のページをカメラで撮影")
+                    description: String(localized: "onboarding_step1_desc", defaultValue: "古典籍のページをカメラで撮影（パソコンなどから「写真」に入れた画像も選べます）")
                 )
                 howToStep(
                     icon: "text.viewfinder",

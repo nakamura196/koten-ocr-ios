@@ -59,11 +59,17 @@ struct CropView: View {
                         .accessibilityLabel(Text("crop_reset_zoom"))
                         .transition(.opacity)
                     }
+                    // Icon plus word: an icon alone was easy to miss.
                     Button(action: rotateImage) {
-                        KotenIconLabel(systemName: "rotate.right")
+                        HStack(spacing: 4) {
+                            Image(systemName: "rotate.right").font(.body.weight(.semibold))
+                            Text(String(localized: "crop_rotate", defaultValue: "回転")).font(.body.weight(.bold)).lineLimit(1)
+                        }
+                        .padding(.horizontal, 14)
+                        .frame(minHeight: 44)
                     }
-                    .buttonStyle(.kotenGlassCircle)
-                    .accessibilityLabel(Text("crop_rotate"))
+                    .buttonStyle(.kotenGlass)
+                    .accessibilityIdentifier("crop_rotate_button")
                 }
                 .overlay {
                     if !typeSize.isAccessibilitySize {
