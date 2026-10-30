@@ -2,8 +2,10 @@ import SwiftUI
 
 struct CropView: View {
     let image: CGImage
-    let onCrop: (CGImage) -> Void
-    let onSkip: () -> Void
+    /// Receives the cropped image and the (possibly rotated) image it was cropped from.
+    let onCrop: (_ cropped: CGImage, _ source: CGImage) -> Void
+    /// Receives the displayed image, i.e. including any rotation applied in this view.
+    let onSkip: (_ displayed: CGImage) -> Void
     let onCancel: () -> Void
 
     @State private var cropRect: CGRect = .zero
@@ -11,6 +13,7 @@ struct CropView: View {
     @State private var initializedCrop = false
     @State private var currentImage: CGImage?
     @State private var containerSize: CGSize = .zero
+    @State private var moveStartRect: CGRect?
 
     // Zoom & Pan
     @State private var zoomScale: CGFloat = 1.0
@@ -48,6 +51,7 @@ struct CropView: View {
                                     .font(.system(size: 18))
                                     .foregroundColor(.yellow)
                             }
+                            .accessibilityLabel(Text("crop_reset_zoom"))
                             .transition(.opacity)
                         }
                         Button(action: rotateImage) {
@@ -168,7 +172,7 @@ struct CropView: View {
 
                 // Bottom buttons
                 HStack(spacing: 40) {
-                    Button(action: { onSkip() }) {
+                    Button(action: { onSkip(displayImage) }) {
                         Text(String(localized: "crop_skip", defaultValue: "Skip"))
                             .foregroundColor(.white)
                             .padding(.horizontal, 24)
@@ -367,13 +371,14 @@ struct CropView: View {
     // MARK: - Crop Drag Gestures
 
     private var moveDrag: some Gesture {
-        DragGesture()
+        DragGesture(coordinateSpace: .named("cropContainer"))
             .onChanged { value in
-                var newRect = cropRect.offsetBy(dx: value.translation.width, dy: value.translation.height)
-                newRect.origin.x = max(imageFrame.minX, min(newRect.origin.x, imageFrame.maxX - newRect.width))
-                newRect.origin.y = max(imageFrame.minY, min(newRect.origin.y, imageFrame.maxY - newRect.height))
-                cropRect = newRect
+                // translation is cumulative since the drag began, so apply it to the rect at drag start
+                let start = moveStartRect ?? cropRect
+                moveStartRect = start
+                cropRect = CropGeometry.moved(start, by: value.translation, within: imageFrame)
             }
+            .onEnded { _ in moveStartRect = nil }
     }
 
     private func cornerDrag(corner: Corner) -> some Gesture {
@@ -439,32 +444,15 @@ struct CropView: View {
 
     private func performCrop() {
         let img = displayImage
-        guard imageFrame.width > 0, imageFrame.height > 0 else {
-            onSkip()
+        guard let rect = CropGeometry.pixelRect(
+            cropRect: cropRect,
+            imageFrame: imageFrame,
+            imageSize: CGSize(width: img.width, height: img.height)
+        ), let cropped = img.cropping(to: rect) else {
+            onSkip(img)
             return
         }
-
-        let scaleX = CGFloat(img.width) / imageFrame.width
-        let scaleY = CGFloat(img.height) / imageFrame.height
-
-        let pixelRect = CGRect(
-            x: (cropRect.minX - imageFrame.minX) * scaleX,
-            y: (cropRect.minY - imageFrame.minY) * scaleY,
-            width: cropRect.width * scaleX,
-            height: cropRect.height * scaleY
-        ).integral
-
-        let clampedRect = pixelRect.intersection(
-            CGRect(x: 0, y: 0, width: img.width, height: img.height)
-        )
-
-        guard !clampedRect.isEmpty,
-              let cropped = img.cropping(to: clampedRect) else {
-            onSkip()
-            return
-        }
-
-        onCrop(cropped)
+        onCrop(cropped, img)
     }
 }
 
