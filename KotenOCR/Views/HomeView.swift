@@ -238,7 +238,7 @@ struct HomeView: View {
         switch recentItems.count {
         case 1: return 280
         case 2: return 200
-        default: return 112
+        default: return 150
         }
     }
 
