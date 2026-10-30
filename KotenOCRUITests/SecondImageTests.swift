@@ -54,6 +54,7 @@ final class SecondImageTests: XCTestCase {
         let ndl = app.buttons["ndl_ocr_button"]
         XCTAssertTrue(ndl.waitForExistence(timeout: 10))
         ndl.tap()
+        app.buttons["run_ocr_button"].tap()
 
         XCTAssertTrue(back.waitForExistence(timeout: 300), "2nd OCR result should appear")
         XCTAssertEqual(app.state, .runningForeground, "app should still be running after the 2nd OCR")
