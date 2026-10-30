@@ -305,6 +305,13 @@ struct SettingsView: View {
                         .foregroundColor(.secondary)
                 }
             }
+            VStack(alignment: .leading, spacing: 2) {
+                Text("settings_sample_image_title")
+                    .font(.body)
+                Text("onboarding_sample_credit")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
         }
     }
 

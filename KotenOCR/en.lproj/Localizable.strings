@@ -231,3 +231,6 @@
 "box_hint_add" = "Drag on the image to draw a new box";
 "box_hint_split" = "Tap where to cut the box";
 "box_hint_merge" = "Select one box, then tap the box to join";
+
+"settings_sample_image_title" = "Manuscript in the introduction";
+"onboarding_sample_credit" = "Image courtesy of the University of Tokyo General Library - The Tale of Genji / transformed";

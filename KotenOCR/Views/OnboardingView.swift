@@ -250,6 +250,11 @@ private struct OnboardingIntroAnimation: View {
                 }
                 .kotenMount()
                 .frame(maxHeight: 330)
+                // Required by the library's reuse terms (cropped and overlaid = modified).
+                Text("onboarding_sample_credit")
+                    .font(.caption2)
+                    .foregroundColor(KotenColor.inkSecondary)
+                    .multilineTextAlignment(.center)
             }
 
             if showLines, let lines = sample?.lines.prefix(3) {

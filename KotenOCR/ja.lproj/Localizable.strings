@@ -231,3 +231,6 @@
 "box_hint_add" = "画像をなぞって、新しい枠を描く";
 "box_hint_split" = "分けたい位置をタップ";
 "box_hint_merge" = "1つ選んでから、つなげる枠をタップ";
+
+"settings_sample_image_title" = "初回説明の写本画像";
+"onboarding_sample_credit" = "『源氏物語』（東京大学総合図書館所蔵）を改変";
