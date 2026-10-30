@@ -7,6 +7,10 @@ struct ResultOverlayView: View {
     var historyItemID: UUID?
     @Binding var translatedText: String?
     var onOpenSettings: (() -> Void)?
+    /// Set by ContentView when the result comes straight from a scan: the 朱 stamp is pressed once.
+    var playCompletionStamp: Binding<Bool> = .constant(false)
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var stampPhase = 0
     @State private var showBoxes = true
     @State private var showCopied = false
     @State private var showShareSheet = false
@@ -33,9 +37,9 @@ struct ResultOverlayView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Image with boxes + pinch-to-zoom (full-width container)
+            // Image with boxes + pinch-to-zoom, on a paper mount
             ZStack {
-                Color(white: 0.2)
+                KotenColor.mount
 
                 Image(decorative: image, scale: 1.0)
                     .resizable()
@@ -58,8 +62,8 @@ struct ResultOverlayView: View {
 
                                 if showBoxes {
                                     Rectangle()
-                                        .stroke(color, lineWidth: isSelected ? 3 : 1)
-                                        .background(color.opacity(isSelected ? 0.35 : 0.1))
+                                        .stroke(color, lineWidth: isSelected ? 3 : 1.5)
+                                        .background(color.opacity(isSelected ? 0.3 : 0.08))
                                         .frame(width: rect.width, height: rect.height)
                                         .overlay(alignment: .topLeading) {
                                             Text("\(index + 1)")
@@ -67,7 +71,7 @@ struct ResultOverlayView: View {
                                                 .foregroundColor(.white)
                                                 .padding(.horizontal, 3)
                                                 .padding(.vertical, 1)
-                                                .background(color.opacity(0.85))
+                                                .background(KotenColor.shuFill)
                                         }
                                         .position(x: rect.midX, y: rect.midY)
                                 }
@@ -134,6 +138,14 @@ struct ResultOverlayView: View {
                     .offset(offset)
             }
             .clipped()
+            .overlay(alignment: .topTrailing) { completionStamp }
+            .padding(6)
+            .background(KotenColor.mount)
+            .overlay(RoundedRectangle(cornerRadius: 4).stroke(KotenColor.rule, lineWidth: 1))
+            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .shadow(color: Color(red: 0.31, green: 0.24, blue: 0.12).opacity(0.15), radius: 8, y: 6)
+            .padding(.horizontal, 14)
+            .padding(.top, 4)
             .background(
                 GeometryReader { geo in
                     Color.clear
@@ -193,30 +205,23 @@ struct ResultOverlayView: View {
                     }
             )
 
-            // Controls
-            HStack(spacing: 12) {
-                Toggle(isOn: $showBoxes) {
-                    Label(String(localized: "boxes_toggle", defaultValue: "Boxes"), systemImage: "rectangle.dashed")
-                        .font(.caption)
+            // Controls (glass)
+            HStack(spacing: 10) {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) { showBoxes.toggle() }
+                } label: {
+                    Label(String(localized: "boxes_toggle", defaultValue: "Boxes"),
+                          systemImage: showBoxes ? "rectangle.dashed" : "rectangle.slash")
+                        .font(.subheadline.weight(.semibold))
+                        .padding(.horizontal, 14)
+                        .frame(minHeight: 40)
+                        .opacity(showBoxes ? 1 : 0.6)
                 }
-                .toggleStyle(.button)
-                .tint(showBoxes ? .blue : .gray)
+                .buttonStyle(.kotenGlass)
                 .accessibilityLabel(Text("boxes_toggle"))
+                .accessibilityAddTraits(showBoxes ? [.isSelected] : [])
 
                 Spacer()
-
-                Text("\(detections.count) " + String(localized: "history_regions", defaultValue: "regions"))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                Button(action: copyAllText) {
-                    Label(showCopied ? String(localized: "copied", defaultValue: "Copied") : String(localized: "copy", defaultValue: "Copy"),
-                          systemImage: showCopied ? "checkmark" : "doc.on.doc")
-                        .font(.caption)
-                }
-                .buttonStyle(.bordered)
-                .tint(showCopied ? .green : .blue)
-                .accessibilityLabel(Text(showCopied ? "copied" : "copy"))
 
                 // Export menu
                 Menu {
@@ -242,15 +247,15 @@ struct ResultOverlayView: View {
                         Label(String(localized: "export_pdf", defaultValue: "Export PDF"), systemImage: "doc.richtext")
                     }
                 } label: {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.caption)
+                    KotenIconLabel(systemName: "square.and.arrow.up")
+                        .foregroundColor(KotenColor.ink)
+                        .kotenGlass(.regular, in: Circle(), interactive: true)
                 }
-                .buttonStyle(.bordered)
-                .tint(.blue)
                 .accessibilityLabel(Text("share"))
+                .accessibilityIdentifier("share_menu")
             }
-            .padding(.horizontal)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 14)
+            .padding(.top, 10)
             .sheet(isPresented: $showShareSheet) {
                 ShareSheet(text: combinedText)
             }
@@ -268,19 +273,31 @@ struct ResultOverlayView: View {
                     .tag(ResultTab.translation)
             }
             .pickerStyle(.segmented)
-            .padding(.horizontal)
-            .padding(.vertical, 6)
-
-            Divider().background(Color.secondary.opacity(0.3))
+            .padding(.horizontal, 20)
+            .padding(.vertical, 8)
+            .animation(KotenMotion.spring(0.28, reduceMotion: reduceMotion), value: selectedTab)
 
             // Tab content
-            switch selectedTab {
-            case .ocr:
-                ocrTextList
-            case .translation:
-                translationPanel
+            ZStack {
+                switch selectedTab {
+                case .ocr:
+                    ocrTextList.transition(.opacity)
+                case .translation:
+                    translationPanel.transition(.opacity)
+                }
+            }
+            .animation(.easeInOut(duration: 0.2), value: selectedTab)
+            .frame(maxHeight: .infinity)
+            .overlay(alignment: .bottomTrailing) { copyButton }
+        }
+        .overlay(alignment: .top) {
+            if showCopied {
+                copiedToast
+                    .padding(.top, 8)
+                    .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
             }
         }
+        .onAppear(perform: playStampIfNeeded)
         .sheet(item: $editingIndex) { index in
             editSheet(for: index)
         }
@@ -347,13 +364,14 @@ struct ResultOverlayView: View {
                         HStack(alignment: .top, spacing: 4) {
                             HStack(alignment: .top, spacing: 8) {
                                 Text("\(index + 1)")
-                                    .font(.system(size: 12, weight: .medium, design: .monospaced))
-                                    .foregroundColor(isSelected ? color : .secondary)
-                                    .frame(width: 24, alignment: .trailing)
+                                    .font(.footnote.weight(.semibold))
+                                    .monospacedDigit()
+                                    .foregroundColor(KotenColor.shu)
+                                    .frame(minWidth: 24, alignment: .trailing)
 
                                 Text(det.text.isEmpty ? "---" : det.text)
-                                    .font(.system(.body, design: .serif))
-                                    .foregroundColor(det.text.isEmpty ? .secondary : .primary)
+                                    .font(.mincho(18, relativeTo: .body))
+                                    .foregroundColor(det.text.isEmpty ? KotenColor.inkSecondary : KotenColor.ink)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                             }
                             .contentShape(Rectangle())
@@ -376,9 +394,9 @@ struct ResultOverlayView: View {
                                 startEditing(index)
                             } label: {
                                 Image(systemName: "pencil")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.secondary)
-                                    .frame(width: 36, height: 36)
+                                    .font(.subheadline)
+                                    .foregroundColor(KotenColor.inkSecondary)
+                                    .frame(width: 40, height: 40)
                             }
                             .buttonStyle(.borderless)
                             .accessibilityLabel(Text("edit_text"))
@@ -395,7 +413,8 @@ struct ResultOverlayView: View {
                     }
                 }
                 .padding(.horizontal, 8)
-                .padding(.vertical, 4)
+                .padding(.top, 4)
+                .padding(.bottom, 96) // room for the floating Copy button
             }
             .onChange(of: selectedIndex) { newValue in
                 if let idx = newValue {
@@ -411,83 +430,146 @@ struct ResultOverlayView: View {
 
     private var translationPanel: some View {
         ScrollView {
-            VStack(spacing: 12) {
-                if let translated = translatedText, !translated.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Button(action: startTranslation) {
-                                Label(String(localized: "retranslate_button", defaultValue: "再翻訳"),
-                                      systemImage: "arrow.clockwise")
-                                    .font(.caption)
-                            }
-                            .buttonStyle(.bordered)
-                            .tint(.orange)
-                            .disabled(isTranslating)
-
-                            Spacer()
-
-                            Button {
-                                #if canImport(UIKit)
-                                UIPasteboard.general.string = translated
-                                #endif
-                            } label: {
-                                Label(String(localized: "copy", defaultValue: "Copy"), systemImage: "doc.on.doc")
-                                    .font(.caption)
-                            }
-                            .buttonStyle(.bordered)
-                            .tint(.blue)
+            VStack(alignment: .leading, spacing: 12) {
+                if isTranslating {
+                    // Soft light passes over placeholder lines (1.2 s cycle) while translating.
+                    VStack(alignment: .leading, spacing: 14) {
+                        ShimmerLine(widthFraction: 0.92)
+                        ShimmerLine(widthFraction: 0.8)
+                        ShimmerLine(widthFraction: 0.86)
+                        Text(String(localized: "translating", defaultValue: "翻訳中..."))
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundColor(KotenColor.inkSecondary)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 14)
+                    .transition(.opacity)
+                } else if let translated = translatedText, !translated.isEmpty {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Button(action: startTranslation) {
+                            Label(String(localized: "retranslate_button", defaultValue: "再翻訳"),
+                                  systemImage: "arrow.clockwise")
+                                .font(.subheadline.weight(.semibold))
+                                .padding(.horizontal, 14)
+                                .frame(minHeight: 40)
                         }
+                        .buttonStyle(.kotenGlass)
+                        .disabled(isTranslating)
+
                         Text(translated)
-                            .font(.system(.body, design: .serif))
+                            .font(.mincho(17, relativeTo: .body))
+                            .lineSpacing(8)
+                            .foregroundColor(KotenColor.ink)
                             .textSelection(.enabled)
                     }
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, 20)
                     .padding(.vertical, 8)
-                }
-
-                if isTranslating {
-                    VStack(spacing: 12) {
-                        ProgressView()
-                        Text(String(localized: "translating", defaultValue: "翻訳中..."))
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 40)
+                    .transition(.opacity)
                 }
 
                 if let error = translationError {
                     Text(error)
-                        .font(.caption)
-                        .foregroundColor(.red)
-                        .padding(.horizontal, 12)
+                        .font(.callout)
+                        .foregroundColor(KotenColor.shu)
+                        .padding(.horizontal, 20)
                 }
 
                 if translatedText == nil && !isTranslating {
                     VStack(spacing: 16) {
                         Image(systemName: "text.book.closed")
-                            .font(.system(size: 36))
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 36, weight: .light))
+                            .foregroundColor(KotenColor.inkSecondary)
+                            .accessibilityHidden(true)
                         Text(String(localized: "translation_empty", defaultValue: "現代語訳がまだありません"))
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .font(.mincho(17, relativeTo: .body))
+                            .foregroundColor(KotenColor.inkSecondary)
                         Button(action: startTranslation) {
-                            HStack {
-                                Image(systemName: "sparkles")
-                                Text(String(localized: "translate_button", defaultValue: "現代語訳"))
-                            }
-                            .font(.subheadline)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 10)
-                            .background(Color.blue)
-                            .cornerRadius(8)
+                            Label(String(localized: "translate_button", defaultValue: "現代語訳"), systemImage: "sparkles")
+                                .font(.headline)
+                                .padding(.horizontal, 24)
+                                .frame(minHeight: 48)
                         }
+                        .buttonStyle(.kotenProminent)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 40)
                 }
             }
+            .padding(.bottom, 96)
+            .animation(.easeInOut(duration: 0.2), value: isTranslating)
+        }
+    }
+
+    // MARK: - Copy, toast, stamp
+
+    /// Floating 朱 Copy button. Copies the text of the visible tab.
+    private var copyButton: some View {
+        Button(action: copyCurrentTab) {
+            Label(String(localized: "copy", defaultValue: "Copy"), systemImage: "doc.on.doc")
+                .font(.headline.weight(.heavy))
+                .padding(.horizontal, 22)
+                .frame(minHeight: 54)
+        }
+        .buttonStyle(.kotenProminent)
+        .accessibilityLabel(Text("copy"))
+        .accessibilityIdentifier("copy_button")
+        .padding(.trailing, 20)
+        .padding(.bottom, 16)
+        .opacity(selectedTab == .translation && (translatedText ?? "").isEmpty ? 0 : 1)
+    }
+
+    private var copiedToast: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "checkmark")
+                .font(.caption.weight(.black))
+                .foregroundColor(.white)
+                .frame(width: 22, height: 22)
+                .background(Circle().fill(KotenColor.shuFill))
+            Text(String(localized: "copied_toast", defaultValue: "コピーしました"))
+                .font(.headline)
+                .foregroundColor(KotenColor.ink)
+        }
+        .padding(.horizontal, 20)
+        .frame(minHeight: 46)
+        .kotenGlass(.regular, in: Capsule())
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("copied_toast")
+    }
+
+    /// 朱印 pressed when OCR finishes: 1.3 → 1.0 with ink spreading, about 250 ms,
+    /// success haptic. With Reduce Motion it only fades in. Fades away after a moment.
+    @ViewBuilder private var completionStamp: some View {
+        if stampPhase > 0 {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(KotenColor.shuFill)
+                    .frame(width: 64, height: 64)
+                    .blur(radius: 8)
+                    .opacity(stampPhase == 2 ? 0.3 : 0)
+                    .scaleEffect(stampPhase == 2 ? 1.2 : 1)
+                KotenStamp(size: 56)
+            }
+            .scaleEffect(stampPhase == 1 && !reduceMotion ? 1.3 : 1)
+            .opacity(stampPhase == 1 ? (reduceMotion ? 0 : 0.5) : (stampPhase == 4 ? 0 : 1))
+            .padding(10)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+        }
+    }
+
+    private func playStampIfNeeded() {
+        guard playCompletionStamp.wrappedValue else { return }
+        playCompletionStamp.wrappedValue = false
+        stampPhase = 1
+        DispatchQueue.main.async {
+            withAnimation(.easeOut(duration: 0.12)) { stampPhase = 2 }
+            KotenHaptics.notify(.success)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+            withAnimation(.easeOut(duration: 0.13)) { stampPhase = 3 }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+            withAnimation(.easeIn(duration: 0.4)) { stampPhase = 4 }
         }
     }
 
@@ -533,19 +615,19 @@ struct ResultOverlayView: View {
         detections.map(\.text).filter { !$0.isEmpty }.joined(separator: "\n")
     }
 
-    private func copyAllText() {
-        #if canImport(UIKit)
-        UIPasteboard.general.string = combinedText
-        showCopied = true
+    private func copyCurrentTab() {
+        let text = selectedTab == .translation ? (translatedText ?? "") : combinedText
+        guard !text.isEmpty else { return }
+        UIPasteboard.general.string = text
+        KotenHaptics.notify(.success)
+        withAnimation(KotenMotion.spring(0.35, reduceMotion: reduceMotion)) { showCopied = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            showCopied = false
+            withAnimation(.easeIn(duration: 0.2)) { showCopied = false }
         }
-        #endif
     }
 
     private func boxColor(for index: Int) -> Color {
-        let colors: [Color] = [.red, .green, .blue, .orange, .purple, .cyan, .yellow, .pink]
-        return colors[index % colors.count]
+        KotenColor.shu
     }
 }
 
@@ -573,3 +655,33 @@ struct ShareSheet: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
+
+/// Placeholder line with a soft light passing over it (1.2 s cycle). Static with Reduce Motion.
+private struct ShimmerLine: View {
+    let widthFraction: CGFloat
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var phase: CGFloat = -1
+
+    var body: some View {
+        GeometryReader { geo in
+            Capsule()
+                .fill(KotenColor.mount)
+                .overlay {
+                    if !reduceMotion {
+                        LinearGradient(colors: [.clear, KotenColor.washiCard.opacity(0.9), .clear],
+                                       startPoint: .leading, endPoint: .trailing)
+                            .frame(width: geo.size.width * 0.5)
+                            .offset(x: phase * geo.size.width)
+                    }
+                }
+                .clipShape(Capsule())
+                .frame(width: geo.size.width * widthFraction)
+        }
+        .frame(height: 14)
+        .accessibilityHidden(true)
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.linear(duration: 1.2).repeatForever(autoreverses: false)) { phase = 1 }
+        }
+    }
+}

@@ -28,7 +28,8 @@ final class ScreenshotTests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
-        app.launchArguments += ["-hasCompletedOnboarding", "YES", "-ocrSuccessCount", "999", "-skipHome", "YES"]
+        app.launchArguments += ["-hasCompletedOnboarding", "YES", "-ocrSuccessCount", "999", "-skipHome", "YES",
+                                "-coachShutterShown", "YES", "-coachCropCornerShown", "YES"]
 
         // Match app language to the test runner language (set by xcodebuild -testLanguage)
         let preferredLang = Locale.preferredLanguages.first ?? "ja"
@@ -155,6 +156,7 @@ final class ScreenshotTests: XCTestCase {
         XCTAssertTrue(ndlButton.waitForExistence(timeout: 10), "OCR mode buttons should appear")
         sleep(1)  // Show mode selection briefly
         ndlButton.tap()
+        app.buttons["run_ocr_button"].tap()
 
         // Wait for OCR to complete
         let backButton = app.buttons.matching(
@@ -232,6 +234,7 @@ final class ScreenshotTests: XCTestCase {
         XCTAssertTrue(ndlButton.waitForExistence(timeout: 10), "OCR mode buttons should appear")
         sleep(1)
         ndlButton.tap()
+        app.buttons["run_ocr_button"].tap()
 
         // Wait for 近代 OCR result
         let resultLoaded2 = backButton.waitForExistence(timeout: 300)
