@@ -175,7 +175,9 @@ class DEIMDetector: @unchecked Sendable {
             charCounts = DEIMDetector.decodeCharCounts(charCountData, elementType: elementType)
         }
 
-        let numDetections = scores.count
+        // The outputs are parallel arrays; read only as far as all of them reach.
+        let numDetections = min(scores.count, labels.count, bboxes.count / 4)
+        if let counts = charCounts, counts.count < numDetections { charCounts = nil }
         var detections: [Detection] = []
 
         // Scale factors: image was padded to maxWH x maxWH, then resized to input size

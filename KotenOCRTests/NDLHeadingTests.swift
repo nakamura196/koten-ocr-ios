@@ -141,4 +141,12 @@ final class NDLHeadingTests: XCTestCase {
         let dets = try postprocess(labels: [2], boxes: [-10, 700, 900, 820], scores: [0.9])
         XCTAssertEqual(dets.map(\.box), [[0, 700, 800, 800]])
     }
+
+    /// The outputs are parallel arrays; a shorter one used to be indexed past its end (a crash).
+    func testOutputsOfDifferentLengthsAreNotOverread() throws {
+        let dets = try postprocess(labels: [2], boxes: [10, 10, 300, 30, 10, 40, 100, 60],
+                                   scores: [0.9, 0.8], charCounts: [3])
+        XCTAssertEqual(dets.map(\.box), [[10, 10, 300, 30]])
+        XCTAssertEqual(dets.map(\.predCharCount), [3])
+    }
 }
