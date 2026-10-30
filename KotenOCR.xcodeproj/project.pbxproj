@@ -68,6 +68,7 @@
 		A812012515F81DD1710B8FF8 /* ReadingOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33E0D72EA37B2FC8AEAAB9C3 /* ReadingOrder.swift */; };
 		A837047A0506557D5318480E /* DeskewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B09C946B5776D24214D069B /* DeskewTests.swift */; };
 		A8AD59058F22F7DD85588E33 /* QuadCropOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD279EF54FDA15B9B22A0772 /* QuadCropOverlay.swift */; };
+		AA5B2482456C825215B7008A /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = D39618E527700DAF10D21A16 /* PrivacyInfo.xcprivacy */; };
 		AE0508DB7CB99DEF84EEB4DC /* OnboardingSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = A36038871775AA4E17722957 /* OnboardingSample.swift */; };
 		B08FDACE53C363DD87842F4E /* DetectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91ECD227D650332CC3FA89B7 /* DetectionTests.swift */; };
 		B40BD58294F991DBD2327961 /* TiltMonitorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E65C85BD0D8B4099B0A32AD /* TiltMonitorTests.swift */; };
@@ -201,6 +202,7 @@
 		CBDF15C34D6661310197B75E /* Models */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Models; path = KotenOCR/Models; sourceTree = SOURCE_ROOT; };
 		D02D5F325A2BFEFF88F7A6EA /* ScreenshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotTests.swift; sourceTree = "<group>"; };
 		D1D04E8E36E0873A6D94D661 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		D39618E527700DAF10D21A16 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		D6CFDE78282D74C1F90DD69F /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		D87605111E3CF0E5B72BE6F9 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		D9592F98393FE48326A85B89 /* InferenceThread.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InferenceThread.swift; sourceTree = "<group>"; };
@@ -430,6 +432,7 @@
 				270641011EB727A6FC52AD0B /* KotenOCRApp.swift */,
 				7078A6C58B9E131D0C86B41E /* Localizable.strings */,
 				9A2B8FC9F37AF7ABC52CE712 /* MetricKitManager.swift */,
+				D39618E527700DAF10D21A16 /* PrivacyInfo.xcprivacy */,
 				75D337ED66BD4C54B44E5CD9 /* TipJar.storekit */,
 				E412F87D82C0E2D914BD5700 /* Export */,
 				02791E8C5A98F9A68F1D9D32 /* Extensions */,
@@ -559,6 +562,7 @@
 				32AC0585492170F888B835C7 /* InfoPlist.strings in Resources */,
 				F90AF6B5F88C2159FED81F00 /* Localizable.strings in Resources */,
 				D2B4248805F9613D9461AE45 /* Models in Resources */,
+				AA5B2482456C825215B7008A /* PrivacyInfo.xcprivacy in Resources */,
 				D3EEE12E67663C8EA0799D33 /* TipJar.storekit in Resources */,
 				6FFFC61B2F9AE3C5A29C3CDF /* onboarding_sample_ocr.json in Resources */,
 				427A2B6588171C0317C79B33 /* sample_genji.jpg in Resources */,
