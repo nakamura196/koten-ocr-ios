@@ -24,10 +24,12 @@ final class DesignScreenshotTests: XCTestCase {
     func testOnboarding() throws {
         let app = makeApp(theme: "light", extra: ["-hasCompletedOnboarding", "NO"])
         app.launch()
-        sleep(1)
-        shot(app, "onboarding_mid_light")
+        usleep(1_000_000)
+        shot(app, "onboarding_1_sweep_light")
+        usleep(800_000)
+        shot(app, "onboarding_2_boxes_light")
         sleep(3)
-        shot(app, "onboarding_light")
+        shot(app, "onboarding_3_final_light")
     }
 
     // MARK: - Flow

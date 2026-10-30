@@ -49,7 +49,7 @@ struct OnboardingView: View {
         ScrollView {
             VStack(spacing: 0) {
                 OnboardingIntroAnimation(finished: $introFinished)
-                    .padding(.top, 40)
+                    .padding(.top, 32)
                 VStack(spacing: 14) {
                     Text("onboarding_heading")
                         .font(.mincho(30, relativeTo: .largeTitle, bold: true))
@@ -62,7 +62,7 @@ struct OnboardingView: View {
                         .multilineTextAlignment(.center)
                 }
                 .padding(.horizontal, 28)
-                .padding(.top, 26)
+                .padding(.top, 20)
                 .padding(.bottom, 48)
                 .opacity(introFinished ? 1 : 0)
                 .offset(y: introFinished ? 0 : 12)
@@ -193,81 +193,120 @@ struct OnboardingView: View {
     }
 }
 
-/// First-run animation (guidance 1): a sample manuscript page appears, a 朱 frame is drawn
-/// around it, then the read text rises along the lines. Ends after about 3 s.
-/// With Reduce Motion the final state fades in at once.
+/// First-run animation (guidance 1). Replays a real recognition result of the sample page
+/// (KotenOCR/Resources/onboarding_sample_ocr.json, made by OnboardingSampleGenerator) with the
+/// same look and timing as the reading screen: the grey page, the 朱 beam, then the boxes in
+/// reading order (right to left), then the first recognized lines. About 3 s; no OCR runs here.
+/// With Reduce Motion the final state is shown as a still image.
 private struct OnboardingIntroAnimation: View {
     @Binding var finished: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var stage = 0
-    @State private var frameProgress: CGFloat = 0
+    @State private var appeared = false
+    @State private var sweep: CGFloat = 0
+    @State private var revealed = 0
+    @State private var showLines = false
 
-    /// Opening phrases of the Kiritsubo chapter, as on the sample page.
-    private let columns = ["いつれの御時にか", "女御更衣あまた", "さふらひ給ける中に"]
+    private let sample = OnboardingSample.load()
+    private let image = UIImage(named: "OnboardingSample")
+    private var boxes: [CGRect] {
+        (sample?.lines ?? []).map { l in
+            CGRect(x: l.box[0], y: l.box[1], width: l.box[2] - l.box[0], height: l.box[3] - l.box[1])
+        }
+    }
+    private var scanned: Bool { revealed > 0 }
 
     var body: some View {
-        GeometryReader { geo in
-            let w = min(geo.size.width, 300)
-            let s = w / 300
-            ZStack(alignment: .topTrailing) {
-                Image("OnboardingSample")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: w, height: w * 380 / 300)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                    .shadow(color: Color(red: 0.31, green: 0.24, blue: 0.12).opacity(0.25), radius: 15, y: 10)
+        VStack(spacing: 14) {
+            if let image {
+                ZStack {
+                    // Not yet read: grey and slightly sepia, as on the reading screen.
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .grayscale(1)
+                        .colorMultiply(Color(red: 0.95, green: 0.9, blue: 0.82))
+                        .brightness(-0.05)
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFit()
+                        .mask(alignment: .trailing) {
+                            GeometryReader { geo in
+                                Rectangle()
+                                    .frame(width: geo.size.width * (scanned ? 1 : sweep))
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                            }
+                        }
+                        .overlay {
+                            GeometryReader { geo in
+                                ZStack(alignment: .topLeading) {
+                                    if !scanned && sweep > 0 && sweep < 1 {
+                                        ScanBeam(height: geo.size.height)
+                                            .position(x: geo.size.width * (1 - sweep), y: geo.size.height / 2)
+                                    }
+                                    RevealedBoxes(boxes: boxes, revealed: revealed, size: geo.size)
+                                }
+                            }
+                        }
+                }
+                .kotenMount()
+                .frame(maxHeight: 330)
+            }
 
-                RoundedRectangle(cornerRadius: 6)
-                    .trim(from: 0, to: frameProgress)
-                    .stroke(KotenColor.shu, style: StrokeStyle(lineWidth: 7 * s, lineCap: .round))
-                    .padding(3 * s)
-                    .frame(width: w, height: w * 380 / 300)
-
-                ForEach(Array(columns.enumerated()), id: \.offset) { i, text in
-                    VStack(spacing: 2 * s) {
-                        ForEach(Array(text.enumerated()), id: \.offset) { _, ch in
-                            Text(String(ch))
-                                .font(.custom("HiraMinProN-W6", fixedSize: 24 * s))
+            if showLines, let lines = sample?.lines.prefix(3) {
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(Array(lines.enumerated()), id: \.offset) { index, line in
+                        HStack(alignment: .firstTextBaseline, spacing: 10) {
+                            Text("\(index + 1)")
+                                .font(.footnote.weight(.semibold))
+                                .foregroundColor(KotenColor.shu)
+                            Text(line.text)
+                                .font(.mincho(16, relativeTo: .body))
+                                .foregroundColor(KotenColor.ink)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
                         }
                     }
-                    .foregroundColor(Color(red: 0.169, green: 0.149, blue: 0.133))
-                    .padding(.vertical, 8 * s)
-                    .padding(.horizontal, 5 * s)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(Color(red: 0.98, green: 0.957, blue: 0.91).opacity(0.92)))
-                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(KotenColor.shu, lineWidth: 2))
-                    .offset(x: -(18 + CGFloat(i) * 52) * s, y: 40 * s + (stage >= 3 + i ? 0 : 30 * s))
-                    .opacity(stage >= 3 + i ? 1 : 0)
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(RoundedRectangle(cornerRadius: 14).fill(KotenColor.washiCard))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(KotenColor.rule, lineWidth: 1))
+                .transition(.opacity)
             }
-            .frame(width: w, height: w * 380 / 300)
-            .opacity(stage >= 1 ? 1 : 0)
-            .offset(y: stage >= 1 || reduceMotion ? 0 : 16)
-            .frame(maxWidth: .infinity)
         }
-        .frame(height: 380)
-        .padding(.horizontal, 45)
+        .opacity(appeared ? 1 : 0)
+        .offset(y: appeared || reduceMotion ? 0 : 16)
+        .padding(.horizontal, 32)
         .accessibilityHidden(true)
         .onAppear(perform: play)
     }
 
     private func play() {
-        guard stage == 0 else { return }
-        if reduceMotion {
-            frameProgress = 1
-            withAnimation(.easeOut(duration: 0.3)) { stage = 5 }
+        guard !appeared else { return }
+        let count = boxes.count
+        if reduceMotion || count == 0 {
+            appeared = true
+            sweep = 1
+            revealed = count
+            showLines = count > 0
             finished = true
             return
         }
-        // 0–600 ms: the page appears.
-        withAnimation(.easeOut(duration: 0.6)) { stage = 1 }
-        // 600–1400 ms: the 朱 frame is drawn.
-        after(0.6) { withAnimation(.easeInOut(duration: 0.8)) { frameProgress = 1 } }
-        // 1400–2400 ms: the read text rises, one column after another.
-        after(1.4) { withAnimation(.easeOut(duration: 0.45)) { stage = 3 } }
-        after(1.7) { withAnimation(.easeOut(duration: 0.45)) { stage = 4 } }
-        after(2.0) { withAnimation(.easeOut(duration: 0.45)) { stage = 5 } }
-        // 2400–3000 ms: heading and "Next".
-        after(2.4) { withAnimation(.easeOut(duration: 0.5)) { finished = true } }
+        // 0–500 ms: the page appears, grey.
+        withAnimation(.easeOut(duration: 0.5)) { appeared = true }
+        // 500–1300 ms: the 朱 beam sweeps right → left.
+        after(0.5) { withAnimation(.linear(duration: 0.8)) { sweep = 1 } }
+        // 1300–2100 ms: the real boxes appear one by one in reading order (as on the reading screen).
+        let step = min(0.08, 0.8 / Double(count))
+        for i in 1...count {
+            after(1.3 + step * Double(i)) {
+                withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) { revealed = i }
+            }
+        }
+        // 2100–2600 ms: the first recognized lines, then heading and "Next".
+        after(2.15) { withAnimation(.easeOut(duration: 0.35)) { showLines = true } }
+        after(2.5) { withAnimation(.easeOut(duration: 0.45)) { finished = true } }
     }
 
     private func after(_ seconds: Double, _ block: @escaping () -> Void) {

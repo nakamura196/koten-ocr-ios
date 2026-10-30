@@ -107,5 +107,5 @@ This project is released under the [MIT License](LICENSE).
 ### アイコンのフォント・画像 / Icon fonts and images
 - アプリアイコンの「典」は **Noto Serif JP**、背景の仮名は **Yuji Syuku** を使い、画像に変換して収録しています。どちらも [SIL Open Font License 1.1](https://openfontlicense.org)。フォントファイル自体はアプリに含みません（生成手順: `scripts/render_app_icon.py`）。
   The 典 in the app icon uses **Noto Serif JP** and the background kana use **Yuji Syuku**, both under the [SIL Open Font License 1.1](https://openfontlicense.org). They are rendered into the icon images; the font files are not shipped (see `scripts/render_app_icon.py`).
-- 初回説明の写本画像は、東京大学総合図書館所蔵『源氏物語』の画像（テスト用サンプルと同じもの）を切り出したものです。
-  The manuscript image in the first-run introduction is a crop of the Tale of Genji page from the University of Tokyo General Library used as the test sample.
+- 初回説明の写本画像は、東京大学総合図書館所蔵『源氏物語』（テスト用サンプルと同じ写本）の画像 01_0006 の右頁を切り出したものです。表示する枠と文字は、この画像にアプリの古典籍OCRを実際にかけた結果です（`scripts/make_onboarding_sample.py` と `KotenOCRTests/OnboardingSampleGenerator.swift` で再生成）。
+  The manuscript page in the first-run introduction is the right-hand page of image 01_0006 of the same Tale of Genji manuscript (University of Tokyo General Library) as the test sample. Its boxes and text are a real result of the app's Koten OCR, regenerated with `scripts/make_onboarding_sample.py` and `KotenOCRTests/OnboardingSampleGenerator.swift`.

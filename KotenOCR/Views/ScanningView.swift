@@ -107,44 +107,24 @@ struct ScanningView: View {
 
     private var overlayLayer: some View {
         GeometryReader { geo in
-            let sx = image.width > 0 ? geo.size.width / CGFloat(image.width) : 0
-            let sy = image.height > 0 ? geo.size.height / CGFloat(image.height) : 0
             ZStack(alignment: .topLeading) {
                 if !finished && !reduceMotion {
-                    beam(height: geo.size.height)
+                    ScanBeam(height: geo.size.height)
                         .position(x: geo.size.width * (1 - sweep), y: geo.size.height / 2)
                         .animation(.linear(duration: 0.4), value: sweep)
                 }
-                ForEach(Array(detections.prefix(revealedCount).enumerated()), id: \.offset) { index, det in
-                    let rect = CGRect(x: CGFloat(det.box[0]) * sx, y: CGFloat(det.box[1]) * sy,
-                                      width: CGFloat(det.box[2] - det.box[0]) * sx,
-                                      height: CGFloat(det.box[3] - det.box[1]) * sy)
-                    let isNewest = index == revealedCount - 1
-                    Rectangle()
-                        .fill(KotenColor.shu.opacity(isNewest ? 0.25 : 0.1))
-                        .overlay(Rectangle().stroke(KotenColor.shu, lineWidth: isNewest ? 2.5 : 1.5))
-                        .frame(width: rect.width, height: rect.height)
-                        .position(x: rect.midX, y: rect.midY)
-                        .transition(reduceMotion ? .opacity : .scale(scale: 1.25).combined(with: .opacity))
-                }
+                RevealedBoxes(boxes: normalizedBoxes, revealed: revealedCount, size: geo.size)
             }
         }
         .allowsHitTesting(false)
     }
 
-    private func beam(height: CGFloat) -> some View {
-        HStack(spacing: 0) {
-            Rectangle()
-                .fill(KotenColor.shu)
-                .frame(width: 3)
-                .shadow(color: KotenColor.shu, radius: 6)
-                .shadow(color: KotenColor.shu.opacity(0.6), radius: 18)
-            // Faint tail behind the beam (towards the swept side, i.e. right).
-            LinearGradient(colors: [KotenColor.shu.opacity(0.35), .clear], startPoint: .leading, endPoint: .trailing)
-                .frame(width: 70)
+    private var normalizedBoxes: [CGRect] {
+        let w = CGFloat(max(image.width, 1)), h = CGFloat(max(image.height, 1))
+        return detections.map { d in
+            CGRect(x: CGFloat(d.box[0]) / w, y: CGFloat(d.box[1]) / h,
+                   width: CGFloat(d.box[2] - d.box[0]) / w, height: CGFloat(d.box[3] - d.box[1]) / h)
         }
-        .frame(height: height + 20)
-        .offset(x: 35)
     }
 
     private var sheet: some View {
@@ -191,5 +171,52 @@ struct ScanningView: View {
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .kotenGlass(.regular, in: RoundedRectangle(cornerRadius: 34, style: .continuous))
+    }
+}
+
+/// Line boxes appearing one by one (reading screen and onboarding share this look).
+/// `boxes` are normalized to the image (0...1); the newest box is drawn stronger.
+struct RevealedBoxes: View {
+    let boxes: [CGRect]
+    let revealed: Int
+    let size: CGSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            ForEach(Array(boxes.prefix(revealed).enumerated()), id: \.offset) { index, b in
+                let rect = CGRect(x: b.minX * size.width, y: b.minY * size.height,
+                                  width: b.width * size.width, height: b.height * size.height)
+                let isNewest = index == revealed - 1
+                Rectangle()
+                    .fill(KotenColor.shu.opacity(isNewest ? 0.25 : 0.1))
+                    .overlay(Rectangle().stroke(KotenColor.shu, lineWidth: isNewest ? 2.5 : 1.5))
+                    .frame(width: rect.width, height: rect.height)
+                    .position(x: rect.midX, y: rect.midY)
+                    .transition(reduceMotion ? .opacity : .scale(scale: 1.25).combined(with: .opacity))
+            }
+        }
+        .frame(width: size.width, height: size.height, alignment: .topLeading)
+        .allowsHitTesting(false)
+    }
+}
+
+/// The 朱 scanning beam with a faint tail on the already-read (right) side.
+struct ScanBeam: View {
+    let height: CGFloat
+
+    var body: some View {
+        HStack(spacing: 0) {
+            Rectangle()
+                .fill(KotenColor.shu)
+                .frame(width: 3)
+                .shadow(color: KotenColor.shu, radius: 6)
+                .shadow(color: KotenColor.shu.opacity(0.6), radius: 18)
+            LinearGradient(colors: [KotenColor.shu.opacity(0.35), .clear], startPoint: .leading, endPoint: .trailing)
+                .frame(width: 70)
+        }
+        .frame(height: height + 20)
+        .offset(x: 35)
+        .allowsHitTesting(false)
     }
 }
