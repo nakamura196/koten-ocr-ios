@@ -202,12 +202,9 @@ class DEIMDetector: @unchecked Sendable {
 
             // Clamp and truncate. NDLOCR-Lite truncates (astype(np.int32)); rounding moved short lines
             // by a pixel, enough for the 30-character model to read "(1)気送管" as "(1)気送信".
-            let box: [Int] = [
-                max(0, Int(x1)),
-                max(0, Int(y1)),
-                min(metadata.originalWidth, Int(x2)),
-                min(metadata.originalHeight, Int(y2))
-            ]
+            guard let box = Detection.clampedBox(x1, y1, x2, y2,
+                                                 width: metadata.originalWidth, height: metadata.originalHeight,
+                                                 rounding: .towardZero) else { continue }
 
             let predCharCount = charCounts?[i] ?? 100.0
 

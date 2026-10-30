@@ -41,6 +41,20 @@ struct Detection: Codable {
     /// NDL layout classes that hold one line of text (`line_main`, `line_title`, ...),
     /// as opposed to structural ones (`text_block`, `block_*`).
     var isTextLine: Bool { className.hasPrefix("line_") }
+
+    /// Clamps a model box into the image on both sides and converts it to pixels. Returns nil when
+    /// nothing of it is left (it lay outside the image or was inverted) or a coordinate is not finite.
+    /// Only the lower edge used to be clamped for x1/y1 and only the upper for x2/y2, so a box past
+    /// the right edge or above the top came out inverted or with negative coordinates.
+    static func clampedBox(_ x1: Float, _ y1: Float, _ x2: Float, _ y2: Float,
+                           width: Int, height: Int, rounding: FloatingPointRoundingRule) -> [Int]? {
+        guard x1.isFinite, y1.isFinite, x2.isFinite, y2.isFinite else { return nil }
+        let w = Float(width), h = Float(height)
+        let box = [min(max(0, x1), w), min(max(0, y1), h), min(max(0, x2), w), min(max(0, y2), h)]
+            .map { Int($0.rounded(rounding)) }
+        guard box[2] > box[0], box[3] > box[1] else { return nil }
+        return box
+    }
 }
 
 class RTMDetector: @unchecked Sendable {
@@ -185,12 +199,9 @@ class RTMDetector: @unchecked Sendable {
             let y2Adj = y2Orig + verticalPad
 
             // Clamp and round
-            let box: [Int] = [
-                max(0, Int(x1Orig.rounded())),
-                max(0, Int(y1Adj.rounded())),
-                min(metadata.originalWidth, Int(x2Orig.rounded())),
-                min(metadata.originalHeight, Int(y2Adj.rounded()))
-            ]
+            guard let box = Detection.clampedBox(x1Orig, y1Adj, x2Orig, y2Adj,
+                                                 width: metadata.originalWidth, height: metadata.originalHeight,
+                                                 rounding: .toNearestOrAwayFromZero) else { continue }
 
             detections.append(Detection(
                 box: box, score: score, classId: classId,

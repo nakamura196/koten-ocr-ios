@@ -127,4 +127,18 @@ final class NDLHeadingTests: XCTestCase {
         XCTAssertTrue(counts.contains(3), "short lines should go to the 30-character model")
         XCTAssertTrue(counts.contains(2), "full lines should go to the 50-character model")
     }
+
+    // MARK: - Malformed model output
+
+    func testBoxesOutsideThePageAreDropped() throws {
+        let dets = try postprocess(labels: [2, 2, 2],
+                                   boxes: [-30, -20, -5, -2, 900, 10, 950, 30, 10, 10, 100, 30],
+                                   scores: [0.9, 0.9, 0.9])
+        XCTAssertEqual(dets.map(\.box), [[10, 10, 100, 30]])
+    }
+
+    func testBoxesAreClampedOnBothSides() throws {
+        let dets = try postprocess(labels: [2], boxes: [-10, 700, 900, 820], scores: [0.9])
+        XCTAssertEqual(dets.map(\.box), [[0, 700, 800, 800]])
+    }
 }
