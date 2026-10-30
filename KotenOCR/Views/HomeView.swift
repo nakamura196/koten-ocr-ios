@@ -24,6 +24,8 @@ struct HomeView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 header
+                    // The wordmark is a logo: it stops growing at xxxLarge so it never pushes the layout wide.
+                    .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                     .padding(.horizontal, 20)
                     .padding(.top, 8)
 
@@ -76,7 +78,7 @@ struct HomeView: View {
             .font(.mincho(28, relativeTo: .title, bold: true))
             .foregroundColor(KotenColor.ink)
             .lineLimit(1)
-            .minimumScaleFactor(0.7)
+            .minimumScaleFactor(0.5)
         HStack(spacing: 12) {
             if let ns = brandNamespace {
                 seal.matchedGeometryEffect(id: "brandSeal", in: ns)
@@ -233,16 +235,17 @@ private struct RecentThumbnail: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            ZStack {
-                KotenColor.mount
-                if let image {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
+            // The thumbnail fills the tile without asking for more width than the tile has.
+            KotenColor.mount
+                .frame(maxWidth: .infinity)
+                .frame(height: 96)
+                .overlay {
+                    if let image {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                    }
                 }
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 96)
             .clipShape(RoundedRectangle(cornerRadius: 6))
             .overlay(RoundedRectangle(cornerRadius: 6).stroke(KotenColor.rule, lineWidth: 1))
 
