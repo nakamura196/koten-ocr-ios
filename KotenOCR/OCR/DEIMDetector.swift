@@ -61,7 +61,14 @@ class DEIMDetector: @unchecked Sendable {
 
     // MARK: - Detection
 
+    /// The ORT values, output dictionary and tensor data are autoreleased Objective-C objects.
+    /// Swift concurrency threads drain their autorelease pool rarely, so without a pool per run
+    /// every run's output buffers stayed alive and the footprint grew with each image.
     func detect(image: CGImage) throws -> [Detection] {
+        try autoreleasepool { try detectUnpooled(image: image) }
+    }
+
+    private func detectUnpooled(image: CGImage) throws -> [Detection] {
         let (tensor, metadata) = preprocess(image: image)
         guard !tensor.isEmpty else { return [] }
 
@@ -83,7 +90,7 @@ class DEIMDetector: @unchecked Sendable {
             inputNames[1]: sizeTensor
         ]
         let outputNames = try session.outputNames()
-        let results = try session.run(withInputs: inputs, outputNames: Set(outputNames), runOptions: nil)
+        let results = try session.run(withInputs: inputs, outputNames: Set(outputNames), runOptions: ORTMemory.runOptions())
 
         return try postprocess(outputs: results, outputNames: outputNames, metadata: metadata)
     }

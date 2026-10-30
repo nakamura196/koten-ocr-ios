@@ -63,7 +63,14 @@ class RTMDetector: @unchecked Sendable {
         self.maxDetections = maxDetections
     }
 
+    /// The ORT values, output dictionary and tensor data are autoreleased Objective-C objects.
+    /// Swift concurrency threads drain their autorelease pool rarely, so without a pool per run
+    /// every run's output buffers stayed alive and the footprint grew with each image.
     func detect(image: CGImage) throws -> [Detection] {
+        try autoreleasepool { try detectUnpooled(image: image) }
+    }
+
+    private func detectUnpooled(image: CGImage) throws -> [Detection] {
         let (tensor, metadata) = preprocess(image: image)
         let inputData = NSMutableData(bytes: tensor, length: tensor.count * MemoryLayout<Float>.stride)
         let shape: [NSNumber] = [1, 3, NSNumber(value: inputHeight), NSNumber(value: inputWidth)]
@@ -75,7 +82,7 @@ class RTMDetector: @unchecked Sendable {
         }
         let inputs: [String: ORTValue] = [firstInputName: inputTensor]
         let outputNames: Set<String> = ["dets", "labels"]
-        let results = try session.run(withInputs: inputs, outputNames: outputNames, runOptions: nil)
+        let results = try session.run(withInputs: inputs, outputNames: outputNames, runOptions: ORTMemory.runOptions())
 
         return try postprocess(outputs: results, metadata: metadata)
     }
