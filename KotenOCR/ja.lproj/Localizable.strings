@@ -151,6 +151,7 @@
 "onboarding_camera_granted" = "カメラは許可済みです";
 "onboarding_camera_denied" = "カメラが許可されていません";
 "settings_save_to_library" = "フォトライブラリに保存";
+"settings_auto_deskew" = "傾きを自動補正";
 
 /* OCR Engine */
 "settings_ocr_engine" = "OCRエンジン";

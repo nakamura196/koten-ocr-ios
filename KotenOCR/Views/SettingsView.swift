@@ -7,6 +7,7 @@ struct SettingsView: View {
     @AppStorage("appLanguage") private var appLanguage: String = "system"
     @AppStorage("saveToLibrary") private var saveToLibrary = false
     @AppStorage("showTiltGuide") private var showTiltGuide = true
+    @AppStorage(Deskew.settingsKey) private var autoDeskew = true
     @State private var showRestartAlert = false
     @State private var cameraStatus: AVAuthorizationStatus = AVCaptureDevice.authorizationStatus(for: .video)
 
@@ -134,6 +135,8 @@ struct SettingsView: View {
 
             Toggle(String(localized: "settings_show_tilt_guide", defaultValue: "傾きの案内を表示"),
                    isOn: $showTiltGuide)
+            Toggle(String(localized: "settings_auto_deskew", defaultValue: "Auto-correct tilt"),
+                   isOn: $autoDeskew)
         }
     }
 

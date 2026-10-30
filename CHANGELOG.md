@@ -16,6 +16,10 @@
 - カメラ画面に「書類スキャン」を追加（VisionKit）。ページの端を自動検出し、斜めに撮っても補正。最後に使った方式を次回も使用 / Added Scan document on the camera screen (VisionKit): detects page edges and corrects perspective; remembers the last used capture mode
 - カメラに傾きガイドを追加（水平器と「資料と平行に構えてください」）。設定でオフにできます / Added a tilt guide on the camera (level indicator and a "hold parallel" hint), switchable in Settings
 - 切り抜き画面に4点補正モードを追加。四隅を個別に動かして台形ゆがみを補正 / Added a four-corner crop mode that corrects keystone distortion
+- 撮影した資料の小さな傾き（±10°以内）を自動で補正してから行を検出するように。傾いたページで枠が隣の行と重なり、隣の行の文字が混ざる問題を軽減 / Automatic small-angle deskew (within ±10°) before line detection, reducing overlapping boxes and text leaking from adjacent lines on tilted pages
+- 設定に「傾きを自動補正」を追加（既定ON） / Added "Auto-correct tilt" setting (on by default)
+- OCR結果・履歴・書き出しの画像は、補正後の（OCRを実行した）画像に統一 / Result, history and export now use the deskewed image that OCR actually ran on
+- 古典籍モードで、斜めから撮ったページの行ごとの傾きに対応。傾いた行は行に沿って切り出して読むため、隣の行の文字が混ざりにくい。同じ行を二重に検出した場合の重複行と、「□□□□」だけの行も表示しない / Classical mode now handles lines that lean by different amounts (pages shot at an angle): leaning lines are read from crops that follow the line, so neighbouring text no longer leaks in. Duplicate lines from detecting the same column twice, and lines that read only as "□□□□", are dropped
 
 ## 1.3.2 (2026-03-24)
 

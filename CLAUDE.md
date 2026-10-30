@@ -47,9 +47,12 @@ No linter configured.
 
 デュアルモードアーキテクチャ。起動時に両モードのモデルをすべてロードし、ユーザーが確認画面で選択する。
 
+前処理（両モード共通）: `Deskew`（`OCR/Deskew.swift`）が投影プロファイル法で±10°以内の傾きを推定し、0.3°以上かつ改善が明確なときだけ回転する。設定「傾きを自動補正」（`autoDeskew`、既定ON）。OCRを実行した画像を `OCRResult.image` で返し、結果表示・履歴・書き出しはその画像を使う。
+
 #### Koten（古典籍）モード
 1. **Detection** — `RTMDetector` runs RTMDet-S model (1024x1024 input)
 2. **Recognition** — `PARSEQRecognizer` runs PARSeq-Tiny (384x32 input), NDLmoji charset (7141 chars)
+   - `LineTilt`（`OCR/LineTilt.swift`）: 縦長の枠ごとに行の傾き（±6°）を推定し、0.5°以上傾いた行は行に沿った回転切り出しで読む（「傾きを自動補正」がONのとき）。認識後、同じ行を二重に検出した重複行と「□」だけの行を除く
 3. **Reading Order** — `ReadingOrderProcessor` applies block_xy_cut
 
 #### NDL（近代）モード
