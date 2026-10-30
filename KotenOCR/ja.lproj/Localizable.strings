@@ -215,3 +215,19 @@
 "settings_show_tilt_guide" = "傾きの案内を表示";
 "crop_mode_rect" = "矩形";
 "crop_mode_quad" = "4点補正";
+
+"box_edit_enter" = "枠を直す";
+"box_edit_done" = "完了";
+"box_edit_undo" = "元に戻す";
+"box_edit_delete" = "枠を削除";
+"box_edit_reread" = "再認識";
+"box_edit_pending" = "再認識が必要";
+"box_edit_area" = "枠の編集エリア";
+"box_tool_select" = "選ぶ";
+"box_tool_add" = "追加";
+"box_tool_split" = "分割";
+"box_tool_merge" = "結合";
+"box_hint_select" = "枠をタップして選び、ドラッグで動かす。角で大きさを変える";
+"box_hint_add" = "画像をなぞって、新しい枠を描く";
+"box_hint_split" = "分けたい位置をタップ";
+"box_hint_merge" = "1つ選んでから、つなげる枠をタップ";

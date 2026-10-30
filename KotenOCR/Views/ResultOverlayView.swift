@@ -10,6 +10,8 @@ struct ResultOverlayView: View {
     /// Set by ContentView when the result comes straight from a scan: the 朱 stamp is pressed once.
     var playCompletionStamp: Binding<Bool> = .constant(false)
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @EnvironmentObject private var ocrEngine: OCREngine
+    @StateObject private var edit = BoxEditModel()
     @State private var stampPhase = 0
     @State private var showBoxes = true
     @State private var showCopied = false
@@ -50,7 +52,7 @@ struct ResultOverlayView: View {
                             let scaleX = image.width > 0 ? geometry.size.width / CGFloat(image.width) : 0
                             let scaleY = image.height > 0 ? geometry.size.height / CGFloat(image.height) : 0
 
-                            ForEach(Array(detections.enumerated()), id: \.offset) { index, det in
+                            ForEach(Array(shownDetections.enumerated()), id: \.offset) { index, det in
                                 let rect = CGRect(
                                     x: CGFloat(det.box[0]) * scaleX,
                                     y: CGFloat(det.box[1]) * scaleY,
@@ -60,7 +62,7 @@ struct ResultOverlayView: View {
                                 let isSelected = selectedIndex == index
                                 let color = boxColor(for: index)
 
-                                if showBoxes {
+                                if showBoxes && !edit.isActive {
                                     Rectangle()
                                         .stroke(color, lineWidth: isSelected ? 3 : 1.5)
                                         .background(color.opacity(isSelected ? 0.3 : 0.08))
@@ -78,6 +80,14 @@ struct ResultOverlayView: View {
                             }
                         }
                         .allowsHitTesting(false)
+                    }
+                    // Box editing: boxes and corner handles
+                    .overlay {
+                        if edit.isActive {
+                            BoxEditCanvas(model: edit,
+                                          imageSize: CGSize(width: image.width, height: image.height),
+                                          zoom: zoom)
+                        }
                     }
                     // Tap overlay for box selection (single gesture, no conflict)
                     .overlay {
@@ -133,9 +143,19 @@ struct ResultOverlayView: View {
                                     }
                                 )
                         }
+                        .allowsHitTesting(!edit.isActive)
                     }
                     .scaleEffect(zoom)
                     .offset(offset)
+
+                // Touches for box editing live outside the zoomed image so they stay in screen space.
+                if edit.isActive {
+                    BoxEditGestureLayer(model: edit,
+                                        imageSize: CGSize(width: image.width, height: image.height),
+                                        zoom: zoom, offset: $offset, steadyOffset: $steadyOffset,
+                                        isPinching: isPinching,
+                                        onHaptic: { KotenHaptics.notify(.warning) })
+                }
             }
             .clipped()
             .overlay(alignment: .topTrailing) { completionStamp }
@@ -165,7 +185,7 @@ struct ResultOverlayView: View {
                             lastTouchLocation = value.startLocation
                         }
                         // Pan when zoomed (single finger, not during pinch)
-                        if !isPinching && zoom > 1.0 {
+                        if !isPinching && zoom > 1.0 && !edit.isActive {
                             offset = CGSize(
                                 width: steadyOffset.width + value.translation.width,
                                 height: steadyOffset.height + value.translation.height
@@ -173,7 +193,7 @@ struct ResultOverlayView: View {
                         }
                     }
                     .onEnded { _ in
-                        if !isPinching {
+                        if !isPinching && !edit.isActive {
                             steadyOffset = offset
                         }
                     }
@@ -206,6 +226,9 @@ struct ResultOverlayView: View {
             )
 
             // Controls (glass)
+            if edit.isActive {
+                BoxEditControls(model: edit, onCancel: cancelEditing, onDone: finishEditing, onReread: startReread)
+            } else {
             HStack(spacing: 10) {
                 Button {
                     withAnimation(.easeInOut(duration: 0.2)) { showBoxes.toggle() }
@@ -220,6 +243,17 @@ struct ResultOverlayView: View {
                 .buttonStyle(.kotenGlass)
                 .accessibilityLabel(Text("boxes_toggle"))
                 .accessibilityAddTraits(showBoxes ? [.isSelected] : [])
+
+                Button(action: beginEditing) {
+                    Label(String(localized: "box_edit_enter", defaultValue: "枠を直す"),
+                          systemImage: "rectangle.and.pencil.and.ellipsis")
+                        .font(.subheadline.weight(.semibold))
+                        .padding(.horizontal, 14)
+                        .frame(minHeight: 40)
+                }
+                .buttonStyle(.kotenGlass)
+                .accessibilityLabel(Text("box_edit_enter"))
+                .accessibilityIdentifier("box_edit_enter")
 
                 Spacer()
 
@@ -256,7 +290,9 @@ struct ResultOverlayView: View {
             }
             .padding(.horizontal, 14)
             .padding(.top, 10)
-            .sheet(isPresented: $showShareSheet) {
+            }
+            Color.clear.frame(height: 0)
+                .sheet(isPresented: $showShareSheet) {
                 ShareSheet(text: combinedText)
             }
             .sheet(isPresented: $showExportShare) {
@@ -266,6 +302,7 @@ struct ResultOverlayView: View {
             }
 
             // Tab picker
+            if !edit.isActive {
             Picker("", selection: $selectedTab) {
                 Text(String(localized: "tab_ocr", defaultValue: "OCR結果"))
                     .tag(ResultTab.ocr)
@@ -276,6 +313,7 @@ struct ResultOverlayView: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 8)
             .animation(KotenMotion.spring(0.28, reduceMotion: reduceMotion), value: selectedTab)
+            }
 
             // Tab content
             ZStack {
@@ -288,7 +326,7 @@ struct ResultOverlayView: View {
             }
             .animation(.easeInOut(duration: 0.2), value: selectedTab)
             .frame(maxHeight: .infinity)
-            .overlay(alignment: .bottomTrailing) { copyButton }
+            .overlay(alignment: .bottomTrailing) { if !edit.isActive { copyButton } }
         }
         .overlay(alignment: .top) {
             if showCopied {
@@ -298,6 +336,12 @@ struct ResultOverlayView: View {
             }
         }
         .onAppear(perform: playStampIfNeeded)
+        .onChange(of: edit.editor?.selected) { newValue in
+            if edit.isActive, selectedIndex != newValue { selectedIndex = newValue }
+        }
+        .onChange(of: selectedIndex) { newValue in
+            if edit.isActive, edit.editor?.selected != newValue { edit.editor?.selected = newValue }
+        }
         .sheet(item: $editingIndex) { index in
             editSheet(for: index)
         }
@@ -357,8 +401,9 @@ struct ResultOverlayView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 2) {
-                    ForEach(Array(detections.enumerated()), id: \.offset) { index, det in
+                    ForEach(Array(shownDetections.enumerated()), id: \.offset) { index, det in
                         let isSelected = selectedIndex == index
+                        let needsReread = edit.editor?.items.indices.contains(index) == true && edit.editor?.items[index].needsReread == true
                         let color = boxColor(for: index)
 
                         HStack(alignment: .top, spacing: 4) {
@@ -371,8 +416,15 @@ struct ResultOverlayView: View {
 
                                 Text(det.text.isEmpty ? "---" : det.text)
                                     .font(.mincho(18, relativeTo: .body))
-                                    .foregroundColor(det.text.isEmpty ? KotenColor.inkSecondary : KotenColor.ink)
+                                    .foregroundColor(det.text.isEmpty || needsReread ? KotenColor.inkSecondary : KotenColor.ink)
                                     .frame(maxWidth: .infinity, alignment: .leading)
+
+                                if needsReread {
+                                    Image(systemName: "arrow.triangle.2.circlepath")
+                                        .font(.caption)
+                                        .foregroundColor(KotenColor.shu)
+                                        .accessibilityLabel(Text("box_edit_pending"))
+                                }
                             }
                             .contentShape(Rectangle())
                             .onTapGesture {
@@ -381,13 +433,14 @@ struct ResultOverlayView: View {
                                 }
                             }
                             .onLongPressGesture {
-                                startEditing(index)
+                                if !edit.isActive { startEditing(index) }
                             }
                             .accessibilityElement(children: .ignore)
                             .accessibilityLabel(Text("\(index + 1): \(det.text)"))
                             .accessibilityAddTraits(.isButton)
+                            .accessibilityIdentifier("detection_row_\(index)")
                             .accessibilityAction(named: Text("edit_text")) {
-                                startEditing(index)
+                                if !edit.isActive { startEditing(index) }
                             }
 
                             Button {
@@ -399,6 +452,7 @@ struct ResultOverlayView: View {
                                     .frame(width: 40, height: 40)
                             }
                             .buttonStyle(.borderless)
+                            .disabled(edit.isActive)
                             .accessibilityLabel(Text("edit_text"))
                             .accessibilityIdentifier("edit_detection_\(index)")
                         }
@@ -607,6 +661,46 @@ struct ResultOverlayView: View {
                     translationError = error.localizedDescription
                     isTranslating = false
                 }
+            }
+        }
+    }
+
+    // MARK: - Box editing
+
+    /// The lines being shown: the edit copy while editing, otherwise the saved result.
+    private var shownDetections: [Detection] {
+        edit.editor?.detections ?? detections
+    }
+
+    private func beginEditing() {
+        showBoxes = true
+        selectedTab = .ocr
+        edit.begin(detections: detections,
+                   imageSize: CGSize(width: image.width, height: image.height),
+                   selected: selectedIndex)
+    }
+
+    private func cancelEditing() {
+        edit.cancel()
+        selectedIndex = nil
+    }
+
+    private func startReread() {
+        Task { await edit.reread(engine: ocrEngine, image: image, fallbackMode: ocrEngine.currentMode) }
+    }
+
+    /// Done: reads any boxes still waiting, then saves to the result and to history.
+    private func finishEditing() {
+        Task {
+            if (edit.editor?.pendingCount ?? 0) > 0 {
+                let ok = await edit.reread(engine: ocrEngine, image: image, fallbackMode: ocrEngine.currentMode)
+                if !ok { return }
+            }
+            guard let edited = edit.finish() else { return }
+            detections = edited
+            selectedIndex = nil
+            if let id = historyItemID {
+                HistoryManager.shared.updateDetections(id: id, detections: edited)
             }
         }
     }

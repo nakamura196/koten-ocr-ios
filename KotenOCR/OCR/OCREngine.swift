@@ -420,3 +420,80 @@ class OCREngine: ObservableObject {
         return OCRResult(detections: ordered, text: combinedText)
     }
 }
+
+// MARK: - Re-reading hand-corrected boxes (additive API)
+
+extension OCREngine {
+
+    /// Reads the given boxes again, cropping from `image` (the image the OCR ran on).
+    /// Returns the same detections with `text` filled in, in the same order.
+    /// A crop taller than wide is rotated by the recogniser itself, exactly as in the main pipeline.
+    /// If the models for `mode` are not loaded yet they are loaded, without changing the selected mode.
+    func recognize(boxes: [Detection], in image: CGImage, mode: OCRMode) async throws -> [Detection] {
+        guard !boxes.isEmpty else { return [] }
+        try await ensureRecognizerLoaded(for: mode)
+
+        var recognized = boxes
+        let maxConcurrency = 4
+        for batchStart in stride(from: 0, to: recognized.count, by: maxConcurrency) {
+            let batchEnd = min(batchStart + maxConcurrency, recognized.count)
+            let koten = kotenRecognizer
+            let cascade = ndlCascadeRecognizer
+            let results = try await withThrowingTaskGroup(of: (Int, String).self) { group in
+                for i in batchStart..<batchEnd {
+                    guard let cropped = OCREngine.crop(image, box: recognized[i].box) else { continue }
+                    let predCharCount = recognized[i].predCharCount
+                    group.addTask {
+                        switch mode {
+                        case .koten:
+                            guard let koten else { throw OCREngine.notLoaded }
+                            return (i, try koten.recognize(image: cropped))
+                        case .ndl:
+                            guard let cascade else { throw OCREngine.notLoaded }
+                            return (i, try cascade.recognize(image: cropped, predCharCount: predCharCount))
+                        }
+                    }
+                }
+                var texts: [(Int, String)] = []
+                for try await r in group { texts.append(r) }
+                return texts
+            }
+            for (i, text) in results { recognized[i].text = text }
+            try Task.checkCancellation()
+        }
+        return recognized
+    }
+
+    /// Puts lines in reading order (the same step as the main pipeline).
+    func orderReading(_ detections: [Detection], imageWidth: Int, imageHeight: Int) -> [Detection] {
+        (readingOrderProcessor ?? ReadingOrderProcessor())
+            .process(detections: detections, imageWidth: imageWidth, imageHeight: imageHeight)
+    }
+
+    private static var notLoaded: NSError {
+        NSError(domain: "OCR", code: 20, userInfo: [NSLocalizedDescriptionKey: "Recognizer not initialized"])
+    }
+
+    private static func crop(_ image: CGImage, box: [Int]) -> CGImage? {
+        guard box.count >= 4 else { return nil }
+        let rect = CGRect(x: box[0], y: box[1], width: max(1, box[2] - box[0]), height: max(1, box[3] - box[1]))
+            .intersection(CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        guard !rect.isNull, !rect.isEmpty else { return nil }
+        return image.cropping(to: rect)
+    }
+
+    private func ensureRecognizerLoaded(for mode: OCRMode) async throws {
+        switch mode {
+        case .koten where kotenRecognizer != nil: return
+        case .ndl where ndlCascadeRecognizer != nil: return
+        default: break
+        }
+        guard let env = self.env else { throw OCREngine.notLoaded }
+        try await Task.detached(priority: .userInitiated) { [self] in
+            switch mode {
+            case .koten: try loadKotenModels(env: env)
+            case .ndl: try loadNDLModels(env: env)
+            }
+        }.value
+    }
+}
