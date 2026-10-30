@@ -57,7 +57,14 @@ class PARSEQRecognizer: @unchecked Sendable {
 
     // MARK: - Recognition
 
+    /// The ORT values, output dictionary and tensor data are autoreleased Objective-C objects.
+    /// Swift concurrency threads drain their autorelease pool rarely, so without a pool per run
+    /// every run's output buffers stayed alive and the footprint grew with each image.
     func recognize(image: CGImage) throws -> String {
+        try autoreleasepool { try recognizeUnpooled(image: image) }
+    }
+
+    private func recognizeUnpooled(image: CGImage) throws -> String {
         let tensor = preprocess(image: image)
         let inputData = NSMutableData(bytes: tensor, length: tensor.count * MemoryLayout<Float>.stride)
         let shape: [NSNumber] = [1, 3, NSNumber(value: inputHeight), NSNumber(value: inputWidth)]
@@ -69,7 +76,7 @@ class PARSEQRecognizer: @unchecked Sendable {
             throw NSError(domain: "OCR", code: 30, userInfo: [NSLocalizedDescriptionKey: "PARSEQRecognizer: no input/output names"])
         }
         let inputs: [String: ORTValue] = [firstInputName: inputTensor]
-        let results = try session.run(withInputs: inputs, outputNames: Set(outputNames), runOptions: nil)
+        let results = try session.run(withInputs: inputs, outputNames: Set(outputNames), runOptions: ORTMemory.runOptions())
 
         return try postprocess(outputs: results, outputName: firstOutputName)
     }

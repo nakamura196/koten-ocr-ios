@@ -25,7 +25,7 @@ struct DocumentScannerView: UIViewControllerRepresentable {
 
         func documentCameraViewController(_ controller: VNDocumentCameraViewController,
                                           didFinishWith scan: VNDocumentCameraScan) {
-            guard scan.pageCount > 0, let cg = scan.imageOfPage(at: 0).normalizedCGImage else {
+            guard scan.pageCount > 0, let cg = ImageIntake.limit(scan.imageOfPage(at: 0)) else {
                 parent.onCancel()
                 return
             }

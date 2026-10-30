@@ -102,10 +102,26 @@ class ReadingOrderProcessor: @unchecked Sendable {
               let yMax = bboxes.map({ $0[3] }).max() else { return }
         let wPage = xMax - xMin
         let hPage = yMax - yMin
-        guard wPage > 0 && hPage > 0 else { return }
+        guard wPage > 0 && hPage > 0 else {
+            // Degenerate page (e.g. a single zero-width box). Returning here used to leave the boxes
+            // in raw pixel coordinates, and the mesh table below became pixel-sized
+            // (a 6048×8064 image → ~390 MB of Int). Scale both axes uniformly onto the grid instead.
+            let extent = max(wPage, hPage, 1)
+            let s = Float(grid) / extent
+            for i in 0..<bboxes.count {
+                bboxes[i][0] = max(0, floor((bboxes[i][0] - xMin) * s))
+                bboxes[i][1] = max(0, floor((bboxes[i][1] - yMin) * s))
+                bboxes[i][2] = max(0, floor((bboxes[i][2] - xMin) * s))
+                bboxes[i][3] = max(0, floor((bboxes[i][3] - yMin) * s))
+            }
+            return
+        }
 
-        let xGrid: Float = wPage < hPage ? Float(grid) : Float(grid) * (wPage / hPage)
-        let yGrid: Float = hPage < wPage ? Float(grid) : Float(grid) * (hPage / wPage)
+        // The long axis gets grid × aspect cells. Cap the aspect so one very flat or very thin box
+        // cannot make the mesh table huge (a 8000×10 px line gave an 80000-column table).
+        let maxAspect: Float = 20
+        let xGrid: Float = wPage < hPage ? Float(grid) : Float(grid) * min(maxAspect, wPage / hPage)
+        let yGrid: Float = hPage < wPage ? Float(grid) : Float(grid) * min(maxAspect, hPage / wPage)
 
         for i in 0..<bboxes.count {
             bboxes[i][0] = max(0, floor((bboxes[i][0] - xMin) * xGrid / wPage))

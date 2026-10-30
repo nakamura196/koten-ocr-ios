@@ -29,6 +29,7 @@
 - 範囲選択の後は「古典籍／近代」を選んで「読み取る」を押す形に変更。コピーは右下のボタンから、完了は上に短く表示 / After cropping, choose Classical or Modern and tap Read; Copy is a floating button with a short “Copied” toast
 - 「視差効果を減らす」設定では動きをフェードに置き換え。文字の大きさ設定（アクセシビリティサイズを含む）に合わせて配置を調整 / Reduce Motion replaces movement with cross-fades; layouts adapt to Dynamic Type including accessibility sizes
 - 結果画面に「枠を直す」を追加：枠の選択・移動・大きさ変更・削除・追加・分割・結合ができ、変えた枠だけを「再認識」して読む順を並べ直す。元に戻す／キャンセル対応、履歴にも保存 / Added Edit Boxes on the result screen: select, move, resize, delete, add, split and merge line boxes, then Re-read only the changed boxes and re-run reading order; with Undo and Cancel, saved to history
+- 2枚目以降の解析で落ちることがある不具合を修正。解析のたびにメモリ使用量が増え続けていた（文字検出を毎回別のスレッドで実行し、スレッドごとに約100MBの作業領域が残っていた）。撮影・写真の画像は長辺4096pxに縮小して取り込み、新しい撮影の前に前の画像を解放 / Fixed a crash when analysing the 2nd or later image: memory grew with every analysis (line detection ran on a different thread each time and each thread kept ~100 MB of scratch memory). Photos are now taken in at most 4096 px on the long side, and the previous page's images are released before a new capture
 
 ## 1.3.2 (2026-03-24)
 

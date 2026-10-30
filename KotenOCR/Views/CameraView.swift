@@ -17,6 +17,8 @@ class CameraViewController: UIViewController {
     var onCapture: ((CGImage) -> Void)?
 
     private let captureSession = AVCaptureSession()
+    /// Start/stop are blocking calls that must not overlap; keep them on one serial queue.
+    private let sessionQueue = DispatchQueue(label: "com.nakamura196.kotenocr.camera.session")
     private var previewLayer: AVCaptureVideoPreviewLayer?
     private let photoOutput = AVCapturePhotoOutput()
     private var shutterButton: UIButton?
@@ -48,8 +50,9 @@ class CameraViewController: UIViewController {
         // The user may have granted access in Settings since the last time we looked
         if !cameraAvailable { setupCamera() }
         guard cameraAvailable else { return }
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            self?.captureSession.startRunning()
+        let session = captureSession
+        sessionQueue.async {
+            if !session.isRunning { session.startRunning() }
         }
         UIDevice.current.beginGeneratingDeviceOrientationNotifications()
         NotificationCenter.default.addObserver(
@@ -61,7 +64,10 @@ class CameraViewController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         guard cameraAvailable else { return }
-        captureSession.stopRunning()
+        let session = captureSession
+        sessionQueue.async {
+            if session.isRunning { session.stopRunning() }
+        }
         if isFlashOn {
             toggleTorch(on: false)
         }
@@ -460,10 +466,10 @@ class CameraViewController: UIViewController {
 extension CameraViewController: AVCapturePhotoCaptureDelegate {
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         var result: CGImage?
-        if error == nil,
-           let data = photo.fileDataRepresentation(),
-           let uiImage = UIImage(data: data) {
-            result = uiImage.normalizedCGImage ?? uiImage.cgImage
+        // Decode straight to an upright image of at most ImageIntake.maxLongSide px, so a 24/48 MP
+        // capture never exists as a full-size bitmap.
+        if error == nil, let data = photo.fileDataRepresentation() {
+            result = ImageIntake.decode(data)
         }
         // Delegate callbacks arrive on an arbitrary queue; UI state must change on main.
         DispatchQueue.main.async { [weak self] in
