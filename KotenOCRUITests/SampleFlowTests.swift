@@ -18,7 +18,7 @@ final class SampleFlowTests: XCTestCase {
 
     func testEachSampleReadsToResult() throws {
         app.launch()
-        for index in 0..<3 {
+        for index in 0..<5 {   // SamplePage.all
             let link = app.buttons["home_sample_button"]
             XCTAssertTrue(link.waitForExistence(timeout: 120), "home should show the sample link")
             link.tap()

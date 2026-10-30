@@ -241,7 +241,11 @@
 "sample_sheet_lead" = "Choose a page to read it right away. The result is also saved to History.";
 "sample_taketori_title" = "The Tale of the Bamboo Cutter";
 "sample_genji_title" = "The Tale of Genji: Kiritsubo";
+"sample_kikuchi_title" = "Order by Kikuchi Takemitsu (old document)";
+"sample_kikuchi_credit" = "Komonjo Jidai Kagami (NDL Digital Collections)";
+"sample_shibata_title" = "Statement by Shibata Tarōkichi (photo taken at an angle)";
+"sample_shibata_credit" = "Photo: Shibata Vanessa (CC BY-SA 4.0)";
 "sample_modern_title" = "NDL Staff Manual (1963)";
 "sample_ndl_credit" = "National Diet Library Digital Collections";
 "settings_sample_pages_title" = "Sample pages";
-"settings_sample_pages_credit" = "Taketori Monogatari and the NDL Staff Manual: National Diet Library Digital Collections. The Tale of Genji: image courtesy of the University of Tokyo General Library / transformed";
+"settings_sample_pages_credit" = "Taketori Monogatari and the NDL Staff Manual: National Diet Library Digital Collections. The Tale of Genji: image courtesy of the University of Tokyo General Library / transformed. Order by Kikuchi Takemitsu: Komonjo Jidai Kagami (National Diet Library Digital Collections). Statement by Shibata Tarōkichi: photo by Shibata Vanessa, CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/), via Wikimedia Commons";

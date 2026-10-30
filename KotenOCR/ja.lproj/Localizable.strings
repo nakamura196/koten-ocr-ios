@@ -241,7 +241,11 @@
 "sample_sheet_lead" = "選ぶとすぐに読み取ります。結果は履歴にも残ります。";
 "sample_taketori_title" = "竹取物語";
 "sample_genji_title" = "源氏物語　桐壺";
+"sample_kikuchi_title" = "菊池武光 施行状（古文書）";
+"sample_kikuchi_credit" = "『古文書時代鑑』（国立国会図書館デジタルコレクション）";
+"sample_shibata_title" = "柴田太郎吉 明細書（斜めに撮った写真）";
+"sample_shibata_credit" = "写真: 柴田バネッサ（CC BY-SA 4.0）";
 "sample_modern_title" = "国立国会図書館スタッフ・マニュアル";
 "sample_ndl_credit" = "国立国会図書館デジタルコレクション";
 "settings_sample_pages_title" = "サンプルの頁";
-"settings_sample_pages_credit" = "『竹取物語』・『国立国会図書館スタッフ・マニュアル』（国立国会図書館デジタルコレクション）、『源氏物語』（東京大学総合図書館所蔵）を改変";
+"settings_sample_pages_credit" = "『竹取物語』・『国立国会図書館スタッフ・マニュアル』（国立国会図書館デジタルコレクション）、『源氏物語』（東京大学総合図書館所蔵）を改変。菊池武光 施行状: 『古文書時代鑑』（国立国会図書館デジタルコレクション）。柴田太郎吉 明細書: 写真 柴田バネッサ、CC BY-SA 4.0（https://creativecommons.org/licenses/by-sa/4.0/）、Wikimedia Commons より";

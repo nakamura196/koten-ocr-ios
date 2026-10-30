@@ -11,6 +11,8 @@ struct SamplePage: Identifiable {
     static let all: [SamplePage] = [
         SamplePage(id: "sample_taketori", title: "sample_taketori_title", credit: "sample_ndl_credit", mode: .koten),
         SamplePage(id: "sample_genji", title: "sample_genji_title", credit: "onboarding_sample_credit", mode: .koten),
+        SamplePage(id: "sample_kikuchi", title: "sample_kikuchi_title", credit: "sample_kikuchi_credit", mode: .koten),
+        SamplePage(id: "sample_shibata", title: "sample_shibata_title", credit: "sample_shibata_credit", mode: .koten),
         SamplePage(id: "sample_modern", title: "sample_modern_title", credit: "sample_ndl_credit", mode: .ndl),
     ]
 
