@@ -21,6 +21,7 @@
 - 履歴が空のときの絵、文字が見つからなかったときのコツ、カメラが使えないときの案内画面を追加 / Added an empty-history illustration, tips when no text is found, and a camera-unavailable screen
 - 範囲選択の後は「古典籍／近代」を選んで「読み取る」を押す形に変更。コピーは右下のボタンから、完了は上に短く表示 / After cropping, choose Classical or Modern and tap Read; Copy is a floating button with a short “Copied” toast
 - 「視差効果を減らす」設定では動きをフェードに置き換え。文字の大きさ設定（アクセシビリティサイズを含む）に合わせて配置を調整 / Reduce Motion replaces movement with cross-fades; layouts adapt to Dynamic Type including accessibility sizes
+- 結果画面に「枠を直す」を追加：枠の選択・移動・大きさ変更・削除・追加・分割・結合ができ、変えた枠だけを「再認識」して読む順を並べ直す。元に戻す／キャンセル対応、履歴にも保存 / Added Edit Boxes on the result screen: select, move, resize, delete, add, split and merge line boxes, then Re-read only the changed boxes and re-run reading order; with Undo and Cancel, saved to history
 
 ## 1.3.2 (2026-03-24)
 
