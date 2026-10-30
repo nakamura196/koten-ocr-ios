@@ -37,6 +37,10 @@ struct Detection: Codable {
         self.id = id
         self.predCharCount = predCharCount
     }
+
+    /// NDL layout classes that hold one line of text (`line_main`, `line_title`, ...),
+    /// as opposed to structural ones (`text_block`, `block_*`).
+    var isTextLine: Bool { className.hasPrefix("line_") }
 }
 
 class RTMDetector: @unchecked Sendable {
