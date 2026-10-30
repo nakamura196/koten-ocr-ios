@@ -24,7 +24,7 @@
 - アプリアイコンを和紙・墨・朱の配色に変更（ダーク・色付きアイコンにも対応） / App icon recoloured to washi, ink and 朱, with dark and tinted variants
 - ホームに「最近の読み取り」を最大3件表示。押すとその結果を開く / Home shows up to three recent scans; tap one to open it
 - 読み取り中に朱の光が進み具合に合わせて動き、見つかった行が読む順に現れる。完了時に朱印を押す動きと触覚 / While reading, a vermilion beam follows the progress and found lines appear in reading order; a seal stamp and haptic mark completion
-- 初回の説明に、写本に朱の枠が描かれて文字が浮かぶ短い動きを追加。撮影ボタンと範囲の角に一度だけの吹き出し（設定から再表示可） / First-run introduction animation on a manuscript page; one-time hints on the shutter and the crop corner (can be shown again from Settings)
+- 初回の説明で、写本の頁に実際の読み取り結果（枠と文字）を読む順に再生。撮影ボタンと範囲の角に一度だけの吹き出し（設定から再表示可） / The first-run introduction replays a real recognition result (boxes and text) on a manuscript page; one-time hints on the shutter and the crop corner (can be shown again from Settings)
 - 履歴が空のときの絵、文字が見つからなかったときのコツ、カメラが使えないときの案内画面を追加 / Added an empty-history illustration, tips when no text is found, and a camera-unavailable screen
 - 範囲選択の後は「古典籍／近代」を選んで「読み取る」を押す形に変更。コピーは右下のボタンから、完了は上に短く表示 / After cropping, choose Classical or Modern and tap Read; Copy is a floating button with a short “Copied” toast
 - 「視差効果を減らす」設定では動きをフェードに置き換え。文字の大きさ設定（アクセシビリティサイズを含む）に合わせて配置を調整 / Reduce Motion replaces movement with cross-fades; layouts adapt to Dynamic Type including accessibility sizes
