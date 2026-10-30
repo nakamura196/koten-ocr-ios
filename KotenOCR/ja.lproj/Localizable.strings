@@ -160,3 +160,7 @@
 "run_ocr_ndl" = "近代 OCR";
 "ocr_mode_koten_short" = "くずし字";
 "ocr_mode_ndl_short" = "活字・手書き";
+"home_take_photo" = "撮影する";
+"home_choose_photo" = "写真から選ぶ";
+"home_how_to" = "撮影 → 範囲を選ぶ → 文字を読み取り";
+"home_button" = "ホーム";

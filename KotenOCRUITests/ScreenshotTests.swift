@@ -28,7 +28,7 @@ final class ScreenshotTests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
-        app.launchArguments += ["-hasCompletedOnboarding", "YES", "-ocrSuccessCount", "999"]
+        app.launchArguments += ["-hasCompletedOnboarding", "YES", "-ocrSuccessCount", "999", "-skipHome", "YES"]
 
         // Match app language to the test runner language (set by xcodebuild -testLanguage)
         let preferredLang = Locale.preferredLanguages.first ?? "ja"

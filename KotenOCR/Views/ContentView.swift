@@ -4,6 +4,7 @@ import Photos
 import StoreKit
 
 enum AppState {
+    case home
     case camera
     case cropping
     case confirmCrop
@@ -13,7 +14,7 @@ enum AppState {
 
 struct ContentView: View {
     @EnvironmentObject var ocrEngine: OCREngine
-    @State private var appState: AppState = .camera
+    @State private var appState: AppState = ContentView.initialAppState()
     @State private var capturedImage: CGImage?
     @State private var ocrResult: OCRResult?
     @State private var editableDetections: [Detection] = []
@@ -35,6 +36,15 @@ struct ContentView: View {
     @AppStorage("saveToLibrary") private var saveToLibrary = false
     @AppStorage("ocrSuccessCount") private var ocrSuccessCount = 0
     @Environment(\.requestReview) private var requestReview
+
+    /// Home is the default start screen. Screenshot/test automation (TEST_IMAGE_PATH set,
+    /// or `-skipHome YES`) goes straight to the camera state as before.
+    private static func initialAppState() -> AppState {
+        let env = ProcessInfo.processInfo.environment
+        if let path = env["TEST_IMAGE_PATH"], !path.isEmpty { return .camera }
+        if UserDefaults.standard.bool(forKey: "skipHome") { return .camera }
+        return .home
+    }
 
     private var appTheme: AppTheme {
         AppTheme(rawValue: appThemeRaw) ?? .system
@@ -130,6 +140,13 @@ struct ContentView: View {
     private var mainContent: some View {
         ZStack {
             switch appState {
+            case .home:
+                HomeView(
+                    selectedPhotoItem: $selectedPhotoItem,
+                    onCamera: { appState = .camera },
+                    onHistory: { showHistory = true },
+                    onSettings: { showSettings = true }
+                )
             case .camera:
                 cameraView
             case .cropping:
@@ -141,6 +158,9 @@ struct ContentView: View {
             case .result:
                 resultView
             }
+        }
+        .onChange(of: selectedPhotoItem) { newItem in
+            loadPhotoItem(newItem)
         }
     }
 
@@ -155,6 +175,17 @@ struct ContentView: View {
 
             VStack {
                 HStack {
+                    Button(action: { appState = .home }) {
+                        Image(systemName: "house.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(Color.white.opacity(0.2))
+                            .clipShape(Circle())
+                    }
+                    .accessibilityIdentifier("home_button")
+                    .accessibilityLabel(Text("home_button"))
+
                     Button(action: { showHistory = true }) {
                         Image(systemName: "clock.arrow.circlepath")
                             .font(.system(size: 20))
@@ -195,9 +226,6 @@ struct ContentView: View {
                     }
                     .accessibilityIdentifier("gallery_button")
                     .accessibilityLabel(Text("gallery_button"))
-                    .onChange(of: selectedPhotoItem) { newItem in
-                        loadPhotoItem(newItem)
-                    }
 
                     Spacer()
                 }

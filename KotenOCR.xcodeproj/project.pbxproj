@@ -30,6 +30,7 @@
 		728E5483FE3AADF2413203FA /* ExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A229657613D69582B3F74B4D /* ExportManager.swift */; };
 		74099E2D688F864C84A74B4A /* TipJarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12D6ADEDDD0734CA628912DE /* TipJarManager.swift */; };
 		75B2863EC2D302ACE062A056 /* CropView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27E1D8978CB07EFAA65E6FC6 /* CropView.swift */; };
+		85231A78710C83738E4BDFAF /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F0A5DC841B1B099E64FB1CE /* HomeView.swift */; };
 		9DDB6B10ADADB178D31304B3 /* PARSEQRecognizerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878990E0E6B16FF96510AED7 /* PARSEQRecognizerTests.swift */; };
 		A187818DBBEBE23B4E72ECAA /* UIImage+Orientation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 247E98FA5B2F2413221FD51D /* UIImage+Orientation.swift */; };
 		A3AC83B11BD87194218B7E04 /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 042CA1185DB0ADB541DECC16 /* AppTheme.swift */; };
@@ -72,6 +73,7 @@
 		042CA1185DB0ADB541DECC16 /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		04E391BFF7A576B58D3F6056 /* KotenOCRTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = KotenOCRTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		0CAD2DC2969703CFCAA54EA1 /* ExportManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportManagerTests.swift; sourceTree = "<group>"; };
+		0F0A5DC841B1B099E64FB1CE /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		12D6ADEDDD0734CA628912DE /* TipJarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TipJarManager.swift; sourceTree = "<group>"; };
 		1A4629A0F5DA8EE91C6DB6D6 /* KotenOCR.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = KotenOCR.entitlements; sourceTree = "<group>"; };
 		1FD6672AFFCFE2471102B652 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -199,6 +201,7 @@
 				7D5CD36F65D4B7D385BBCA9C /* ContentView.swift */,
 				27E1D8978CB07EFAA65E6FC6 /* CropView.swift */,
 				9A139A6962601902EBDFB6DD /* HistoryListView.swift */,
+				0F0A5DC841B1B099E64FB1CE /* HomeView.swift */,
 				9F0C02138D36BD4637583CC4 /* OnboardingView.swift */,
 				5B4379D31980B50B6E4167FC /* ResultOverlayView.swift */,
 				D6CFDE78282D74C1F90DD69F /* SettingsView.swift */,
@@ -429,6 +432,7 @@
 				1E257D31C55F486C70B827A7 /* HistoryItem.swift in Sources */,
 				D6709D356E1F7B2EB7FFB166 /* HistoryListView.swift in Sources */,
 				1BE4FE0AC063CE4218405FBB /* HistoryManager.swift in Sources */,
+				85231A78710C83738E4BDFAF /* HomeView.swift in Sources */,
 				65E8D11410FF385A0964FB27 /* KeychainHelper.swift in Sources */,
 				D2ADA4E7EFCF4A35211E3ACF /* KotenOCRApp.swift in Sources */,
 				EA6132D99688DA796D3498AE /* MetricKitManager.swift in Sources */,

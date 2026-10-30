@@ -1,5 +1,10 @@
 # Changelog / 変更履歴
 
+## Unreleased
+
+- 起動時にホーム画面を表示（撮影する／写真から選ぶ／履歴／設定）。いきなりカメラが開かないように変更 / Added a home (start) screen on launch with Take Photo, Choose from Photos, History and Settings, instead of opening straight into the camera
+- カメラ画面にホームへ戻るボタンを追加 / Added a Home button on the camera screen
+
 ## 1.3.2 (2026-03-24)
 
 - メモリ使用量を大幅削減。起動時に選択中のモードのみロード（遅延ロード） / Reduced memory usage: lazy model loading (only selected mode at startup)

@@ -160,3 +160,7 @@
 "run_ocr_ndl" = "Modern OCR";
 "ocr_mode_koten_short" = "Kuzushiji";
 "ocr_mode_ndl_short" = "Printed / Handwritten";
+"home_take_photo" = "Take Photo";
+"home_choose_photo" = "Choose from Photos";
+"home_how_to" = "Capture → Select area → Read text";
+"home_button" = "Home";
