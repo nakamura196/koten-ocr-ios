@@ -27,6 +27,21 @@ final class PaperBenchmarkTests: XCTestCase {
         return try XCTUnwrap(UIImage(contentsOfFile: url.path)?.cgImage)
     }
 
+    /// A real high-resolution page: NDL 源氏物語 (pid 2585098), frame 5, right half, 3254×3800, public domain.
+    /// Replaces the synthetic 12 MP page drawn by MemoryRegressionTests.largePage.
+    private func realPage() throws -> CGImage {
+        let path = try XCTUnwrap(Bundle(for: Self.self).path(forResource: "genji_ndl_2585098_R0005_right", ofType: "jpg"))
+        let data = try Data(contentsOf: URL(fileURLWithPath: path))
+        return try XCTUnwrap(UIImage(data: data)?.cgImage)
+    }
+
+    /// Device state, so a slow run can be told apart from thermal throttling or Low Power Mode.
+    private func deviceState() -> String {
+        let p = ProcessInfo.processInfo
+        let t = ["nominal", "fair", "serious", "critical"][min(p.thermalState.rawValue, 3)]
+        return "thermal \(t) | lowPower \(p.isLowPowerModeEnabled)"
+    }
+
     private func median(_ v: [Double]) -> Double {
         let s = v.sorted(); return s.count % 2 == 1 ? s[s.count / 2] : (s[s.count / 2 - 1] + s[s.count / 2]) / 2
     }
@@ -35,12 +50,13 @@ final class PaperBenchmarkTests: XCTestCase {
     func testTimeAndMemoryPerPage() async throws {
         try skipUnlessRequested()
         let engine = try await readyEngine()
-        let photo = ImageIntake.limit(try MemoryRegressionTests.largePage(width: 3024, height: 4032))
+        print("[Bench] state at start: \(deviceState())")
+        let photo = ImageIntake.limit(try realPage())
         let cases: [(String, OCRMode, CGImage, Bool)] = [
             ("koten genji sample, correction off", .koten, try sample("sample_genji"), false),
             ("koten genji sample, correction on", .koten, try sample("sample_genji"), true),
-            ("koten 12MP photo, correction off", .koten, photo, false),
-            ("koten 12MP photo, correction on", .koten, photo, true),
+            ("koten real hi-res page, correction off", .koten, photo, false),
+            ("koten real hi-res page, correction on", .koten, photo, true),
             ("ndl modern sample", .ndl, try sample("sample_modern"), true),
         ]
         let key = Deskew.settingsKey
@@ -57,16 +73,17 @@ final class PaperBenchmarkTests: XCTestCase {
                 times.append(CFAbsoluteTimeGetCurrent() - t0)
                 peak = max(peak, sampler.stop()); lines = r.detections.count
             }
+            print("[Bench] state after \(label): \(deviceState())")
             print(String(format: "[Bench] %@ | %dx%d | lines %d | median %.2f s (min %.2f max %.2f) | peak %.0f MB",
                          label, image.width, image.height, lines, median(times), times.min()!, times.max()!, peak))
         }
     }
 
-    /// Repeated capture: 30 pages in a row on a 12 MP photo, alternating Classical and Modern.
+    /// Repeated capture: 30 pages in a row on the real hi-res page, alternating Classical and Modern.
     func testRepeatedPages() async throws {
         try skipUnlessRequested()
         let engine = try await readyEngine()
-        let photo = ImageIntake.limit(try MemoryRegressionTests.largePage(width: 3024, height: 4032))
+        let photo = ImageIntake.limit(try realPage())
         let baseline = MemoryRegressionTests.footprintMB()
         var peaks: [Double] = []; var after: [Double] = []
         for i in 0..<30 {
@@ -77,6 +94,7 @@ final class PaperBenchmarkTests: XCTestCase {
             XCTAssertFalse(r.detections.isEmpty)
         }
         let fmt = { (v: [Double]) in v.map { String(format: "%.0f", $0) }.joined(separator: ",") }
+        print("[Bench] state after repeated 30: \(deviceState())")
         print("[Bench] repeated 30 | baseline \(String(format: "%.0f", baseline)) MB | max peak \(String(format: "%.0f", peaks.max()!)) MB")
         print("[Bench] peaks [\(fmt(peaks))]")
         print("[Bench] after [\(fmt(after))]")

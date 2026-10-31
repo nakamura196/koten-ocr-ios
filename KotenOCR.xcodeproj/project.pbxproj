@@ -97,6 +97,7 @@
 		EC3F800B4EE9D6ED94C4E9C9 /* SampleFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 688AEB2D3BCC75430BD08B31 /* SampleFlowTests.swift */; };
 		F11585C40AD540374CA8FF02 /* LineTagLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B926F18909672A7653976A00 /* LineTagLayoutTests.swift */; };
 		F70CD1D63CB6A73E60252248 /* koten_page.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 4803ABA4D8E4DE1EECF7141A /* koten_page.jpg */; };
+		F75C823532355A95FB806C4A /* genji_ndl_2585098_R0005_right.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 51BDA2DE7CB295371B9598C9 /* genji_ndl_2585098_R0005_right.jpg */; };
 		F90765D4952D39944DD2894E /* PerspectiveCrop.swift in Sources */ = {isa = PBXBuildFile; fileRef = F044A7A081BF284EEE610AA9 /* PerspectiveCrop.swift */; };
 		F90AF6B5F88C2159FED81F00 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 7078A6C58B9E131D0C86B41E /* Localizable.strings */; };
 /* End PBXBuildFile section */
@@ -152,6 +153,7 @@
 		4B8356DD72D048FA8FE3C5FC /* KotenStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KotenStyle.swift; sourceTree = "<group>"; };
 		4DE94F4988B24C1250C6F20D /* HistoryItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryItem.swift; sourceTree = "<group>"; };
 		4F6E663C280D8B9D21DAE8FD /* ImageIntake.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageIntake.swift; sourceTree = "<group>"; };
+		51BDA2DE7CB295371B9598C9 /* genji_ndl_2585098_R0005_right.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = genji_ndl_2585098_R0005_right.jpg; sourceTree = "<group>"; };
 		53AD4224B5B9AD280E6B6DE6 /* HistoryManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryManagerTests.swift; sourceTree = "<group>"; };
 		53DA58029D61FB0DBF1E5564 /* BoxEditRereadTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxEditRereadTests.swift; sourceTree = "<group>"; };
 		56AB805A57FC795B0DC85FF4 /* RTMDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RTMDetector.swift; sourceTree = "<group>"; };
@@ -358,6 +360,7 @@
 		973CDA2BDCD05215D19116AB /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				51BDA2DE7CB295371B9598C9 /* genji_ndl_2585098_R0005_right.jpg */,
 				4803ABA4D8E4DE1EECF7141A /* koten_page.jpg */,
 			);
 			path = Resources;
@@ -573,6 +576,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F75C823532355A95FB806C4A /* genji_ndl_2585098_R0005_right.jpg in Resources */,
 				F70CD1D63CB6A73E60252248 /* koten_page.jpg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
