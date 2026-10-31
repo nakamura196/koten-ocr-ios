@@ -18,6 +18,10 @@ struct CropView: View {
     // Four-corner mode (normalized image coordinates)
     @State private var isQuadMode = false
     @State private var quad: Quad = .unit
+    /// Set when the reader has chosen a mode or moved the frame; the background page detection then stays out.
+    @State private var modeTouched = false
+    /// Set while detection switches to four-corner mode itself, so the mode change keeps the found corners.
+    @State private var autoSwitching = false
 
     // Zoom & Pan
     @State private var zoomScale: CGFloat = 1.0
@@ -224,7 +228,11 @@ struct CropView: View {
                     .padding(.top, 12)
 
                 CropModePicker(isQuad: $isQuadMode)
-                    .onChange(of: isQuadMode) { on in if on { prepareQuad() } }
+                    .onChange(of: isQuadMode) { on in
+                        if autoSwitching { autoSwitching = false; return }
+                        modeTouched = true
+                        if on { prepareQuad() }
+                    }
 
                 // Bottom glass toolbar
                 HStack(spacing: 12) {
@@ -257,6 +265,7 @@ struct CropView: View {
         }
         .onAppear {
             currentImage = image
+            autoDetectPage()
             if !CoachMark.cropCorner.isShown && ProcessInfo.processInfo.environment["TEST_IMAGE_PATH"]?.isEmpty ?? true {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                     withAnimation(.easeOut(duration: 0.3)) { showCornerCoach = true }
@@ -391,6 +400,7 @@ struct CropView: View {
     private func rotateImage() {
         guard let rotated = displayImage.rotated90Clockwise() else { return }
         currentImage = rotated
+        modeTouched = true
         isQuadMode = false
         initializedCrop = false
         zoomScale = 1.0
@@ -543,6 +553,24 @@ struct CropView: View {
 
     // MARK: - Crop execution
 
+    /// Runs page detection in the background when the screen opens. If a page is found and the reader
+    /// has not touched anything yet, starts in four-corner mode with the corners on the page.
+    /// Otherwise nothing changes (rectangle mode as before).
+    private func autoDetectPage() {
+        let img = image
+        DispatchQueue.global(qos: .userInitiated).async {
+            let found = PerspectiveCrop.detectForCropScreen(in: img)
+            DispatchQueue.main.async {
+                guard let found, PerspectiveCrop.shouldStartInQuadMode(detected: found),
+                      !modeTouched, !isQuadMode, initializedCrop, displayImage === img,
+                      imageFrame.width > 0, cropRect.isNearly(imageFrame) else { return }
+                quad = found
+                autoSwitching = true
+                isQuadMode = true
+            }
+        }
+    }
+
     /// Seeds the corners from the current rectangle, then tries to snap them to a detected page.
     private func prepareQuad() {
         guard imageFrame.width > 0, imageFrame.height > 0 else { return }
@@ -626,3 +654,11 @@ private struct CropGridLines: View {
     }
 }
 
+
+private extension CGRect {
+    /// True when the rectangle has not been moved from `other` (within a couple of points).
+    func isNearly(_ other: CGRect, tolerance: CGFloat = 2) -> Bool {
+        abs(minX - other.minX) <= tolerance && abs(minY - other.minY) <= tolerance
+            && abs(width - other.width) <= tolerance && abs(height - other.height) <= tolerance
+    }
+}
