@@ -38,7 +38,10 @@ targets:
           FW_PLIST="${FW_DIR}/Info.plist"
           if [ -f "$FW_PLIST" ]; then
             /usr/libexec/PlistBuddy -c "Set :MinimumOSVersion ${IPHONEOS_DEPLOYMENT_TARGET}" "$FW_PLIST"
-            codesign --force --sign "${EXPANDED_CODE_SIGN_IDENTITY}" --timestamp=none --preserve-metadata=identifier,entitlements "${FW_DIR}"
+            # CI builds with CODE_SIGNING_ALLOWED=NO and has no identity to sign with
+            if [ "${CODE_SIGNING_ALLOWED}" != "NO" ] && [ -n "${EXPANDED_CODE_SIGN_IDENTITY}" ]; then
+              codesign --force --sign "${EXPANDED_CODE_SIGN_IDENTITY}" --timestamp=none --preserve-metadata=identifier,entitlements "${FW_DIR}"
+            fi
           fi
         name: Fix ONNX Runtime and re-sign
     dependencies:

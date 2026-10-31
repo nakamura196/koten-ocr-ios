@@ -618,7 +618,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Fix ONNX Runtime MinimumOSVersion mismatch and re-sign\nFW_DIR=\"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/onnxruntime.framework\"\nFW_PLIST=\"${FW_DIR}/Info.plist\"\nif [ -f \"$FW_PLIST\" ]; then\n  /usr/libexec/PlistBuddy -c \"Set :MinimumOSVersion ${IPHONEOS_DEPLOYMENT_TARGET}\" \"$FW_PLIST\"\n  codesign --force --sign \"${EXPANDED_CODE_SIGN_IDENTITY}\" --timestamp=none --preserve-metadata=identifier,entitlements \"${FW_DIR}\"\nfi\n";
+			shellScript = "# Fix ONNX Runtime MinimumOSVersion mismatch and re-sign\nFW_DIR=\"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/onnxruntime.framework\"\nFW_PLIST=\"${FW_DIR}/Info.plist\"\nif [ -f \"$FW_PLIST\" ]; then\n  /usr/libexec/PlistBuddy -c \"Set :MinimumOSVersion ${IPHONEOS_DEPLOYMENT_TARGET}\" \"$FW_PLIST\"\n  # CI builds with CODE_SIGNING_ALLOWED=NO and has no identity to sign with\n  if [ \"${CODE_SIGNING_ALLOWED}\" != \"NO\" ] && [ -n \"${EXPANDED_CODE_SIGN_IDENTITY}\" ]; then\n    codesign --force --sign \"${EXPANDED_CODE_SIGN_IDENTITY}\" --timestamp=none --preserve-metadata=identifier,entitlements \"${FW_DIR}\"\n  fi\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
