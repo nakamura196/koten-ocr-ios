@@ -171,10 +171,13 @@ class DEIMDetector: @unchecked Sendable {
         var charCounts: [Float]?
         if outputNames.count >= 4, let charCountValue = outputs[outputNames[3]] {
             let charCountData = try charCountValue.tensorData() as Data
-            charCounts = charCountData.withUnsafeBytes { Array($0.bindMemory(to: Float.self)) }
+            let elementType = try charCountValue.tensorTypeAndShapeInfo().elementType
+            charCounts = DEIMDetector.decodeCharCounts(charCountData, elementType: elementType)
         }
 
-        let numDetections = scores.count
+        // The outputs are parallel arrays; read only as far as all of them reach.
+        let numDetections = min(scores.count, labels.count, bboxes.count / 4)
+        if let counts = charCounts, counts.count < numDetections { charCounts = nil }
         var detections: [Detection] = []
 
         // Scale factors: image was padded to maxWH x maxWH, then resized to input size
@@ -185,7 +188,9 @@ class DEIMDetector: @unchecked Sendable {
 
         for i in 0..<numDetections {
             let score = scores[i]
-            if score < scoreThreshold { continue }
+            // NDLOCR-Lite keeps only scores > conf_threshold (0.25); its score_threshold is unused.
+            // Without this, a stray caption at 0.217 on the modern sample became an extra line.
+            if score < scoreThreshold || score <= confThreshold { continue }
 
             let label = Int(labels[i])
             // Python code: class_index = int(label) - 1
@@ -199,13 +204,11 @@ class DEIMDetector: @unchecked Sendable {
 
             let className = classNames[classIndex] ?? "class_\(classIndex)"
 
-            // Clamp and round
-            let box: [Int] = [
-                max(0, Int(x1.rounded())),
-                max(0, Int(y1.rounded())),
-                min(metadata.originalWidth, Int(x2.rounded())),
-                min(metadata.originalHeight, Int(y2.rounded()))
-            ]
+            // Clamp and truncate. NDLOCR-Lite truncates (astype(np.int32)); rounding moved short lines
+            // by a pixel, enough for the 30-character model to read "(1)気送管" as "(1)気送信".
+            guard let box = Detection.clampedBox(x1, y1, x2, y2,
+                                                 width: metadata.originalWidth, height: metadata.originalHeight,
+                                                 rounding: .towardZero) else { continue }
 
             let predCharCount = charCounts?[i] ?? 100.0
 
@@ -224,6 +227,20 @@ class DEIMDetector: @unchecked Sendable {
         let nmsResult = DEIMDetector.applyNMS(sorted, iouThreshold: iouThreshold)
 
         return Array(nmsResult.prefix(maxDetections))
+    }
+
+    /// The char_count output is the line-length class (1 = long, 2 = medium, 3 = short) that picks the
+    /// 100 / 50 / 30-character PARSeq model. DEIMv2 exports it as int64; reading those bytes as Float
+    /// gave denormals (≈0), so every line fell through to the 100-character model.
+    static func decodeCharCounts(_ data: Data, elementType: ORTTensorElementDataType) -> [Float] {
+        switch elementType {
+        case .int64:
+            return data.withUnsafeBytes { $0.bindMemory(to: Int64.self).map { Float($0) } }
+        case .int32:
+            return data.withUnsafeBytes { $0.bindMemory(to: Int32.self).map { Float($0) } }
+        default:
+            return data.withUnsafeBytes { Array($0.bindMemory(to: Float.self)) }
+        }
     }
 
     // MARK: - NMS

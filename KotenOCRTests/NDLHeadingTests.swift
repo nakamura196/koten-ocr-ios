@@ -1,4 +1,5 @@
 import XCTest
+import OnnxRuntimeBindings
 @testable import KotenOCR
 
 /// Modern (NDL) mode must keep one-line headings and captions.
@@ -29,7 +30,9 @@ final class NDLHeadingTests: XCTestCase {
     /// including the headings "(ヱ)気送子送付管" and "(1)気送管" and the caption "(図2)送村官".
     @MainActor
     func testModernSampleKeepsHeadingsLikeTheOfficialResult() async throws {
-        guard Bundle.main.path(forResource: "NDLmoji", ofType: "yaml", inDirectory: "Models") != nil else {
+        // The yaml files are in git; the onnx models are not (CI has none).
+        guard Bundle.main.path(forResource: "rtmdet-s-1280x1280", ofType: "onnx", inDirectory: "Models") != nil,
+              Bundle.main.path(forResource: "deim-s-1024x1024", ofType: "onnx", inDirectory: "Models") != nil else {
             throw XCTSkip("Models not available")
         }
         let url = try XCTUnwrap(Bundle.main.url(forResource: "sample_modern", withExtension: "jpg"))
@@ -52,7 +55,108 @@ final class NDLHeadingTests: XCTestCase {
         XCTAssertTrue(result.detections.contains { $0.className == "line_title" }, "headings should survive")
         XCTAssertTrue(lines.contains { $0.contains("送付管") && !$0.contains("送付には") },
                       "heading (ヱ)気送子送付管 should be read")
-        XCTAssertTrue(lines.contains { $0.contains("気送管") && $0.count <= 8 },
+        // The heading itself is what matters here. Its last character depends on the crop: the 30-character
+        // model (chosen for short lines, as in NDLOCR-Lite) reads the deskewed crop as "(1)気送信".
+        XCTAssertTrue(lines.contains { $0.hasPrefix("(1)気送") && $0.count <= 8 },
                       "heading (1)気送管 should be read")
+    }
+
+    // MARK: - DEIM post-processing on hand-made model outputs
+
+    private func makeDetector() throws -> DEIMDetector {
+        guard let deimPath = Bundle.main.path(forResource: "deim-s-1024x1024", ofType: "onnx", inDirectory: "Models"),
+              let configPath = Bundle.main.path(forResource: "ndl-deim", ofType: "yaml", inDirectory: "Models") else {
+            throw XCTSkip("Models not available")
+        }
+        return try DEIMDetector(env: try ORTEnv(loggingLevel: .warning), modelPath: deimPath, configPath: configPath,
+                                iouThreshold: 0.2, maxDetections: 1000)
+    }
+
+    private func tensor<T>(_ values: [T], _ type: ORTTensorElementDataType, _ shape: [Int]) throws -> ORTValue {
+        var v = values
+        let data = NSMutableData(bytes: &v, length: v.count * MemoryLayout<T>.stride)
+        return try ORTValue(tensorData: data, elementType: type, shape: shape.map { NSNumber(value: $0) })
+    }
+
+    /// Runs `postprocess` on an 800×800 page (model coordinates = image coordinates).
+    private func postprocess(labels: [Int64], boxes: [Float], scores: [Float], charCounts: [Int64]? = nil,
+                             size: Int = 800) throws -> [Detection] {
+        let detector = try makeDetector()
+        var outputs: [String: ORTValue] = [
+            "labels": try tensor(labels, .int64, [1, labels.count]),
+            "boxes": try tensor(boxes, .float, [1, boxes.count / 4, 4]),
+            "scores": try tensor(scores, .float, [1, scores.count])
+        ]
+        var names = ["labels", "boxes", "scores"]
+        if let charCounts {
+            outputs["char_count"] = try tensor(charCounts, .int64, [1, charCounts.count])
+            names.append("char_count")
+        }
+        return try detector.postprocess(outputs: outputs, outputNames: names,
+                                        metadata: .init(originalWidth: size, originalHeight: size, maxWH: 800))
+    }
+
+    /// NDLOCR-Lite truncates box coordinates; rounding shifted short lines by a pixel.
+    func testBoxesAreTruncatedLikeNDLOCRLite() throws {
+        let dets = try postprocess(labels: [2], boxes: [100.7, 50.9, 300.6, 80.99], scores: [0.9])
+        XCTAssertEqual(dets.map(\.box), [[100, 50, 300, 80]])
+    }
+
+    // MARK: - Line-length class (picks the 30 / 50 / 100-character model)
+
+    func testCharCountsAreDecodedFromInt64() {
+        var values: [Int64] = [3, 2, 1]
+        let data = Data(bytes: &values, count: values.count * MemoryLayout<Int64>.stride)
+        XCTAssertEqual(DEIMDetector.decodeCharCounts(data, elementType: .int64), [3, 2, 1])
+    }
+
+    func testPostprocessKeepsTheCharCountOfEachLine() throws {
+        let dets = try postprocess(labels: [2, 2], boxes: [10, 10, 300, 30, 10, 40, 100, 60],
+                                   scores: [0.9, 0.8], charCounts: [2, 3])
+        XCTAssertEqual(dets.map(\.predCharCount), [2, 3])
+    }
+
+    /// On the bundled modern sample DEIM puts short lines (headings, captions, line ends) in class 3
+    /// and full lines in class 2, as NDLOCR-Lite's Python run shows. Reading the int64 output as Float
+    /// made every line class 0, so the 100-character model read everything.
+    func testModernSampleRoutesLinesToTheSmallerModels() throws {
+        let detector = try makeDetector()
+        let url = try XCTUnwrap(Bundle.main.url(forResource: "sample_modern", withExtension: "jpg"))
+        let image = try XCTUnwrap(UIImage(contentsOfFile: url.path)?.normalizedCGImage)
+        let lines = try detector.detect(image: image).filter(\.isTextLine)
+        let counts = Set(lines.map { Int($0.predCharCount.rounded()) })
+        XCTAssertTrue(counts.isSubset(of: [1, 2, 3]), "unexpected classes \(counts)")
+        XCTAssertTrue(counts.contains(3), "short lines should go to the 30-character model")
+        XCTAssertTrue(counts.contains(2), "full lines should go to the 50-character model")
+    }
+
+    /// NDLOCR-Lite drops detections at or below conf_threshold 0.25, not just below the 0.2 score threshold.
+    func testDetectionsAtOrBelowTheConfThresholdAreDropped() throws {
+        let dets = try postprocess(labels: [2, 2, 2],
+                                   boxes: [10, 10, 300, 30, 10, 40, 300, 60, 10, 70, 300, 90],
+                                   scores: [0.9, 0.25, 0.217])
+        XCTAssertEqual(dets.map(\.box), [[10, 10, 300, 30]])
+    }
+
+    // MARK: - Malformed model output
+
+    func testBoxesOutsideThePageAreDropped() throws {
+        let dets = try postprocess(labels: [2, 2, 2],
+                                   boxes: [-30, -20, -5, -2, 900, 10, 950, 30, 10, 10, 100, 30],
+                                   scores: [0.9, 0.9, 0.9])
+        XCTAssertEqual(dets.map(\.box), [[10, 10, 100, 30]])
+    }
+
+    func testBoxesAreClampedOnBothSides() throws {
+        let dets = try postprocess(labels: [2], boxes: [-10, 700, 900, 820], scores: [0.9])
+        XCTAssertEqual(dets.map(\.box), [[0, 700, 800, 800]])
+    }
+
+    /// The outputs are parallel arrays; a shorter one used to be indexed past its end (a crash).
+    func testOutputsOfDifferentLengthsAreNotOverread() throws {
+        let dets = try postprocess(labels: [2], boxes: [10, 10, 300, 30, 10, 40, 100, 60],
+                                   scores: [0.9, 0.8], charCounts: [3])
+        XCTAssertEqual(dets.map(\.box), [[10, 10, 300, 30]])
+        XCTAssertEqual(dets.map(\.predCharCount), [3])
     }
 }

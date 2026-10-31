@@ -127,4 +127,26 @@ final class ReadingOrderTests: XCTestCase {
         XCTAssertEqual(result.map(\.text), ["flat"])
         XCTAssertLessThan(CFAbsoluteTimeGetCurrent() - start, 0.5)
     }
+
+    // MARK: - Fragmented columns
+
+    /// The tilted photo sample_shibata: one column was detected as a full-height box plus three fragments
+    /// whose left edges differ by a few pixels. They end up in one XY-cut leaf, and sorting that leaf by
+    /// the left edge alone put the bottom fragment before the top one. Lines whose centres are within
+    /// 0.3 × the median width are one column (as NDLOCR-Lite's sort_lines_local) and read top to bottom.
+    func testFragmentsOfOneColumnReadTopToBottom() {
+        let detections = [
+            det(536, 557, 605, 877, text: "middle"),
+            det(532, 47, 589, 384, text: "top"),
+            det(531, 718, 566, 873, text: "bottom"),
+            det(530, 2, 604, 881, text: "whole"),
+            det(567, 283, 599, 383, text: "side note"),
+            det(540, 284, 572, 388, text: "side note 2"),
+            det(440, 0, 504, 877, text: "next column"),
+        ]
+        let texts = processor.process(detections: detections, imageWidth: 700, imageHeight: 900).map(\.text)
+        let fragments = texts.filter { ["top", "middle", "bottom"].contains($0) }
+        XCTAssertEqual(fragments, ["top", "middle", "bottom"])
+        XCTAssertEqual(texts.last, "next column")
+    }
 }

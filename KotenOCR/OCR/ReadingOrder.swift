@@ -321,21 +321,7 @@ class ReadingOrderProcessor: @unchecked Sendable {
             node.numVerticalLines = numVert
 
             if node.numLines > 1 {
-                if node.isVertical() {
-                    // Vertical: right-to-left (descending x0), then top-to-bottom (ascending y0)
-                    node.lineIdx.sort { a, b in
-                        let ax = bboxes[a][0], bx = bboxes[b][0]
-                        if ax != bx { return ax > bx }
-                        return bboxes[a][1] < bboxes[b][1]
-                    }
-                } else {
-                    // Horizontal: top-to-bottom (ascending y0), then left-to-right (ascending x0)
-                    node.lineIdx.sort { a, b in
-                        let ay = bboxes[a][1], by = bboxes[b][1]
-                        if ay != by { return ay < by }
-                        return bboxes[a][0] < bboxes[b][0]
-                    }
-                }
+                node.lineIdx = sortLeafLines(node.lineIdx, bboxes: bboxes, vertical: node.isVertical())
             }
         } else {
             // Internal node: recurse into children
@@ -350,6 +336,43 @@ class ReadingOrderProcessor: @unchecked Sendable {
             }
         }
         return (node.numLines, node.numVerticalLines)
+    }
+
+    /// Orders the lines of one leaf. A leaf holds lines the XY-cut could not separate, typically pieces
+    /// of one column (a full-height box plus fragments, on a tilted photo). Sorting by the left edge
+    /// alone read a lower piece first when its left edge was a few pixels further right.
+    /// As in NDLOCR-Lite's sort_lines_local, lines whose centres lie within 0.3 × the median line
+    /// width (height, for horizontal text) of each other form one column, read top to bottom;
+    /// columns go right to left. Horizontal text: rows top to bottom, each left to right.
+    private func sortLeafLines(_ lines: [Int], bboxes: [[Int]], vertical: Bool) -> [Int] {
+        // Across the reading direction (x for vertical text) and along it (y for vertical text).
+        func across(_ i: Int) -> Int { vertical ? bboxes[i][0] + bboxes[i][2] : bboxes[i][1] + bboxes[i][3] }
+        func along(_ i: Int) -> Int { vertical ? bboxes[i][1] + bboxes[i][3] : bboxes[i][0] + bboxes[i][2] }
+        let spans = lines.map { vertical ? bboxes[$0][2] - bboxes[$0][0] : bboxes[$0][3] - bboxes[$0][1] }.sorted()
+        // Centres are kept doubled (x0 + x1), so the margin is doubled too.
+        let margin = Double(spans[spans.count / 2]) * 0.3 * 2
+
+        // Vertical columns go right to left (descending x); horizontal rows top to bottom.
+        let byAcross = lines.sorted { a, b in
+            vertical ? across(a) > across(b) : across(a) < across(b)
+        }
+        // A line joins the current column when its centre is within the margin of the previous line's.
+        // (Comparing with the column's first line split a column whose first line was a narrow side note.)
+        var groups: [[Int]] = []
+        var previous = 0
+        for i in byAcross {
+            if let last = groups.indices.last, Double(abs(across(i) - previous)) <= margin {
+                groups[last].append(i)
+            } else {
+                groups.append([i])
+            }
+            previous = across(i)
+        }
+        return groups.flatMap { group in
+            group.sorted { a, b in
+                along(a) != along(b) ? along(a) < along(b) : (vertical ? across(a) > across(b) : across(a) < across(b))
+            }
+        }
     }
 
     // MARK: - Ranking (depth-first traversal)

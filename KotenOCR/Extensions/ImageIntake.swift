@@ -60,8 +60,8 @@ enum ImageIntake {
     }
 
     /// Upright, size-limited CGImage from a UIImage (document scanner pages).
+    /// Rotation and downscaling happen in one draw; there is no fallback to the un-rotated `cgImage`.
     static func limit(_ image: UIImage, maxLongSide: Int = maxLongSide) -> CGImage? {
-        guard let cg = image.normalizedCGImage ?? image.cgImage else { return nil }
-        return limit(cg, maxLongSide: maxLongSide)
+        image.normalizedCGImage(maxLongSide: maxLongSide)
     }
 }

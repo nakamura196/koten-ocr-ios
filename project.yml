@@ -24,8 +24,8 @@ targets:
       base:
         INFOPLIST_FILE: KotenOCR/Info.plist
         PRODUCT_BUNDLE_IDENTIFIER: com.nakamura196.kotenocr
-        MARKETING_VERSION: "2.0.1"
-        CURRENT_PROJECT_VERSION: "5"
+        MARKETING_VERSION: "2.1"
+        CURRENT_PROJECT_VERSION: "6"
         DEVELOPMENT_TEAM: "Q6S8JS6GWV"
         CODE_SIGN_STYLE: "Automatic"
         TARGETED_DEVICE_FAMILY: "1,2"
@@ -38,7 +38,10 @@ targets:
           FW_PLIST="${FW_DIR}/Info.plist"
           if [ -f "$FW_PLIST" ]; then
             /usr/libexec/PlistBuddy -c "Set :MinimumOSVersion ${IPHONEOS_DEPLOYMENT_TARGET}" "$FW_PLIST"
-            codesign --force --sign "${EXPANDED_CODE_SIGN_IDENTITY}" --timestamp=none --preserve-metadata=identifier,entitlements "${FW_DIR}"
+            # CI builds with CODE_SIGNING_ALLOWED=NO and has no identity to sign with
+            if [ "${CODE_SIGNING_ALLOWED}" != "NO" ] && [ -n "${EXPANDED_CODE_SIGN_IDENTITY}" ]; then
+              codesign --force --sign "${EXPANDED_CODE_SIGN_IDENTITY}" --timestamp=none --preserve-metadata=identifier,entitlements "${FW_DIR}"
+            fi
           fi
         name: Fix ONNX Runtime and re-sign
     dependencies:

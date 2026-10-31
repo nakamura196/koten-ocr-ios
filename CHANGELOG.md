@@ -1,6 +1,19 @@
 # Changelog / 変更履歴
 
-## 2.0.1 (Unreleased)
+## 2.1 (Unreleased)
+
+- 切り抜き画面に「自動補正」を追加。ページの四隅を探して、斜めに撮った頁をまっすぐに直す。気に入らなければ「元に戻す」 / Added Auto-correct on the crop screen: finds the page corners and straightens a page photographed at an angle; Undo restores the original
+- 結果画面に「確信度」のスライダーを追加。上げると自信のない枠から隠れる（表示だけで、読み取り結果は変わらない） / Added a Confidence slider on the result screen: raising it hides the least certain lines (display only; the results themselves are kept)
+- 細い行（傍書など）の番号を読める大きさにし、重なる番号をずらして表示 / Line numbers on thin lines (such as side notes) are now legible, and overlapping numbers are moved apart
+- 近代モードで、見出しなど短い行を短い行用のモデルで読むように（NDLOCR-Lite と同じ）。枠の座標と検出の線引きも NDLOCR-Lite にそろえた / Modern mode reads short lines such as headings with the short-line models, as NDLOCR-Lite does; box coordinates and the detection threshold now match NDLOCR-Lite
+- 読み順: 1 つの行が細切れに検出されたとき、上から順に並ぶように / Reading order: fragments of one column are now kept top to bottom
+- 白黒（16 ビット）の画像を回転すると失敗する不具合と、画像の向きの扱いを修正 / Fixed rotating 16-bit grayscale images, and image orientation handling
+- 履歴の保存を確実に（書き込みの途中で終了しても壊れにくく） / History is saved more reliably (files are written atomically)
+- アップデートの案内を、操作を妨げない形に / Update notices no longer block the app
+- 翻訳の API キーをこの端末だけに保存（機種変更やバックアップからの復元では再入力が必要） / The translation API key is now stored on this device only (re-enter it after moving to a new device or restoring a backup)
+- プライバシーマニフェストを追加し、プライバシーポリシーを実際の動作に合わせて更新 / Added a privacy manifest and updated the privacy policy to describe what the app actually does
+
+## 2.0.1 (2026-10-30)
 
 - 最初の説明で、撮影のほかに写真から読み込めることを案内 / The first-run guide now mentions that you can also choose a photo, not only take one
 - 切り抜き画面の回転ボタンに「回転」と文字を表示 / The rotate button on the crop screen now shows a "Rotate" label

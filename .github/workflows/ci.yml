@@ -1,0 +1,36 @@
+name: CI
+# Runs the unit tests (KotenOCRTests) on a GitHub macOS runner. The repo is public, so this is free.
+#
+# The ONNX models are gitignored (about 80 MB, fetched by setup.sh), so they are NOT available here.
+# The tests that need them (OCR engine, detection/recognition, performance, memory, benchmarks)
+# check for the models and call XCTSkip, so they show up as "skipped", not failed.
+# What runs for real on CI: history, export, geometry, deskew, reading order, translation settings,
+# keychain and other tests that need no model. Run the full suite locally after ./setup.sh.
+#
+# Not run here: KotenOCRUITests (need models and a long simulator session).
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  unit-tests:
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      # The Xcode project references the Models folder; make sure it exists (empty on CI).
+      - name: Create empty Models folder
+        run: mkdir -p KotenOCR/Models
+      - name: Pick an iPhone simulator
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available iPhone | grep -Eo '[0-9A-F]{8}-([0-9A-F]{4}-){3}[0-9A-F]{12}' | head -n 1)
+          echo "Using simulator $UDID"
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+      - name: Unit tests
+        run: xcodebuild test -project KotenOCR.xcodeproj -scheme KotenOCR -destination "platform=iOS Simulator,id=${{ steps.sim.outputs.udid }}" -only-testing:KotenOCRTests CODE_SIGNING_ALLOWED=NO

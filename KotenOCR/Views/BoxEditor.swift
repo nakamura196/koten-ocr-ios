@@ -146,7 +146,7 @@ struct BoxEditor {
 
     /// Edited or new lines use the 100-character model: their predicted length is no longer known.
     private func replacingBox(_ d: Detection, with box: [Int], keepText: Bool) -> Detection {
-        Detection(box: box, score: d.score, classId: d.classId, className: d.className,
+        Detection(box: box, score: 1.0, classId: d.classId, className: d.className,
                   text: keepText ? d.text : "", id: d.id, predCharCount: 100.0)
     }
 }

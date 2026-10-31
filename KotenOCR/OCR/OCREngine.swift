@@ -77,10 +77,11 @@ class OCREngine: ObservableObject {
         }
     }
 
-    /// Switch OCR mode, loading models on demand if needed
+    /// Switch OCR mode, loading models on demand if needed.
+    /// The selected mode changes only once its models are in place. It used to change first, so a
+    /// failed load left the engine on a mode it could not run (and, through @AppStorage, the next
+    /// launch tried to load that mode again at startup).
     func switchMode(to mode: OCRMode) async throws {
-        currentModeRaw = mode.rawValue
-
         // Check if models for the target mode are already loaded
         let loaded = locked { () -> Bool in
             switch mode {
@@ -88,7 +89,10 @@ class OCREngine: ObservableObject {
             case .ndl: return ndlDetector != nil && ndlCascadeRecognizer != nil
             }
         }
-        if loaded { return }
+        if loaded {
+            await MainActor.run { self.currentModeRaw = mode.rawValue }
+            return
+        }
 
         // Models need loading
         guard let env = self.env else {
@@ -107,6 +111,7 @@ class OCREngine: ObservableObject {
                 try self.loadNDLModels(env: env)
             }
         }.value
+        await MainActor.run { self.currentModeRaw = mode.rawValue }
     }
 
     /// Handle memory warning by releasing unused mode's models. While an OCR run is in flight
@@ -373,6 +378,7 @@ class OCREngine: ObservableObject {
     static func recognizeKotenLines(image: CGImage, detections: [Detection],
                                     recognizer: PARSEQRecognizer, lineTilt: Bool) async throws -> [Detection] {
         var recognized = detections
+        let pageVertical = isVerticalPage(detections)
         let maxConcurrency = 4
         for batchStart in stride(from: 0, to: recognized.count, by: maxConcurrency) {
             let batchEnd = min(batchStart + maxConcurrency, recognized.count)
@@ -380,22 +386,24 @@ class OCREngine: ObservableObject {
                 for i in batchStart..<batchEnd {
                     let box = recognized[i].box
                     guard box.count >= 4 else { continue }
+                    let vertical = readsVertically(box: box, pageVertical: pageVertical)
                     group.addTask {
                         try Task.checkCancellation()
                         let plainRect = CGRect(x: max(0, box[0]), y: max(0, box[1]),
                                                width: max(1, box[2] - box[0]), height: max(1, box[3] - box[1]))
                         guard lineTilt else {
                             guard let plain = image.cropping(to: plainRect) else { return (i, "") }
-                            return (i, try recognizer.recognize(image: plain))
+                            return (i, try recognizer.recognize(image: plain, vertical: vertical))
                         }
                         let tilted = LineTilt.crop(image, box: box)
                         guard let cropped = tilted.image else { return (i, "") }
-                        var text = try recognizer.recognize(image: cropped)
+                        // An oriented crop is laid out along its column; let its own shape decide.
+                        var text = try recognizer.recognize(image: cropped, vertical: tilted.plan == nil ? vertical : nil)
                         // PARSeq occasionally collapses into "□□□…" on a crop; if the oriented crop does,
                         // read the plain box as well and keep whichever is less garbled.
                         if tilted.plan != nil, LineTilt.placeholderCount(text) >= 3,
                            let plain = image.cropping(to: plainRect) {
-                            let alternative = try recognizer.recognize(image: plain)
+                            let alternative = try recognizer.recognize(image: plain, vertical: vertical)
                             if LineTilt.placeholderCount(alternative) < LineTilt.placeholderCount(text) {
                                 text = alternative
                             }
@@ -415,6 +423,25 @@ class OCREngine: ObservableObject {
         }
         recognized.removeAll { LineTilt.isPlaceholderOnly($0.text) }
         return LineTilt.dropSameLineDuplicates(recognized)
+    }
+
+    // MARK: - Line direction
+
+    /// True when most line boxes are taller than wide (the same majority rule as the reading order).
+    static func isVerticalPage(_ detections: [Detection]) -> Bool {
+        let boxes = detections.map(\.box).filter { $0.count >= 4 }
+        let tall = boxes.filter { $0[3] - $0[1] > $0[2] - $0[0] }.count
+        return boxes.count < tall * 2
+    }
+
+    /// Whether to read one box as a vertical line. A clearly long box follows its own shape; a box of
+    /// one or two characters (long side under 1.5 × the short side) follows the page. Deciding from the
+    /// box alone read a wide single character on a vertical page, or a narrow one ("1", "図") on a
+    /// horizontal page, in the wrong direction.
+    static func readsVertically(box: [Int], pageVertical: Bool) -> Bool {
+        let w = box[2] - box[0], h = box[3] - box[1]
+        if Double(max(w, h)) >= 1.5 * Double(min(w, h)) { return h > w }
+        return pageVertical
     }
 
     private func processNDL(image: CGImage) async throws -> OCRResult {
@@ -437,6 +464,7 @@ class OCREngine: ObservableObject {
 
         // Step 2: Cascade text recognition for each detection (parallel, batched)
         var recognized = detections
+        let pageVertical = Self.isVerticalPage(detections)
         let maxConcurrency = 4
         for batchStart in stride(from: 0, to: recognized.count, by: maxConcurrency) {
             let batchEnd = min(batchStart + maxConcurrency, recognized.count)
@@ -452,10 +480,12 @@ class OCREngine: ObservableObject {
                     )
                     guard let cropped = image.cropping(to: cropRect) else { continue }
                     let predCharCount = recognized[i].predCharCount
+                    let vertical = Self.readsVertically(box: box, pageVertical: pageVertical)
 
                     group.addTask {
                         try Task.checkCancellation()
-                        let text = try cascadeRecognizer.recognize(image: cropped, predCharCount: predCharCount)
+                        let text = try cascadeRecognizer.recognize(image: cropped, predCharCount: predCharCount,
+                                                                   vertical: vertical)
                         return (i, text)
                     }
                 }
