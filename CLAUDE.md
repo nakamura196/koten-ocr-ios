@@ -116,6 +116,16 @@ Two languages: Japanese (`ja.lproj/`) and English (`en.lproj/`). Use `String(loc
 
 Credentials stored in `.env` (gitignored). API key `.p8` file at `~/.private_keys/`. JWT auth with PyJWT. Key operations documented in the blog post at `/Users/nakamura/git/zenn/content/ja/posts/appstore-connect-api-guide.md`.
 
+### カスタマーレビューの確認と返信
+
+```bash
+python3 scripts/reviews.py --unanswered      # 未返信のレビューだけ表示
+python3 scripts/reviews.py --reply <REVIEW_ID> --body-file reply.txt --dry-run
+python3 scripts/reviews.py --reply <REVIEW_ID> --body-file reply.txt
+```
+
+返信は App Store 上で公開される。投稿前に文面の了承を取ること。
+
 ### Analytics ダッシュボード（Web UI）
 
 App Store Connect Web UIのアナリティクス。APIより最新のデータが見られる。
