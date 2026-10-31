@@ -5,7 +5,7 @@ import OnnxRuntimeBindings
 
 struct Detection: Codable {
     let box: [Int]       // [x1, y1, x2, y2]
-    let score: Float
+    var score: Float
     let classId: Int
     let className: String
     var text: String = ""
