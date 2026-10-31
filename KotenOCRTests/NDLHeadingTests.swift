@@ -30,7 +30,9 @@ final class NDLHeadingTests: XCTestCase {
     /// including the headings "(ヱ)気送子送付管" and "(1)気送管" and the caption "(図2)送村官".
     @MainActor
     func testModernSampleKeepsHeadingsLikeTheOfficialResult() async throws {
-        guard Bundle.main.path(forResource: "NDLmoji", ofType: "yaml", inDirectory: "Models") != nil else {
+        // The yaml files are in git; the onnx models are not (CI has none).
+        guard Bundle.main.path(forResource: "rtmdet-s-1280x1280", ofType: "onnx", inDirectory: "Models") != nil,
+              Bundle.main.path(forResource: "deim-s-1024x1024", ofType: "onnx", inDirectory: "Models") != nil else {
             throw XCTSkip("Models not available")
         }
         let url = try XCTUnwrap(Bundle.main.url(forResource: "sample_modern", withExtension: "jpg"))

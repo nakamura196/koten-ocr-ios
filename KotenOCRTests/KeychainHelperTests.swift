@@ -5,6 +5,15 @@ import Security
 final class KeychainHelperTests: XCTestCase {
     private let key = "test_keychain_helper_\(UUID().uuidString)"
 
+    override func setUpWithError() throws {
+        // An unsigned build (CI uses CODE_SIGNING_ALLOWED=NO) has no keychain access group.
+        let probe: [String: Any] = [kSecClass as String: kSecClassGenericPassword,
+                                    kSecAttrAccount as String: key, kSecValueData as String: Data()]
+        let status = SecItemAdd(probe as CFDictionary, nil)
+        SecItemDelete([kSecClass as String: kSecClassGenericPassword, kSecAttrAccount as String: key] as CFDictionary)
+        if status == errSecMissingEntitlement { throw XCTSkip("Keychain not available in an unsigned build") }
+    }
+
     override func tearDown() {
         KeychainHelper.delete(key: key)
         super.tearDown()

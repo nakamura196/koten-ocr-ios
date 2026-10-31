@@ -17,7 +17,9 @@ final class BoxEditRereadTests: XCTestCase {
 
     @MainActor
     private func readyEngine(mode: OCRMode) async throws -> OCREngine {
-        guard Bundle.main.path(forResource: "NDLmoji", ofType: "yaml", inDirectory: "Models") != nil else {
+        // The yaml files are in git; the onnx models are not (CI has none).
+        guard Bundle.main.path(forResource: "rtmdet-s-1280x1280", ofType: "onnx", inDirectory: "Models") != nil,
+              Bundle.main.path(forResource: "deim-s-1024x1024", ofType: "onnx", inDirectory: "Models") != nil else {
             throw XCTSkip("Models not available")
         }
         let engine = OCREngine()
