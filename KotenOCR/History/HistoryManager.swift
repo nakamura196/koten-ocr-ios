@@ -1,9 +1,13 @@
 import Foundation
 import UIKit
 import CoreGraphics
+import ImageIO
+import UniformTypeIdentifiers
 
 class HistoryManager: ObservableObject {
     static let shared = HistoryManager()
+
+    static let thumbnailMaxPixel: CGFloat = 200
 
     static var historyDirectory: URL {
         guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
@@ -16,21 +20,49 @@ class HistoryManager: ObservableObject {
 
     @Published var items: [HistoryItem] = []
 
-    private init() {
+    /// Directory this instance reads and writes (injectable for tests).
+    let directory: URL
+
+    /// Serial queue for all disk writes, so a delete can never race a pending save.
+    private let ioQueue = DispatchQueue(label: "com.nakamura196.kotenocr.history-io", qos: .utility)
+
+    private convenience init() {
+        self.init(directory: Self.historyDirectory)
+    }
+
+    init(directory: URL) {
+        self.directory = directory
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         loadItems()
     }
 
-    func save(image: CGImage, detections: [Detection], text: String) {
+    /// Blocks until all queued disk writes have finished (for tests).
+    func flush() {
+        ioQueue.sync {}
+    }
+
+    private func jsonURL(for id: UUID) -> URL {
+        directory.appendingPathComponent("\(id.uuidString).json")
+    }
+
+    func imageURL(for item: HistoryItem) -> URL {
+        directory.appendingPathComponent(item.imageFileName)
+    }
+
+    func thumbnailURL(for item: HistoryItem) -> URL {
+        directory.appendingPathComponent(item.thumbnailFileName)
+    }
+
+    private func onMain(_ block: () -> Void) {
+        if Thread.isMainThread { block() } else { DispatchQueue.main.sync(execute: block) }
+    }
+
+    /// Adds the item to the list immediately and returns its id.
+    /// JPEG encoding, thumbnail generation and file writes happen on a background queue.
+    @discardableResult
+    func save(image: CGImage, detections: [Detection], text: String) -> UUID {
         let id = UUID()
         let imageFileName = "\(id.uuidString).jpg"
-        let imagePath = Self.historyDirectory.appendingPathComponent(imageFileName)
-
-        // Save image as JPEG
-        let uiImage = UIImage(cgImage: image)
-        if let data = uiImage.jpegData(compressionQuality: 0.8) {
-            try? data.write(to: imagePath)
-        }
-
         let item = HistoryItem(
             id: id,
             date: Date(),
@@ -38,21 +70,27 @@ class HistoryManager: ObservableObject {
             detections: detections,
             imageFileName: imageFileName
         )
+        onMain { items.insert(item, at: 0) }
 
-        // Save JSON
-        let jsonPath = Self.historyDirectory.appendingPathComponent("\(id.uuidString).json")
-        if let data = try? JSONEncoder().encode(item) {
-            try? data.write(to: jsonPath)
+        let imagePath = imageURL(for: item)
+        let thumbPath = thumbnailURL(for: item)
+        let jsonPath = jsonURL(for: id)
+        ioQueue.async {
+            if let data = UIImage(cgImage: image).jpegData(compressionQuality: 0.8) {
+                try? data.write(to: imagePath)
+                if let thumb = Self.makeThumbnailJPEG(from: data) {
+                    try? thumb.write(to: thumbPath)
+                }
+            }
+            if let data = try? JSONEncoder().encode(item) {
+                try? data.write(to: jsonPath)
+            }
         }
-
-        DispatchQueue.main.async {
-            self.items.insert(item, at: 0)
-        }
+        return id
     }
 
     func loadItems() {
-        let dir = Self.historyDirectory
-        guard let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil) else { return }
+        guard let files = try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil) else { return }
 
         let jsonFiles = files.filter { $0.pathExtension == "json" }
         var loaded: [HistoryItem] = []
@@ -68,30 +106,99 @@ class HistoryManager: ObservableObject {
     }
 
     func delete(item: HistoryItem) {
-        let jsonPath = Self.historyDirectory.appendingPathComponent("\(item.id.uuidString).json")
-        let imagePath = item.imagePath
-        try? FileManager.default.removeItem(at: jsonPath)
-        try? FileManager.default.removeItem(at: imagePath)
+        let urls = [jsonURL(for: item.id), imageURL(for: item), thumbnailURL(for: item)]
+        ioQueue.async { urls.forEach { try? FileManager.default.removeItem(at: $0) } }
         items.removeAll { $0.id == item.id }
     }
 
     func updateTranslation(for itemID: UUID, translatedText: String) {
         guard let index = items.firstIndex(where: { $0.id == itemID }) else { return }
         items[index].translatedText = translatedText
+        persist(items[index])
+    }
 
-        // Re-save JSON
-        let jsonPath = Self.historyDirectory.appendingPathComponent("\(itemID.uuidString).json")
-        if let data = try? JSONEncoder().encode(items[index]) {
-            try? data.write(to: jsonPath)
+    /// Stores manual text edits. `text` is rebuilt from the detections (non-empty lines joined by newline).
+    func updateDetections(id itemID: UUID, detections: [Detection]) {
+        guard let index = items.firstIndex(where: { $0.id == itemID }) else { return }
+        items[index].detections = detections
+        items[index].text = Self.combinedText(of: detections)
+        persist(items[index])
+    }
+
+    static func combinedText(of detections: [Detection]) -> String {
+        detections.map(\.text).filter { !$0.isEmpty }.joined(separator: "\n")
+    }
+
+    private func persist(_ item: HistoryItem) {
+        let jsonPath = jsonURL(for: item.id)
+        ioQueue.async {
+            if let data = try? JSONEncoder().encode(item) {
+                try? data.write(to: jsonPath)
+            }
         }
     }
 
     func deleteAll() {
-        for item in items {
-            let jsonPath = Self.historyDirectory.appendingPathComponent("\(item.id.uuidString).json")
-            try? FileManager.default.removeItem(at: jsonPath)
-            try? FileManager.default.removeItem(at: item.imagePath)
-        }
+        let urls = items.flatMap { [jsonURL(for: $0.id), imageURL(for: $0), thumbnailURL(for: $0)] }
+        ioQueue.async { urls.forEach { try? FileManager.default.removeItem(at: $0) } }
         items.removeAll()
+    }
+
+    // MARK: - Thumbnails
+
+    /// Downsamples encoded image data to a JPEG whose longer side is `maxPixel` (ImageIO, no full decode).
+    static func makeThumbnailJPEG(from data: Data, maxPixel: CGFloat = thumbnailMaxPixel) -> Data? {
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
+        return thumbnailJPEG(from: source, maxPixel: maxPixel)
+    }
+
+    static func makeThumbnailJPEG(fromFile url: URL, maxPixel: CGFloat = thumbnailMaxPixel) -> Data? {
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else { return nil }
+        return thumbnailJPEG(from: source, maxPixel: maxPixel)
+    }
+
+    private static func thumbnailJPEG(from source: CGImageSource, maxPixel: CGFloat) -> Data? {
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixel
+        ]
+        guard let cg = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
+        return UIImage(cgImage: cg).jpegData(compressionQuality: 0.7)
+    }
+
+    /// Downsamples the original to `maxPixel` for a larger tile (home with one or two scans).
+    /// Not stored; falls back to the list thumbnail.
+    func preview(for item: HistoryItem, maxPixel: CGFloat) async -> UIImage? {
+        let imagePath = imageURL(for: item)
+        let image: UIImage? = await withCheckedContinuation { cont in
+            ioQueue.async {
+                cont.resume(returning: Self.makeThumbnailJPEG(fromFile: imagePath, maxPixel: maxPixel).flatMap(UIImage.init(data:)))
+            }
+        }
+        if let image { return image }
+        return await thumbnail(for: item)
+    }
+
+    /// Returns the list thumbnail. Uses the stored thumbnail if present; otherwise downsamples the
+    /// original on a background thread and stores the result for next time (old items).
+    func thumbnail(for item: HistoryItem) async -> UIImage? {
+        let thumbPath = thumbnailURL(for: item)
+        let imagePath = imageURL(for: item)
+        return await withCheckedContinuation { cont in
+            ioQueue.async {
+                if let data = try? Data(contentsOf: thumbPath), let img = UIImage(data: data) {
+                    cont.resume(returning: img)
+                    return
+                }
+                guard let data = Self.makeThumbnailJPEG(fromFile: imagePath) else {
+                    cont.resume(returning: nil)
+                    return
+                }
+                try? data.write(to: thumbPath)
+                cont.resume(returning: UIImage(data: data))
+            }
+        }
     }
 }

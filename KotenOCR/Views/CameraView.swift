@@ -17,6 +17,8 @@ class CameraViewController: UIViewController {
     var onCapture: ((CGImage) -> Void)?
 
     private let captureSession = AVCaptureSession()
+    /// Start/stop are blocking calls that must not overlap; keep them on one serial queue.
+    private let sessionQueue = DispatchQueue(label: "com.nakamura196.kotenocr.camera.session")
     private var previewLayer: AVCaptureVideoPreviewLayer?
     private let photoOutput = AVCapturePhotoOutput()
     private var shutterButton: UIButton?
@@ -26,6 +28,8 @@ class CameraViewController: UIViewController {
     private var isFlashOn = false
     private var captureDevice: AVCaptureDevice?
     private var currentDeviceOrientation: UIDeviceOrientation = .portrait
+    private var isCapturing = false
+    private var messageView: UIView?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -43,9 +47,12 @@ class CameraViewController: UIViewController {
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        // The user may have granted access in Settings since the last time we looked
+        if !cameraAvailable { setupCamera() }
         guard cameraAvailable else { return }
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            self?.captureSession.startRunning()
+        let session = captureSession
+        sessionQueue.async {
+            if !session.isRunning { session.startRunning() }
         }
         UIDevice.current.beginGeneratingDeviceOrientationNotifications()
         NotificationCenter.default.addObserver(
@@ -57,7 +64,10 @@ class CameraViewController: UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         guard cameraAvailable else { return }
-        captureSession.stopRunning()
+        let session = captureSession
+        sessionQueue.async {
+            if session.isRunning { session.stopRunning() }
+        }
         if isFlashOn {
             toggleTorch(on: false)
         }
@@ -96,6 +106,17 @@ class CameraViewController: UIViewController {
     // MARK: - Camera Setup
 
     private func setupCamera() {
+        messageView?.removeFromSuperview()
+        messageView = nil
+
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .denied, .restricted:
+            showPermissionDenied()
+            return
+        default:
+            break
+        }
+
         guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
               let input = try? AVCaptureDeviceInput(device: device) else {
             showNoCameraLabel()
@@ -122,33 +143,81 @@ class CameraViewController: UIViewController {
     }
 
     private func showNoCameraLabel() {
+        showMessage(String(localized: "camera_no_camera", defaultValue: "No Camera"), showSettingsButton: false)
+    }
+
+    private func showPermissionDenied() {
+        showMessage(
+            String(localized: "camera_permission_denied",
+                   defaultValue: "カメラが許可されていません。設定アプリでカメラへのアクセスを許可してください。写真ライブラリから画像を選ぶこともできます。"),
+            showSettingsButton: true
+        )
+    }
+
+    private func showMessage(_ text: String, showSettingsButton: Bool) {
+        messageView?.removeFromSuperview()
+
         let label = UILabel()
-        label.text = String(localized: "camera_no_camera", defaultValue: "No Camera")
-        label.textColor = .gray
+        label.text = text
+        label.textColor = .lightGray
         label.textAlignment = .center
         label.numberOfLines = 0
         label.font = .systemFont(ofSize: 16)
-        label.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(label)
+        label.accessibilityIdentifier = "camera_message"
+
+        let stack = UIStackView(arrangedSubviews: [label])
+        stack.axis = .vertical
+        stack.spacing = 20
+        stack.alignment = .center
+        stack.translatesAutoresizingMaskIntoConstraints = false
+
+        if showSettingsButton {
+            var config = UIButton.Configuration.filled()
+            config.title = String(localized: "camera_open_settings", defaultValue: "設定を開く")
+            config.baseBackgroundColor = .white
+            config.baseForegroundColor = .black
+            let button = UIButton(configuration: config)
+            button.accessibilityIdentifier = "camera_open_settings_button"
+            button.addAction(UIAction { _ in
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }, for: .touchUpInside)
+            stack.addArrangedSubview(button)
+        }
+
+        view.addSubview(stack)
         NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-            label.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 20),
+            stack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            stack.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            stack.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 24),
+            stack.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -24)
         ])
+        messageView = stack
+        view.bringSubviewToFront(stack)
     }
 
     // MARK: - UI
 
     private func setupUI() {
         // Shutter button
-        let button = UIButton(type: .system)
+        // White ring with a white disc inside (hybrid storyboard b); press shrinks it.
+        let button = UIButton(type: .custom)
         button.translatesAutoresizingMaskIntoConstraints = false
-        button.backgroundColor = .white
+        button.backgroundColor = .clear
         button.layer.cornerRadius = 35
         button.layer.borderWidth = 4
-        button.layer.borderColor = UIColor.white.withAlphaComponent(0.5).cgColor
+        button.layer.borderColor = UIColor.white.cgColor
+        let disc = UIView(frame: CGRect(x: 7, y: 7, width: 56, height: 56))
+        disc.backgroundColor = .white
+        disc.layer.cornerRadius = 28
+        disc.isUserInteractionEnabled = false
+        button.addSubview(disc)
+        button.addTarget(self, action: #selector(shutterDown), for: [.touchDown, .touchDragEnter])
+        button.addTarget(self, action: #selector(shutterUp), for: [.touchUpInside, .touchUpOutside, .touchCancel, .touchDragExit])
         button.addTarget(self, action: #selector(capturePhoto), for: .touchUpInside)
         button.accessibilityLabel = String(localized: "capture_button", defaultValue: "Capture")
+        button.accessibilityIdentifier = "shutter_button"
         view.addSubview(button)
 
         NSLayoutConstraint.activate([
@@ -165,7 +234,7 @@ class CameraViewController: UIViewController {
         flash.translatesAutoresizingMaskIntoConstraints = false
         flash.setImage(UIImage(systemName: "bolt.slash.fill"), for: .normal)
         flash.tintColor = .white
-        flash.backgroundColor = UIColor.white.withAlphaComponent(0.2)
+        flash.backgroundColor = UIColor(red: 0.17, green: 0.165, blue: 0.157, alpha: 0.85)
         flash.layer.cornerRadius = 22
         flash.addTarget(self, action: #selector(toggleFlash), for: .touchUpInside)
         flash.accessibilityLabel = String(localized: "flash_off", defaultValue: "Flash Off")
@@ -340,8 +409,33 @@ class CameraViewController: UIViewController {
         }
     }
 
+    @objc private func shutterDown() {
+        UIView.animate(withDuration: 0.1) { self.shutterButton?.transform = CGAffineTransform(scaleX: 0.88, y: 0.88) }
+    }
+
+    @objc private func shutterUp() {
+        UIView.animate(withDuration: 0.15) { self.shutterButton?.transform = .identity }
+    }
+
+    /// White flash for 120 ms with a firm haptic (storyboard b).
+    private func playShutterFeedback() {
+        UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
+        let flash = UIView(frame: view.bounds)
+        flash.backgroundColor = UIColor.white.withAlphaComponent(0.85)
+        flash.isUserInteractionEnabled = false
+        view.addSubview(flash)
+        let reduceMotion = UIAccessibility.isReduceMotionEnabled
+        UIView.animate(withDuration: reduceMotion ? 0.2 : 0.12, delay: 0, options: [.curveEaseOut]) {
+            flash.alpha = 0
+        } completion: { _ in
+            flash.removeFromSuperview()
+        }
+    }
+
     @objc private func capturePhoto() {
-        guard cameraAvailable else { return }
+        guard cameraAvailable, !isCapturing else { return }
+        setCapturing(true)
+        playShutterFeedback()
         // Set video orientation based on current device orientation
         if let connection = photoOutput.connection(with: .video) {
             connection.videoOrientation = videoOrientation(for: currentDeviceOrientation)
@@ -349,17 +443,43 @@ class CameraViewController: UIViewController {
         let settings = AVCapturePhotoSettings()
         photoOutput.capturePhoto(with: settings, delegate: self)
     }
+
+    private func setCapturing(_ capturing: Bool) {
+        isCapturing = capturing
+        shutterButton?.isEnabled = !capturing
+        shutterButton?.alpha = capturing ? 0.5 : 1.0
+    }
+
+    private func showCaptureError() {
+        let alert = UIAlertController(
+            title: nil,
+            message: String(localized: "camera_capture_failed", defaultValue: "撮影に失敗しました。もう一度お試しください。"),
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: String(localized: "ok", defaultValue: "OK"), style: .default))
+        present(alert, animated: true)
+    }
 }
 
 // MARK: - AVCapturePhotoCaptureDelegate
 
 extension CameraViewController: AVCapturePhotoCaptureDelegate {
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        guard error == nil,
-              let data = photo.fileDataRepresentation(),
-              let uiImage = UIImage(data: data) else { return }
-
-        guard let correctedImage = uiImage.normalizedCGImage ?? uiImage.cgImage else { return }
-        onCapture?(correctedImage)
+        var result: CGImage?
+        // Decode straight to an upright image of at most ImageIntake.maxLongSide px, so a 24/48 MP
+        // capture never exists as a full-size bitmap.
+        if error == nil, let data = photo.fileDataRepresentation() {
+            result = ImageIntake.decode(data)
+        }
+        // Delegate callbacks arrive on an arbitrary queue; UI state must change on main.
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.setCapturing(false)
+            if let result {
+                self.onCapture?(result)
+            } else {
+                self.showCaptureError()
+            }
+        }
     }
 }

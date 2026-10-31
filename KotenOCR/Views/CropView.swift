@@ -2,8 +2,10 @@ import SwiftUI
 
 struct CropView: View {
     let image: CGImage
-    let onCrop: (CGImage) -> Void
-    let onSkip: () -> Void
+    /// Receives the cropped image and the (possibly rotated) image it was cropped from.
+    let onCrop: (_ cropped: CGImage, _ source: CGImage) -> Void
+    /// Receives the displayed image, i.e. including any rotation applied in this view.
+    let onSkip: (_ displayed: CGImage) -> Void
     let onCancel: () -> Void
 
     @State private var cropRect: CGRect = .zero
@@ -11,12 +13,23 @@ struct CropView: View {
     @State private var initializedCrop = false
     @State private var currentImage: CGImage?
     @State private var containerSize: CGSize = .zero
+    @State private var moveStartRect: CGRect?
+
+    // Four-corner mode (normalized image coordinates)
+    @State private var isQuadMode = false
+    @State private var quad: Quad = .unit
 
     // Zoom & Pan
     @State private var zoomScale: CGFloat = 1.0
     @State private var baseZoomScale: CGFloat = 1.0
     @State private var panOffset: CGSize = .zero
     @State private var basePanOffset: CGSize = .zero
+
+    // Design: handles appear one by one; one-time coach mark on a corner
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @State private var handlesShown = 0
+    @State private var showCornerCoach = false
 
     private let handleSize: CGFloat = 28
     private let minCropSize: CGFloat = 50
@@ -27,38 +40,50 @@ struct CropView: View {
 
     var body: some View {
         ZStack {
-            Color(white: 0.2).ignoresSafeArea()
+            WashiBackground()
 
             VStack(spacing: 0) {
                 // Top bar
-                HStack {
+                HStack(spacing: 10) {
                     Button(action: onCancel) {
-                        Text(String(localized: "cancel", defaultValue: "Cancel"))
-                            .foregroundColor(.white)
+                        KotenBackLabel(title: String(localized: "ocr_error_retake", defaultValue: "撮り直す"))
                     }
-                    Spacer()
-                    Text(String(localized: "crop_title", defaultValue: "Crop"))
-                        .foregroundColor(.white)
-                        .font(.headline)
-                    Spacer()
-                    HStack(spacing: 16) {
-                        if zoomScale > 1.01 {
-                            Button(action: resetZoom) {
-                                Image(systemName: "arrow.counterclockwise")
-                                    .font(.system(size: 18))
-                                    .foregroundColor(.yellow)
-                            }
-                            .transition(.opacity)
+                    .buttonStyle(.kotenGlass)
+                    .accessibilityIdentifier("crop_cancel_button")
+                    Spacer(minLength: 8)
+                    if zoomScale > 1.01 {
+                        Button(action: resetZoom) {
+                            KotenIconLabel(systemName: "arrow.counterclockwise")
                         }
-                        Button(action: rotateImage) {
-                            Image(systemName: "rotate.right")
-                                .font(.system(size: 20))
-                                .foregroundColor(.white)
+                        .buttonStyle(.kotenGlassCircle)
+                        .accessibilityLabel(Text("crop_reset_zoom"))
+                        .transition(.opacity)
+                    }
+                    // Icon plus word: an icon alone was easy to miss.
+                    Button(action: rotateImage) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "rotate.right").font(.body.weight(.semibold))
+                            Text(String(localized: "crop_rotate", defaultValue: "回転")).font(.body.weight(.bold)).lineLimit(1)
                         }
-                        .accessibilityLabel(Text("crop_rotate"))
+                        .padding(.horizontal, 14)
+                        .frame(minHeight: 44)
+                    }
+                    .buttonStyle(.kotenGlass)
+                    .accessibilityIdentifier("crop_rotate_button")
+                }
+                .overlay {
+                    if !typeSize.isAccessibilitySize {
+                        Text(String(localized: "crop_title", defaultValue: "Crop"))
+                            .font(.mincho(18, relativeTo: .headline, bold: true))
+                            .foregroundColor(KotenColor.ink)
+                            .lineLimit(1)
+                            .padding(.horizontal, 130)
+                            .allowsHitTesting(false)
+                            .accessibilityAddTraits(.isHeader)
                     }
                 }
-                .padding()
+                .padding(.horizontal, 14)
+                .padding(.top, 6)
                 .animation(.easeInOut(duration: 0.2), value: zoomScale > 1.01)
 
                 // Image + crop overlay
@@ -73,18 +98,25 @@ struct CropView: View {
                     let zoomedRect = zoomedImageRect(baseRect: baseRect)
 
                     ZStack {
-                        // Distinct background for the zoomable area
-                        Color(white: 0.2)
+                        // Dark board behind the photo, so the white crop frame reads clearly
+                        RoundedRectangle(cornerRadius: 6).fill(KotenColor.docBackground)
 
-                        // Image at zoomed position
-                        Image(decorative: img, scale: 1.0)
-                            .resizable()
-                            .interpolation(.high)
-                            .frame(width: zoomedRect.width, height: zoomedRect.height)
-                            .position(x: zoomedRect.midX, y: zoomedRect.midY)
+                        // Image at zoomed position, clipped to the board (handles are not clipped)
+                        ZStack {
+                            Image(decorative: img, scale: 1.0)
+                                .resizable()
+                                .interpolation(.high)
+                                .frame(width: zoomedRect.width, height: zoomedRect.height)
+                                .position(x: zoomedRect.midX, y: zoomedRect.midY)
+                        }
+                        .frame(width: cSize.width, height: cSize.height)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
 
                         // Crop overlays (only after initialization)
-                        if initializedCrop {
+                        if initializedCrop && isQuadMode {
+                            QuadCropOverlay(quad: $quad, imageFrame: imageFrame, coordinateSpaceName: "cropContainer")
+                        }
+                        if initializedCrop && !isQuadMode {
                             CropDimOverlay(cropRect: cropRect, containerSize: cSize)
                                 .allowsHitTesting(false)
 
@@ -118,6 +150,17 @@ struct CropView: View {
                             edgeHandle(edge: .trailing)
                         }
 
+                        if showCornerCoach {
+                            CoachBubble(text: String(localized: "coach_crop_corner", defaultValue: "角を動かして\n範囲を選ぶ"),
+                                        pointer: .up, pointerX: 0.18)
+                                .frame(maxWidth: min(cSize.width - 24, 280))
+                                .fixedSize(horizontal: true, vertical: false)
+                                .position(x: min(max(cropRect.minX + 100, 110), cSize.width - 110),
+                                          y: min(cropRect.minY + 70, cSize.height - 50))
+                                .allowsHitTesting(false)
+                                .transition(.opacity)
+                        }
+
                         // Zoom level indicator
                         if zoomScale > 1.01 {
                             VStack {
@@ -142,9 +185,12 @@ struct CropView: View {
                     // Two-finger pan gesture on the container
                     .gesture(panGesture)
                     .coordinateSpace(name: "cropContainer")
+                    .simultaneousGesture(TapGesture().onEnded { dismissCornerCoach() })
+                    .simultaneousGesture(DragGesture(minimumDistance: 1).onChanged { _ in dismissCornerCoach() })
                     .onAppear {
                         containerSize = cSize
                         initializeCrop(baseRect: baseRect)
+                        revealHandles()
                     }
                     .onChange(of: cSize) { newSize in
                         containerSize = newSize
@@ -166,34 +212,77 @@ struct CropView: View {
                     }
                 }
 
-                // Bottom buttons
-                HStack(spacing: 40) {
-                    Button(action: { onSkip() }) {
+                .padding(.horizontal, 12)
+                .padding(.top, 10)
+
+                Text("crop_tip")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(KotenColor.inkSecondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 26)
+                    .padding(.top, 12)
+
+                CropModePicker(isQuad: $isQuadMode)
+                    .onChange(of: isQuadMode) { on in if on { prepareQuad() } }
+
+                // Bottom glass toolbar
+                HStack(spacing: 12) {
+                    Button(action: { onSkip(displayImage) }) {
                         Text(String(localized: "crop_skip", defaultValue: "Skip"))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 12)
-                            .background(Color.white.opacity(0.2))
-                            .cornerRadius(8)
+                            .font(.headline)
+                            .padding(.horizontal, 22)
+                            .frame(minHeight: 50)
                     }
+                    .buttonStyle(.kotenGlass)
                     .accessibilityIdentifier("skip_crop_button")
+
+                    Spacer(minLength: 0)
 
                     Button(action: performCrop) {
                         Text(String(localized: "crop_apply", defaultValue: "Crop"))
-                            .foregroundColor(.black)
-                            .fontWeight(.semibold)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 12)
-                            .background(Color.white)
-                            .cornerRadius(8)
+                            .font(.headline.weight(.heavy))
+                            .padding(.horizontal, 26)
+                            .frame(minWidth: 120, minHeight: 50)
                     }
+                    .buttonStyle(.kotenProminent)
                     .accessibilityIdentifier("crop_button")
                 }
-                .padding(.vertical, 20)
+                .padding(10)
+                .kotenGlass(.regular, in: RoundedRectangle(cornerRadius: 36, style: .continuous))
+                .padding(.horizontal, 12)
+                .padding(.top, 12)
+                .padding(.bottom, 12)
             }
         }
         .onAppear {
             currentImage = image
+            if !CoachMark.cropCorner.isShown && ProcessInfo.processInfo.environment["TEST_IMAGE_PATH"]?.isEmpty ?? true {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    withAnimation(.easeOut(duration: 0.3)) { showCornerCoach = true }
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 6.6) { dismissCornerCoach() }
+            }
+        }
+    }
+
+    private func dismissCornerCoach() {
+        guard showCornerCoach else { return }
+        CoachMark.cropCorner.markShown()
+        withAnimation(.easeOut(duration: 0.2)) { showCornerCoach = false }
+    }
+
+    /// The 朱 corner dots appear in turn, 40 ms apart (all at once with Reduce Motion).
+    private func revealHandles() {
+        guard handlesShown == 0 else { return }
+        if reduceMotion {
+            handlesShown = 4
+            return
+        }
+        for i in 1...4 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.04 * Double(i)) {
+                withAnimation(.spring(response: 0.25, dampingFraction: 0.7)) { handlesShown = max(handlesShown, i) }
+            }
         }
     }
 
@@ -302,6 +391,7 @@ struct CropView: View {
     private func rotateImage() {
         guard let rotated = displayImage.rotated90Clockwise() else { return }
         currentImage = rotated
+        isQuadMode = false
         initializedCrop = false
         zoomScale = 1.0
         baseZoomScale = 1.0
@@ -334,10 +424,25 @@ struct CropView: View {
             }
         }()
 
+        let order: Int = {
+            switch corner {
+            case .topLeft: return 1
+            case .topRight: return 2
+            case .bottomRight: return 3
+            case .bottomLeft: return 4
+            }
+        }()
+        let visible = handlesShown >= order
+        // 朱 dot with a white ring; the touch target stays 44pt.
         return Circle()
-            .fill(Color.white)
-            .frame(width: handleSize, height: handleSize)
-            .shadow(radius: 2)
+            .fill(KotenColor.shuFill)
+            .frame(width: 20, height: 20)
+            .overlay(Circle().stroke(Color.white, lineWidth: 3))
+            .shadow(color: .black.opacity(0.4), radius: 3, y: 2)
+            .scaleEffect(visible ? 1 : 0.2)
+            .opacity(visible ? 1 : 0)
+            .frame(width: 44, height: 44)
+            .contentShape(Circle())
             .position(pos)
             .gesture(cornerDrag(corner: corner))
     }
@@ -367,13 +472,14 @@ struct CropView: View {
     // MARK: - Crop Drag Gestures
 
     private var moveDrag: some Gesture {
-        DragGesture()
+        DragGesture(coordinateSpace: .named("cropContainer"))
             .onChanged { value in
-                var newRect = cropRect.offsetBy(dx: value.translation.width, dy: value.translation.height)
-                newRect.origin.x = max(imageFrame.minX, min(newRect.origin.x, imageFrame.maxX - newRect.width))
-                newRect.origin.y = max(imageFrame.minY, min(newRect.origin.y, imageFrame.maxY - newRect.height))
-                cropRect = newRect
+                // translation is cumulative since the drag began, so apply it to the rect at drag start
+                let start = moveStartRect ?? cropRect
+                moveStartRect = start
+                cropRect = CropGeometry.moved(start, by: value.translation, within: imageFrame)
             }
+            .onEnded { _ in moveStartRect = nil }
     }
 
     private func cornerDrag(corner: Corner) -> some Gesture {
@@ -437,34 +543,39 @@ struct CropView: View {
 
     // MARK: - Crop execution
 
+    /// Seeds the corners from the current rectangle, then tries to snap them to a detected page.
+    private func prepareQuad() {
+        guard imageFrame.width > 0, imageFrame.height > 0 else { return }
+        quad = Quad(rect: CGRect(x: (cropRect.minX - imageFrame.minX) / imageFrame.width,
+                                 y: (cropRect.minY - imageFrame.minY) / imageFrame.height,
+                                 width: cropRect.width / imageFrame.width,
+                                 height: cropRect.height / imageFrame.height))
+        let img = displayImage
+        let seeded = quad
+        DispatchQueue.global(qos: .userInitiated).async {
+            guard let found = PerspectiveCrop.detectPage(in: img) else { return }
+            DispatchQueue.main.async {
+                guard isQuadMode, displayImage === img else { return }
+                quad = PerspectiveCrop.adoptDetected(found, current: quad, seeded: seeded)
+            }
+        }
+    }
+
     private func performCrop() {
         let img = displayImage
-        guard imageFrame.width > 0, imageFrame.height > 0 else {
-            onSkip()
+        if isQuadMode, let rectified = PerspectiveCrop.rectify(img, normalizedQuad: quad) {
+            onCrop(rectified, img)
             return
         }
-
-        let scaleX = CGFloat(img.width) / imageFrame.width
-        let scaleY = CGFloat(img.height) / imageFrame.height
-
-        let pixelRect = CGRect(
-            x: (cropRect.minX - imageFrame.minX) * scaleX,
-            y: (cropRect.minY - imageFrame.minY) * scaleY,
-            width: cropRect.width * scaleX,
-            height: cropRect.height * scaleY
-        ).integral
-
-        let clampedRect = pixelRect.intersection(
-            CGRect(x: 0, y: 0, width: img.width, height: img.height)
-        )
-
-        guard !clampedRect.isEmpty,
-              let cropped = img.cropping(to: clampedRect) else {
-            onSkip()
+        guard let rect = CropGeometry.pixelRect(
+            cropRect: cropRect,
+            imageFrame: imageFrame,
+            imageSize: CGSize(width: img.width, height: img.height)
+        ), let cropped = img.cropping(to: rect) else {
+            onSkip(img)
             return
         }
-
-        onCrop(cropped)
+        onCrop(cropped, img)
     }
 }
 
@@ -478,7 +589,7 @@ private struct CropDimOverlay: View {
         Canvas { context, size in
             context.fill(
                 Path(CGRect(origin: .zero, size: size)),
-                with: .color(.black.opacity(0.5))
+                with: .color(Color(red: 0.12, green: 0.1, blue: 0.08).opacity(0.55))
             )
             context.blendMode = .destinationOut
             context.fill(

@@ -9,8 +9,8 @@ layout_detection:
   # NMSの閾値（0.0-1.0）
   nms_threshold: 0.4
 
-  # 最大検出数
-  max_detections: 100
+  # 最大検出数（公式の NDL古典籍OCR-Lite には上限が無い。100 では新聞のような紙面で行が落ちる）
+  max_detections: 1000
 
   # 入力サイズ
   input_shape: [1, 3, 1024, 1024]

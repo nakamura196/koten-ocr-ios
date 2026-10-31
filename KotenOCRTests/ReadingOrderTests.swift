@@ -102,4 +102,29 @@ final class ReadingOrderTests: XCTestCase {
         let result = processor.process(detections: detections, imageWidth: 1200, imageHeight: 600)
         XCTAssertEqual(result.count, 100)
     }
+
+    // MARK: - Degenerate pages (regression: pixel-sized mesh table)
+
+    func testSingleZeroWidthBoxOnLargeImage() {
+        // A box clamped at the right edge of a 48 MP image has zero width.
+        let d = det(6048, 100, 6048, 8000, text: "Z")
+        let start = CFAbsoluteTimeGetCurrent()
+        let result = processor.process(detections: [d], imageWidth: 6048, imageHeight: 8064)
+        XCTAssertEqual(result.map(\.text), ["Z"])
+        XCTAssertLessThan(CFAbsoluteTimeGetCurrent() - start, 0.5)
+    }
+
+    func testBoxesInOneZeroWidthColumn() {
+        let detections = [det(500, 3000, 500, 4000, text: "b"), det(500, 100, 500, 2000, text: "a")]
+        let result = processor.process(detections: detections, imageWidth: 6048, imageHeight: 8064)
+        XCTAssertEqual(Set(result.map(\.text)), ["a", "b"])
+    }
+
+    func testSingleVeryFlatBox() {
+        let d = det(0, 4000, 8000, 4010, text: "flat")
+        let start = CFAbsoluteTimeGetCurrent()
+        let result = processor.process(detections: [d], imageWidth: 8064, imageHeight: 6048)
+        XCTAssertEqual(result.map(\.text), ["flat"])
+        XCTAssertLessThan(CFAbsoluteTimeGetCurrent() - start, 0.5)
+    }
 }

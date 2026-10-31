@@ -9,7 +9,9 @@ final class ScreenshotTests: XCTestCase {
     private var app: XCUIApplication!
     private let screenshotDir = ProcessInfo.processInfo.environment["SCREENSHOT_DIR"]
         ?? "/tmp/kotenocr_screenshots"
-    private let projectRoot = "/Users/nakamura/git/hi/miyako/koten-ocr-ios"
+    // This checkout (works from any worktree), derived from this file's location.
+    private let projectRoot = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent().deletingLastPathComponent().path
 
     // Path to test image for 古典籍 (kuzushiji) mode
     private var testImagePath: String {
@@ -17,7 +19,8 @@ final class ScreenshotTests: XCTestCase {
            !envPath.isEmpty {
             return envPath
         }
-        return "\(projectRoot)/KotenOCRUITests/Resources/test_koten_sample.jpg"
+        // The written page only (the spread's other page is blank), so the store shot shows it large.
+        return "\(projectRoot)/KotenOCRUITests/Resources/test_koten_sample_page.jpg"
     }
 
     // Path to test image for 近代 (NDL) mode — 校異源氏物語
@@ -28,7 +31,8 @@ final class ScreenshotTests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
-        app.launchArguments += ["-hasCompletedOnboarding", "YES", "-ocrSuccessCount", "999"]
+        app.launchArguments += ["-hasCompletedOnboarding", "YES", "-ocrSuccessCount", "999", "-skipHome", "YES",
+                                "-coachShutterShown", "YES", "-coachCropCornerShown", "YES"]
 
         // Match app language to the test runner language (set by xcodebuild -testLanguage)
         let preferredLang = Locale.preferredLanguages.first ?? "ja"
@@ -60,7 +64,8 @@ final class ScreenshotTests: XCTestCase {
         ).firstMatch
         let resultLoaded = backButton.waitForExistence(timeout: 300)
         XCTAssertTrue(resultLoaded, "OCR result should appear within 300s")
-        sleep(2)
+        // Let the 朱印 completion stamp finish before the shot.
+        sleep(5)
 
         // Screenshot: OCR result
         saveScreenshot(name: "04_result")
@@ -75,16 +80,32 @@ final class ScreenshotTests: XCTestCase {
             saveScreenshot(name: "05_translation")
         }
 
-        // Go back to camera
+        // Back goes to the confirm screen; Cancel from there returns to the camera.
         backButton.tap()
-        sleep(1)
+        let cancelButton = app.buttons.matching(
+            NSPredicate(format: "label == 'キャンセル' OR label == 'Cancel'")
+        ).firstMatch
+        if cancelButton.waitForExistence(timeout: 5) {
+            cancelButton.tap()
+            sleep(1)
+        }
 
         // Screenshot: Camera view
         saveScreenshot(name: "01_camera")
 
+        // Screenshot: Home (recent scans)
+        let homeButton = app.buttons.matching(
+            NSPredicate(format: "identifier == 'home_button'")
+        ).firstMatch
+        if homeButton.waitForExistence(timeout: 5) {
+            homeButton.tap()
+            sleep(2)
+            saveScreenshot(name: "02_home")
+        }
+
         // Screenshot: Settings
         let settingsButton = app.buttons.matching(
-            NSPredicate(format: "identifier == 'settings_button'")
+            NSPredicate(format: "identifier == 'home_settings_button' OR identifier == 'settings_button'")
         ).firstMatch
         if settingsButton.waitForExistence(timeout: 5) {
             settingsButton.tap()
@@ -155,6 +176,7 @@ final class ScreenshotTests: XCTestCase {
         XCTAssertTrue(ndlButton.waitForExistence(timeout: 10), "OCR mode buttons should appear")
         sleep(1)  // Show mode selection briefly
         ndlButton.tap()
+        app.buttons["run_ocr_button"].tap()
 
         // Wait for OCR to complete
         let backButton = app.buttons.matching(
@@ -232,6 +254,7 @@ final class ScreenshotTests: XCTestCase {
         XCTAssertTrue(ndlButton.waitForExistence(timeout: 10), "OCR mode buttons should appear")
         sleep(1)
         ndlButton.tap()
+        app.buttons["run_ocr_button"].tap()
 
         // Wait for 近代 OCR result
         let resultLoaded2 = backButton.waitForExistence(timeout: 300)
@@ -253,17 +276,23 @@ final class ScreenshotTests: XCTestCase {
         sleep(1)
     }
 
-    /// Capture onboarding screenshots
+    /// Capture onboarding screenshots. The intro's last frame is the first store image.
     func testCaptureOnboarding() throws {
-        app.launchArguments = ["-hasCompletedOnboarding", "NO"]
+        if let i = app.launchArguments.firstIndex(of: "-hasCompletedOnboarding") {
+            app.launchArguments[i + 1] = "NO"
+        }
         app.launchEnvironment["TEST_IMAGE_PATH"] = ""
         app.launch()
-        sleep(3)
+        // The scan, boxes and lines finish at about 3 s.
+        sleep(5)
 
-        saveScreenshot(name: "07_onboarding_intro")
+        saveScreenshot(name: "00_intro")
         app.swipeLeft()
         sleep(1)
         saveScreenshot(name: "08_onboarding_howto")
+        app.swipeLeft()
+        sleep(1)
+        saveScreenshot(name: "09_onboarding_steps")
     }
 
     // MARK: - Helpers

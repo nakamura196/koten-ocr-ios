@@ -4,7 +4,14 @@ import CoreText
 
 struct ExportManager {
 
-    static func exportAsTXT(text: String, fileName: String = "KotenOCR") -> URL? {
+    /// e.g. `KotenOCR_20261029_2154` (local time, fixed digits regardless of locale).
+    static func defaultFileName(date: Date = Date(), calendar: Calendar = .current) -> String {
+        let c = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
+        return String(format: "KotenOCR_%04d%02d%02d_%02d%02d",
+                      c.year ?? 0, c.month ?? 0, c.day ?? 0, c.hour ?? 0, c.minute ?? 0)
+    }
+
+    static func exportAsTXT(text: String, fileName: String = ExportManager.defaultFileName()) -> URL? {
         let tempDir = FileManager.default.temporaryDirectory
         let fileURL = tempDir.appendingPathComponent("\(fileName).txt")
         do {
@@ -15,7 +22,7 @@ struct ExportManager {
         }
     }
 
-    static func exportAsPDF(text: String, image: CGImage?, fileName: String = "KotenOCR") -> URL? {
+    static func exportAsPDF(text: String, image: CGImage?, fileName: String = ExportManager.defaultFileName()) -> URL? {
         let tempDir = FileManager.default.temporaryDirectory
         let fileURL = tempDir.appendingPathComponent("\(fileName).pdf")
 

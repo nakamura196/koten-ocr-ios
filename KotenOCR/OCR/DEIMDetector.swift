@@ -61,7 +61,14 @@ class DEIMDetector: @unchecked Sendable {
 
     // MARK: - Detection
 
+    /// The ORT values, output dictionary and tensor data are autoreleased Objective-C objects.
+    /// Swift concurrency threads drain their autorelease pool rarely, so without a pool per run
+    /// every run's output buffers stayed alive and the footprint grew with each image.
     func detect(image: CGImage) throws -> [Detection] {
+        try autoreleasepool { try detectUnpooled(image: image) }
+    }
+
+    private func detectUnpooled(image: CGImage) throws -> [Detection] {
         let (tensor, metadata) = preprocess(image: image)
         guard !tensor.isEmpty else { return [] }
 
@@ -83,7 +90,7 @@ class DEIMDetector: @unchecked Sendable {
             inputNames[1]: sizeTensor
         ]
         let outputNames = try session.outputNames()
-        let results = try session.run(withInputs: inputs, outputNames: Set(outputNames), runOptions: nil)
+        let results = try session.run(withInputs: inputs, outputNames: Set(outputNames), runOptions: ORTMemory.runOptions())
 
         return try postprocess(outputs: results, outputNames: outputNames, metadata: metadata)
     }
@@ -214,7 +221,7 @@ class DEIMDetector: @unchecked Sendable {
         let sorted = detections.sorted { $0.score > $1.score }
 
         // Apply NMS to remove overlapping detections
-        let nmsResult = applyNMS(sorted, iouThreshold: iouThreshold)
+        let nmsResult = DEIMDetector.applyNMS(sorted, iouThreshold: iouThreshold)
 
         return Array(nmsResult.prefix(maxDetections))
     }
@@ -222,12 +229,15 @@ class DEIMDetector: @unchecked Sendable {
     // MARK: - NMS
 
     /// Apply Non-Maximum Suppression to remove overlapping detections.
-    private func applyNMS(_ detections: [Detection], iouThreshold: Float) -> [Detection] {
+    /// Only text lines suppress each other: a one-line heading or caption lies almost exactly
+    /// inside its own text_block / block_*, and letting the block win dropped the line
+    /// (the official NDLOCR-Lite applies no NMS at all and keeps those lines).
+    static func applyNMS(_ detections: [Detection], iouThreshold: Float) -> [Detection] {
         var kept: [Detection] = []
 
         for det in detections {
             var shouldKeep = true
-            for existing in kept {
+            for existing in kept where det.isTextLine && existing.isTextLine {
                 if computeIoU(det.box, existing.box) > iouThreshold {
                     shouldKeep = false
                     break
@@ -242,7 +252,7 @@ class DEIMDetector: @unchecked Sendable {
     }
 
     /// Compute Intersection over Union between two boxes [x1, y1, x2, y2].
-    private func computeIoU(_ a: [Int], _ b: [Int]) -> Float {
+    private static func computeIoU(_ a: [Int], _ b: [Int]) -> Float {
         guard a.count >= 4, b.count >= 4 else { return 0 }
         let x1 = max(a[0], b[0])
         let y1 = max(a[1], b[1])

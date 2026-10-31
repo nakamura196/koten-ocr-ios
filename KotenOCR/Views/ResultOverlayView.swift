@@ -7,6 +7,14 @@ struct ResultOverlayView: View {
     var historyItemID: UUID?
     @Binding var translatedText: String?
     var onOpenSettings: (() -> Void)?
+    /// Set by ContentView when the result comes straight from a scan: the 朱 stamp is pressed once.
+    var playCompletionStamp: Binding<Bool> = .constant(false)
+    /// While editing boxes, the current number of lines (nil when not editing). Lets the header count follow edits.
+    var editingLineCount: Binding<Int?> = .constant(nil)
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @EnvironmentObject private var ocrEngine: OCREngine
+    @StateObject private var edit = BoxEditModel()
+    @State private var stampPhase = 0
     @State private var showBoxes = true
     @State private var showCopied = false
     @State private var showShareSheet = false
@@ -33,9 +41,9 @@ struct ResultOverlayView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Image with boxes + pinch-to-zoom (full-width container)
+            // Image with boxes + pinch-to-zoom, on a paper mount
             ZStack {
-                Color(white: 0.2)
+                KotenColor.mount
 
                 Image(decorative: image, scale: 1.0)
                     .resizable()
@@ -46,34 +54,56 @@ struct ResultOverlayView: View {
                             let scaleX = image.width > 0 ? geometry.size.width / CGFloat(image.width) : 0
                             let scaleY = image.height > 0 ? geometry.size.height / CGFloat(image.height) : 0
 
-                            ForEach(Array(detections.enumerated()), id: \.offset) { index, det in
-                                let rect = CGRect(
+                            let rects = shownDetections.map { det in
+                                CGRect(
                                     x: CGFloat(det.box[0]) * scaleX,
                                     y: CGFloat(det.box[1]) * scaleY,
                                     width: CGFloat(det.box[2] - det.box[0]) * scaleX,
                                     height: CGFloat(det.box[3] - det.box[1]) * scaleY
                                 )
-                                let isSelected = selectedIndex == index
-                                let color = boxColor(for: index)
+                            }
 
-                                if showBoxes {
+                            if showBoxes && !edit.isActive {
+                                // Divided by the zoom so lines keep their on-screen thickness when zoomed.
+                                let lineWidth = LineTagLayout.boxLineWidth(for: rects) / zoom
+                                ForEach(Array(rects.enumerated()), id: \.offset) { index, rect in
+                                    let isSelected = selectedIndex == index
+                                    let color = boxColor(for: index)
                                     Rectangle()
-                                        .stroke(color, lineWidth: isSelected ? 3 : 1)
-                                        .background(color.opacity(isSelected ? 0.35 : 0.1))
+                                        .stroke(color, lineWidth: isSelected ? lineWidth * 2 : lineWidth)
+                                        .background(color.opacity(isSelected ? 0.3 : 0.08))
                                         .frame(width: rect.width, height: rect.height)
-                                        .overlay(alignment: .topLeading) {
-                                            Text("\(index + 1)")
-                                                .font(.system(size: 9, weight: .bold))
-                                                .foregroundColor(.white)
-                                                .padding(.horizontal, 3)
-                                                .padding(.vertical, 1)
-                                                .background(color.opacity(0.85))
-                                        }
                                         .position(x: rect.midX, y: rect.midY)
+                                }
+                                // Numbers sit at the start of each line, outside the box, so they never hide the first characters.
+                                let tagBounds = CGRect(origin: .zero, size: geometry.size)
+                                // Tags of crowded lines may touch: a thin white rim keeps them apart and they let
+                                // the page show through a little; the selected line's tag is solid and on top.
+                                ForEach(Array(LineTagLayout.frames(for: rects, in: tagBounds).enumerated()), id: \.offset) { index, tag in
+                                    let isSelected = selectedIndex == index
+                                    Text("\(index + 1)")
+                                        .font(.system(size: tag.height * 0.75, weight: .bold))
+                                        .monospacedDigit()
+                                        .foregroundColor(.white)
+                                        .frame(width: tag.width, height: tag.height)
+                                        .background(Capsule().fill(KotenColor.shuFill))
+                                        .overlay(Capsule().stroke(Color.white, lineWidth: max(0.5, tag.height / 16)))
+                                        .opacity(isSelected ? 1 : 0.85)
+                                        .fixedSize()
+                                        .position(x: tag.midX, y: tag.midY)
+                                        .zIndex(isSelected ? 1 : 0)
                                 }
                             }
                         }
                         .allowsHitTesting(false)
+                    }
+                    // Box editing: boxes and corner handles
+                    .overlay {
+                        if edit.isActive {
+                            BoxEditCanvas(model: edit,
+                                          imageSize: CGSize(width: image.width, height: image.height),
+                                          zoom: zoom)
+                        }
                     }
                     // Tap overlay for box selection (single gesture, no conflict)
                     .overlay {
@@ -129,11 +159,29 @@ struct ResultOverlayView: View {
                                     }
                                 )
                         }
+                        .allowsHitTesting(!edit.isActive)
                     }
                     .scaleEffect(zoom)
                     .offset(offset)
+
+                // Touches for box editing live outside the zoomed image so they stay in screen space.
+                if edit.isActive {
+                    BoxEditGestureLayer(model: edit,
+                                        imageSize: CGSize(width: image.width, height: image.height),
+                                        zoom: zoom, offset: $offset, steadyOffset: $steadyOffset,
+                                        isPinching: isPinching,
+                                        onHaptic: { KotenHaptics.notify(.warning) })
+                }
             }
             .clipped()
+            .overlay(alignment: .topTrailing) { completionStamp }
+            .padding(6)
+            .background(KotenColor.mount)
+            .overlay(RoundedRectangle(cornerRadius: 4).stroke(KotenColor.rule, lineWidth: 1))
+            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .shadow(color: Color(red: 0.31, green: 0.24, blue: 0.12).opacity(0.15), radius: 8, y: 6)
+            .padding(.horizontal, 14)
+            .padding(.top, 4)
             .background(
                 GeometryReader { geo in
                     Color.clear
@@ -153,7 +201,7 @@ struct ResultOverlayView: View {
                             lastTouchLocation = value.startLocation
                         }
                         // Pan when zoomed (single finger, not during pinch)
-                        if !isPinching && zoom > 1.0 {
+                        if !isPinching && zoom > 1.0 && !edit.isActive {
                             offset = CGSize(
                                 width: steadyOffset.width + value.translation.width,
                                 height: steadyOffset.height + value.translation.height
@@ -161,7 +209,7 @@ struct ResultOverlayView: View {
                         }
                     }
                     .onEnded { _ in
-                        if !isPinching {
+                        if !isPinching && !edit.isActive {
                             steadyOffset = offset
                         }
                     }
@@ -193,30 +241,37 @@ struct ResultOverlayView: View {
                     }
             )
 
-            // Controls
-            HStack(spacing: 12) {
-                Toggle(isOn: $showBoxes) {
-                    Label(String(localized: "boxes_toggle", defaultValue: "Boxes"), systemImage: "rectangle.dashed")
-                        .font(.caption)
+            // Controls (glass)
+            if edit.isActive {
+                BoxEditControls(model: edit, onCancel: cancelEditing, onDone: finishEditing, onReread: startReread)
+            } else {
+            HStack(spacing: 10) {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) { showBoxes.toggle() }
+                } label: {
+                    Label(String(localized: "boxes_toggle", defaultValue: "Boxes"),
+                          systemImage: showBoxes ? "rectangle.dashed" : "rectangle.slash")
+                        .font(.subheadline.weight(.semibold))
+                        .padding(.horizontal, 14)
+                        .frame(minHeight: 40)
+                        .opacity(showBoxes ? 1 : 0.6)
                 }
-                .toggleStyle(.button)
-                .tint(showBoxes ? .blue : .gray)
+                .buttonStyle(.kotenGlass)
                 .accessibilityLabel(Text("boxes_toggle"))
+                .accessibilityAddTraits(showBoxes ? [.isSelected] : [])
+
+                Button(action: beginEditing) {
+                    Label(String(localized: "box_edit_enter", defaultValue: "枠を直す"),
+                          systemImage: "rectangle.and.pencil.and.ellipsis")
+                        .font(.subheadline.weight(.semibold))
+                        .padding(.horizontal, 14)
+                        .frame(minHeight: 40)
+                }
+                .buttonStyle(.kotenGlass)
+                .accessibilityLabel(Text("box_edit_enter"))
+                .accessibilityIdentifier("box_edit_enter")
 
                 Spacer()
-
-                Text("\(detections.count) " + String(localized: "history_regions", defaultValue: "regions"))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                Button(action: copyAllText) {
-                    Label(showCopied ? String(localized: "copied", defaultValue: "Copied") : String(localized: "copy", defaultValue: "Copy"),
-                          systemImage: showCopied ? "checkmark" : "doc.on.doc")
-                        .font(.caption)
-                }
-                .buttonStyle(.bordered)
-                .tint(showCopied ? .green : .blue)
-                .accessibilityLabel(Text(showCopied ? "copied" : "copy"))
 
                 // Export menu
                 Menu {
@@ -242,16 +297,18 @@ struct ResultOverlayView: View {
                         Label(String(localized: "export_pdf", defaultValue: "Export PDF"), systemImage: "doc.richtext")
                     }
                 } label: {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.caption)
+                    KotenIconLabel(systemName: "square.and.arrow.up")
+                        .foregroundColor(KotenColor.ink)
+                        .kotenGlass(.regular, in: Circle(), interactive: true)
                 }
-                .buttonStyle(.bordered)
-                .tint(.blue)
                 .accessibilityLabel(Text("share"))
+                .accessibilityIdentifier("share_menu")
             }
-            .padding(.horizontal)
-            .padding(.vertical, 8)
-            .sheet(isPresented: $showShareSheet) {
+            .padding(.horizontal, 14)
+            .padding(.top, 10)
+            }
+            Color.clear.frame(height: 0)
+                .sheet(isPresented: $showShareSheet) {
                 ShareSheet(text: combinedText)
             }
             .sheet(isPresented: $showExportShare) {
@@ -261,6 +318,7 @@ struct ResultOverlayView: View {
             }
 
             // Tab picker
+            if !edit.isActive {
             Picker("", selection: $selectedTab) {
                 Text(String(localized: "tab_ocr", defaultValue: "OCR結果"))
                     .tag(ResultTab.ocr)
@@ -268,18 +326,40 @@ struct ResultOverlayView: View {
                     .tag(ResultTab.translation)
             }
             .pickerStyle(.segmented)
-            .padding(.horizontal)
-            .padding(.vertical, 6)
-
-            Divider().background(Color.secondary.opacity(0.3))
+            .padding(.horizontal, 20)
+            .padding(.vertical, 8)
+            .animation(KotenMotion.spring(0.28, reduceMotion: reduceMotion), value: selectedTab)
+            }
 
             // Tab content
-            switch selectedTab {
-            case .ocr:
-                ocrTextList
-            case .translation:
-                translationPanel
+            ZStack {
+                switch selectedTab {
+                case .ocr:
+                    ocrTextList.transition(.opacity)
+                case .translation:
+                    translationPanel.transition(.opacity)
+                }
             }
+            .animation(.easeInOut(duration: 0.2), value: selectedTab)
+            .frame(maxHeight: .infinity)
+            .overlay(alignment: .bottomTrailing) { if !edit.isActive { copyButton } }
+        }
+        .overlay(alignment: .top) {
+            if showCopied {
+                copiedToast
+                    .padding(.top, 8)
+                    .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .onAppear(perform: playStampIfNeeded)
+        .onChange(of: edit.editor?.items.count) { newValue in
+            editingLineCount.wrappedValue = newValue
+        }
+        .onChange(of: edit.editor?.selected) { newValue in
+            if edit.isActive, selectedIndex != newValue { selectedIndex = newValue }
+        }
+        .onChange(of: selectedIndex) { newValue in
+            if edit.isActive, edit.editor?.selected != newValue { edit.editor?.selected = newValue }
         }
         .sheet(item: $editingIndex) { index in
             editSheet(for: index)
@@ -298,8 +378,14 @@ struct ResultOverlayView: View {
 
     // MARK: - Edit Sheet
 
+    private func startEditing(_ index: Int) {
+        guard index < detections.count else { return }
+        editText = detections[index].text
+        editingIndex = index
+    }
+
     private func editSheet(for index: Int) -> some View {
-        NavigationView {
+        NavigationStack {
             VStack {
                 TextEditor(text: $editText)
                     .font(.system(.body, design: .serif))
@@ -317,6 +403,9 @@ struct ResultOverlayView: View {
                     Button(String(localized: "edit_save", defaultValue: "Save")) {
                         if let idx = editingIndex, idx < detections.count {
                             detections[idx].text = editText
+                            if let id = historyItemID {
+                                HistoryManager.shared.updateDetections(id: id, detections: detections)
+                            }
                         }
                         editingIndex = nil
                     }
@@ -331,43 +420,74 @@ struct ResultOverlayView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 2) {
-                    ForEach(Array(detections.enumerated()), id: \.offset) { index, det in
+                    ForEach(Array(shownDetections.enumerated()), id: \.offset) { index, det in
                         let isSelected = selectedIndex == index
+                        let needsReread = edit.editor?.items.indices.contains(index) == true && edit.editor?.items[index].needsReread == true
                         let color = boxColor(for: index)
 
-                        HStack(alignment: .top, spacing: 8) {
-                            Text("\(index + 1)")
-                                .font(.system(size: 12, weight: .medium, design: .monospaced))
-                                .foregroundColor(isSelected ? color : .secondary)
-                                .frame(width: 24, alignment: .trailing)
+                        HStack(alignment: .top, spacing: 4) {
+                            HStack(alignment: .top, spacing: 8) {
+                                Text("\(index + 1)")
+                                    .font(.footnote.weight(.semibold))
+                                    .monospacedDigit()
+                                    .foregroundColor(KotenColor.shu)
+                                    .frame(minWidth: 24, alignment: .trailing)
 
-                            Text(det.text.isEmpty ? "---" : det.text)
-                                .font(.system(.body, design: .serif))
-                                .foregroundColor(det.text.isEmpty ? .secondary : .primary)
+                                Text(det.text.isEmpty ? "---" : det.text)
+                                    .font(.mincho(18, relativeTo: .body))
+                                    .foregroundColor(det.text.isEmpty || needsReread ? KotenColor.inkSecondary : KotenColor.ink)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                                if needsReread {
+                                    Image(systemName: "arrow.triangle.2.circlepath")
+                                        .font(.caption)
+                                        .foregroundColor(KotenColor.shu)
+                                        .accessibilityLabel(Text("box_edit_pending"))
+                                }
+                            }
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    selectedIndex = selectedIndex == index ? nil : index
+                                }
+                            }
+                            .onLongPressGesture {
+                                if !edit.isActive { startEditing(index) }
+                            }
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel(Text("\(index + 1): \(det.text)"))
+                            .accessibilityAddTraits(.isButton)
+                            .accessibilityIdentifier("detection_row_\(index)")
+                            .accessibilityAction(named: Text("edit_text")) {
+                                if !edit.isActive { startEditing(index) }
+                            }
+
+                            Button {
+                                startEditing(index)
+                            } label: {
+                                Image(systemName: "pencil")
+                                    .font(.subheadline)
+                                    .foregroundColor(KotenColor.inkSecondary)
+                                    .frame(width: 40, height: 40)
+                            }
+                            .buttonStyle(.borderless)
+                            .disabled(edit.isActive)
+                            .accessibilityLabel(Text("edit_text"))
+                            .accessibilityIdentifier("edit_detection_\(index)")
                         }
                         .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, 4)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(
                             RoundedRectangle(cornerRadius: 6)
                                 .fill(isSelected ? color.opacity(0.2) : Color.clear)
                         )
                         .id(index)
-                        .onTapGesture {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                selectedIndex = selectedIndex == index ? nil : index
-                            }
-                        }
-                        .onLongPressGesture {
-                            editingIndex = index
-                            editText = det.text
-                        }
-                        .accessibilityLabel(Text("\(index + 1): \(det.text)"))
-                        .accessibilityHint(Text("edit_text"))
                     }
                 }
                 .padding(.horizontal, 8)
-                .padding(.vertical, 4)
+                .padding(.top, 4)
+                .padding(.bottom, 96) // room for the floating Copy button
             }
             .onChange(of: selectedIndex) { newValue in
                 if let idx = newValue {
@@ -383,83 +503,146 @@ struct ResultOverlayView: View {
 
     private var translationPanel: some View {
         ScrollView {
-            VStack(spacing: 12) {
-                if let translated = translatedText, !translated.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Button(action: startTranslation) {
-                                Label(String(localized: "retranslate_button", defaultValue: "再翻訳"),
-                                      systemImage: "arrow.clockwise")
-                                    .font(.caption)
-                            }
-                            .buttonStyle(.bordered)
-                            .tint(.orange)
-                            .disabled(isTranslating)
-
-                            Spacer()
-
-                            Button {
-                                #if canImport(UIKit)
-                                UIPasteboard.general.string = translated
-                                #endif
-                            } label: {
-                                Label(String(localized: "copy", defaultValue: "Copy"), systemImage: "doc.on.doc")
-                                    .font(.caption)
-                            }
-                            .buttonStyle(.bordered)
-                            .tint(.blue)
+            VStack(alignment: .leading, spacing: 12) {
+                if isTranslating {
+                    // Soft light passes over placeholder lines (1.2 s cycle) while translating.
+                    VStack(alignment: .leading, spacing: 14) {
+                        ShimmerLine(widthFraction: 0.92)
+                        ShimmerLine(widthFraction: 0.8)
+                        ShimmerLine(widthFraction: 0.86)
+                        Text(String(localized: "translating", defaultValue: "翻訳中..."))
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundColor(KotenColor.inkSecondary)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 14)
+                    .transition(.opacity)
+                } else if let translated = translatedText, !translated.isEmpty {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Button(action: startTranslation) {
+                            Label(String(localized: "retranslate_button", defaultValue: "再翻訳"),
+                                  systemImage: "arrow.clockwise")
+                                .font(.subheadline.weight(.semibold))
+                                .padding(.horizontal, 14)
+                                .frame(minHeight: 40)
                         }
+                        .buttonStyle(.kotenGlass)
+                        .disabled(isTranslating)
+
                         Text(translated)
-                            .font(.system(.body, design: .serif))
+                            .font(.mincho(17, relativeTo: .body))
+                            .lineSpacing(8)
+                            .foregroundColor(KotenColor.ink)
                             .textSelection(.enabled)
                     }
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, 20)
                     .padding(.vertical, 8)
-                }
-
-                if isTranslating {
-                    VStack(spacing: 12) {
-                        ProgressView()
-                        Text(String(localized: "translating", defaultValue: "翻訳中..."))
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 40)
+                    .transition(.opacity)
                 }
 
                 if let error = translationError {
                     Text(error)
-                        .font(.caption)
-                        .foregroundColor(.red)
-                        .padding(.horizontal, 12)
+                        .font(.callout)
+                        .foregroundColor(KotenColor.shu)
+                        .padding(.horizontal, 20)
                 }
 
                 if translatedText == nil && !isTranslating {
                     VStack(spacing: 16) {
                         Image(systemName: "text.book.closed")
-                            .font(.system(size: 36))
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 36, weight: .light))
+                            .foregroundColor(KotenColor.inkSecondary)
+                            .accessibilityHidden(true)
                         Text(String(localized: "translation_empty", defaultValue: "現代語訳がまだありません"))
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .font(.mincho(17, relativeTo: .body))
+                            .foregroundColor(KotenColor.inkSecondary)
                         Button(action: startTranslation) {
-                            HStack {
-                                Image(systemName: "sparkles")
-                                Text(String(localized: "translate_button", defaultValue: "現代語訳"))
-                            }
-                            .font(.subheadline)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 10)
-                            .background(Color.blue)
-                            .cornerRadius(8)
+                            Label(String(localized: "translate_button", defaultValue: "現代語訳"), systemImage: "sparkles")
+                                .font(.headline)
+                                .padding(.horizontal, 24)
+                                .frame(minHeight: 48)
                         }
+                        .buttonStyle(.kotenProminent)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 40)
                 }
             }
+            .padding(.bottom, 96)
+            .animation(.easeInOut(duration: 0.2), value: isTranslating)
+        }
+    }
+
+    // MARK: - Copy, toast, stamp
+
+    /// Floating 朱 Copy button. Copies the text of the visible tab.
+    private var copyButton: some View {
+        Button(action: copyCurrentTab) {
+            Label(String(localized: "copy", defaultValue: "Copy"), systemImage: "doc.on.doc")
+                .font(.headline.weight(.heavy))
+                .padding(.horizontal, 22)
+                .frame(minHeight: 54)
+        }
+        .buttonStyle(.kotenProminent)
+        .accessibilityLabel(Text("copy"))
+        .accessibilityIdentifier("copy_button")
+        .padding(.trailing, 20)
+        .padding(.bottom, 16)
+        .opacity(selectedTab == .translation && (translatedText ?? "").isEmpty ? 0 : 1)
+    }
+
+    private var copiedToast: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "checkmark")
+                .font(.caption.weight(.black))
+                .foregroundColor(.white)
+                .frame(width: 22, height: 22)
+                .background(Circle().fill(KotenColor.shuFill))
+            Text(String(localized: "copied_toast", defaultValue: "コピーしました"))
+                .font(.headline)
+                .foregroundColor(KotenColor.ink)
+        }
+        .padding(.horizontal, 20)
+        .frame(minHeight: 46)
+        .kotenGlass(.regular, in: Capsule())
+        .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("copied_toast")
+    }
+
+    /// 朱印 pressed when OCR finishes: 1.3 → 1.0 with ink spreading, about 250 ms,
+    /// success haptic. With Reduce Motion it only fades in. Fades away after a moment.
+    @ViewBuilder private var completionStamp: some View {
+        if stampPhase > 0 {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(KotenColor.shuFill)
+                    .frame(width: 64, height: 64)
+                    .blur(radius: 8)
+                    .opacity(stampPhase == 2 ? 0.3 : 0)
+                    .scaleEffect(stampPhase == 2 ? 1.2 : 1)
+                KotenStamp(size: 56)
+            }
+            .scaleEffect(stampPhase == 1 && !reduceMotion ? 1.3 : 1)
+            .opacity(stampPhase == 1 ? (reduceMotion ? 0 : 0.5) : (stampPhase == 4 ? 0 : 1))
+            .padding(10)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+        }
+    }
+
+    private func playStampIfNeeded() {
+        guard playCompletionStamp.wrappedValue else { return }
+        playCompletionStamp.wrappedValue = false
+        stampPhase = 1
+        DispatchQueue.main.async {
+            withAnimation(.easeOut(duration: 0.12)) { stampPhase = 2 }
+            KotenHaptics.notify(.success)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+            withAnimation(.easeOut(duration: 0.13)) { stampPhase = 3 }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+            withAnimation(.easeIn(duration: 0.4)) { stampPhase = 4 }
         }
     }
 
@@ -501,23 +684,141 @@ struct ResultOverlayView: View {
         }
     }
 
+    // MARK: - Box editing
+
+    /// The lines being shown: the edit copy while editing, otherwise the saved result.
+    private var shownDetections: [Detection] {
+        edit.editor?.detections ?? detections
+    }
+
+    private func beginEditing() {
+        showBoxes = true
+        selectedTab = .ocr
+        edit.begin(detections: detections,
+                   imageSize: CGSize(width: image.width, height: image.height),
+                   selected: selectedIndex)
+    }
+
+    private func cancelEditing() {
+        edit.cancel()
+        selectedIndex = nil
+    }
+
+    private func startReread() {
+        Task { await edit.reread(engine: ocrEngine, image: image, fallbackMode: ocrEngine.currentMode) }
+    }
+
+    /// Done: reads any boxes still waiting, then saves to the result and to history.
+    private func finishEditing() {
+        Task {
+            if (edit.editor?.pendingCount ?? 0) > 0 {
+                let ok = await edit.reread(engine: ocrEngine, image: image, fallbackMode: ocrEngine.currentMode)
+                if !ok { return }
+            }
+            guard let edited = edit.finish() else { return }
+            detections = edited
+            selectedIndex = nil
+            if let id = historyItemID {
+                HistoryManager.shared.updateDetections(id: id, detections: edited)
+            }
+        }
+    }
+
     private var combinedText: String {
         detections.map(\.text).filter { !$0.isEmpty }.joined(separator: "\n")
     }
 
-    private func copyAllText() {
-        #if canImport(UIKit)
-        UIPasteboard.general.string = combinedText
-        showCopied = true
+    private func copyCurrentTab() {
+        let text = selectedTab == .translation ? (translatedText ?? "") : combinedText
+        guard !text.isEmpty else { return }
+        UIPasteboard.general.string = text
+        KotenHaptics.notify(.success)
+        withAnimation(KotenMotion.spring(0.35, reduceMotion: reduceMotion)) { showCopied = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            showCopied = false
+            withAnimation(.easeIn(duration: 0.2)) { showCopied = false }
         }
-        #endif
     }
 
     private func boxColor(for index: Int) -> Color {
-        let colors: [Color] = [.red, .green, .blue, .orange, .purple, .cyan, .yellow, .pink]
-        return colors[index % colors.count]
+        KotenColor.shu
+    }
+}
+
+/// Places line-number tags at the start of their lines, just outside the box: above a
+/// vertical line, left of a horizontal one. A tag is first sized to its line's width, so tags of
+/// neighbouring lines stay apart however crowded the page is; on a dense page they are small
+/// until the reader zooms in (tags zoom with the image). A tag much smaller than the page's
+/// typical one (a thin side note) is then grown where it covers no other box or tag. When there
+/// is no room before the image edge the tag goes inside the start of its box.
+enum LineTagLayout {
+    /// Clear space between a tag and its box. Not shrunk with small tags: the tag's rim and the
+    /// box line would otherwise close it (two-digit tags, shrunk most, looked stuck to the box).
+    static let gap: CGFloat = 3
+    /// Regular tag height; the font is three quarters of the tag height.
+    static let regularHeight: CGFloat = 12
+
+    static func regularSize(for number: Int) -> CGSize {
+        CGSize(width: CGFloat(8 + 5 * String(number).count), height: regularHeight)
+    }
+
+    /// Box outline width for a page: 8% of its typical line thickness (the median of the
+    /// boxes' short sides), between 0.5 and 1.5 pt. A fixed 1.5 pt took a quarter of a
+    /// 12 pt column.
+    static func boxLineWidth(for rects: [CGRect]) -> CGFloat {
+        let thickness = rects.map { min($0.width, $0.height) }.sorted()
+        guard !thickness.isEmpty else { return 1.5 }
+        return min(1.5, max(0.5, thickness[thickness.count / 2] * 0.08))
+    }
+
+    static func frames(for rects: [CGRect], in bounds: CGRect? = nil) -> [CGRect] {
+        let area = bounds ?? CGRect(x: 0, y: 0, width: CGFloat.greatestFiniteMagnitude,
+                                    height: CGFloat.greatestFiniteMagnitude)
+        var tags = rects.enumerated().map { index, rect in
+            let regular = regularSize(for: index + 1)
+            let vertical = rect.height >= rect.width
+            let scale = min(1, vertical ? rect.width / regular.width : rect.height / regular.height)
+            return place(CGSize(width: regular.width * scale, height: regular.height * scale), at: rect, in: area)
+        }
+        // A thin line among regular ones (a side note, 傍書) would get a tag far smaller than its
+        // neighbours'. Grow it toward the page's typical tag height, as far as it stays clear of
+        // the other boxes and tags.
+        let heights = tags.map(\.height).sorted()
+        guard !heights.isEmpty else { return tags }
+        let typical = heights[heights.count / 2]
+        for (index, rect) in rects.enumerated() where tags[index].height < typical - 0.001 {
+            let regular = regularSize(for: index + 1)
+            let natural = tags[index].height
+            for step in 0..<4 {
+                let height = typical - (typical - natural) * CGFloat(step) / 4
+                let size = CGSize(width: regular.width * height / regular.height, height: height)
+                let tag = place(size, at: rect, in: area)
+                // Half the box gap of clear space, so a grown tag never squeezes up against a neighbour.
+                let room = tag.insetBy(dx: -gap / 2, dy: -gap / 2)
+                let blocked = rects.indices.contains { other in
+                    other != index && (rects[other].intersects(room) || tags[other].intersects(room))
+                }
+                // Only outside the box: a larger tag inside it would hide more of the first characters.
+                if !blocked && !tag.intersects(rect) {
+                    tags[index] = tag
+                    break
+                }
+            }
+        }
+        return tags
+    }
+
+    /// Outside the start of the line, or inside it when there is no room before the image edge.
+    private static func place(_ size: CGSize, at rect: CGRect, in area: CGRect) -> CGRect {
+        let vertical = rect.height >= rect.width
+        let outside = vertical
+            ? CGRect(x: rect.midX - size.width / 2, y: rect.minY - gap - size.height,
+                     width: size.width, height: size.height)
+            : CGRect(x: rect.minX - gap - size.width, y: rect.midY - size.height / 2,
+                     width: size.width, height: size.height)
+        if area.contains(outside) { return outside }
+        return vertical
+            ? CGRect(x: rect.midX - size.width / 2, y: rect.minY + gap, width: size.width, height: size.height)
+            : CGRect(x: rect.minX + gap, y: rect.midY - size.height / 2, width: size.width, height: size.height)
     }
 }
 
@@ -545,3 +846,33 @@ struct ShareSheet: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
+
+/// Placeholder line with a soft light passing over it (1.2 s cycle). Static with Reduce Motion.
+private struct ShimmerLine: View {
+    let widthFraction: CGFloat
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var phase: CGFloat = -1
+
+    var body: some View {
+        GeometryReader { geo in
+            Capsule()
+                .fill(KotenColor.mount)
+                .overlay {
+                    if !reduceMotion {
+                        LinearGradient(colors: [.clear, KotenColor.washiCard.opacity(0.9), .clear],
+                                       startPoint: .leading, endPoint: .trailing)
+                            .frame(width: geo.size.width * 0.5)
+                            .offset(x: phase * geo.size.width)
+                    }
+                }
+                .clipShape(Capsule())
+                .frame(width: geo.size.width * widthFraction)
+        }
+        .frame(height: 14)
+        .accessibilityHidden(true)
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.linear(duration: 1.2).repeatForever(autoreverses: false)) { phase = 1 }
+        }
+    }
+}

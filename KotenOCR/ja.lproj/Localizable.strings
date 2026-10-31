@@ -1,11 +1,11 @@
 /* Onboarding */
-"onboarding_intro" = "古典籍・くずし字の文字認識アプリ。\nカメラで撮影するだけで、くずし字をテキストに変換します。";
+"onboarding_intro" = "古典籍・くずし字の文字認識アプリ。\nカメラで撮影するか、写真を選ぶだけで、くずし字をテキストに変換します。";
 "onboarding_camera_title" = "カメラへのアクセス";
 "onboarding_camera_description" = "古典籍の文字を認識するために、\nカメラへのアクセスを許可してください。";
 "onboarding_allow_camera" = "カメラを許可する";
 "onboarding_howto_title" = "使い方";
 "onboarding_step1_title" = "撮影する";
-"onboarding_step1_desc" = "古典籍のページをカメラで撮影";
+"onboarding_step1_desc" = "古典籍のページをカメラで撮影（パソコンなどから「写真」に入れた画像も選べます）";
 "onboarding_step2_title" = "認識する";
 "onboarding_step2_desc" = "AIが自動でくずし字を認識";
 "onboarding_step3_title" = "コピーする";
@@ -133,13 +133,13 @@
 "history_translated_badge" = "翻訳済";
 
 /* Crop */
-"crop_title" = "切り取り";
+"crop_title" = "範囲を選ぶ";
 "crop_apply" = "切り取り";
 "crop_skip" = "スキップ";
 "crop_rotate" = "回転";
 "confirm_crop_title" = "確認";
 "retrim" = "再切り取り";
-"run_ocr" = "OCR実行";
+"run_ocr" = "読み取る";
 
 /* Camera Settings */
 "settings_camera" = "カメラ";
@@ -151,6 +151,7 @@
 "onboarding_camera_granted" = "カメラは許可済みです";
 "onboarding_camera_denied" = "カメラが許可されていません";
 "settings_save_to_library" = "フォトライブラリに保存";
+"settings_auto_deskew" = "傾きを自動補正";
 
 /* OCR Engine */
 "settings_ocr_engine" = "OCRエンジン";
@@ -160,3 +161,91 @@
 "run_ocr_ndl" = "近代 OCR";
 "ocr_mode_koten_short" = "くずし字";
 "ocr_mode_ndl_short" = "活字・手書き";
+"home_take_photo" = "撮影する";
+"home_choose_photo" = "写真から選ぶ";
+"home_how_to" = "撮影 → 範囲を選ぶ → 文字を読み取り";
+"home_button" = "ホーム";
+
+/* Fixes: history, errors, camera permission */
+"history_delete_item" = "この履歴を削除";
+"history_delete_item_title" = "この履歴を削除しますか？";
+"settings_provider" = "翻訳プロバイダー";
+"tipjar_unavailable" = "現在、商品を取得できません。";
+"ocr_error_model" = "文字認識の準備に失敗しました。アプリを再起動してもう一度お試しください。";
+"ocr_error_generic" = "文字を読み取れませんでした。画像を撮り直してもう一度お試しください。";
+"ocr_error_retake" = "撮り直す";
+"camera_permission_denied" = "カメラが許可されていません。設定アプリでカメラへのアクセスを許可してください。写真ライブラリから画像を選ぶこともできます。";
+"camera_capture_failed" = "撮影に失敗しました。もう一度お試しください。";
+"crop_reset_zoom" = "拡大をリセット";
+
+/* Hybrid design (washi + glass) */
+"brand_tagline" = "くずし字を、その場で読む";
+"home_take_photo_sub" = "本や文書をカメラで撮る";
+"home_recent" = "最近の読み取り";
+"lines_count_format" = "%d 行";
+"camera_frame_hint" = "ページ全体を枠に入れてください";
+"coach_shutter" = "ここを押して撮影";
+"coach_crop_corner" = "角を動かして\n範囲を選ぶ";
+"crop_tip" = "四隅の朱の点を動かして、読みたい所を囲みます";
+"ocr_mode_picker" = "読み取りの種類";
+"reading_in_progress" = "読み取り中…";
+"scan_title" = "読み取り中";
+"scan_preparing" = "準備しています…";
+"scan_finding_lines" = "行を探しています…";
+"scan_reading_text" = "文字を読んでいます…";
+"scan_done_format" = "%d 行を読み取りました";
+"copied_toast" = "コピーしました";
+"no_lines_title" = "文字が見つかりませんでした";
+"no_lines_tip_page" = "ページ全体が入るように撮る";
+"no_lines_tip_light" = "明るい場所で、影を避ける";
+"no_lines_tip_modern" = "活字なら「近代」を選ぶ";
+"camera_unavailable_title" = "カメラが使えません";
+"camera_unavailable_body" = "「設定」アプリで、KotenOCR の「カメラ」をオンにしてください。撮った画像は端末の外に出ません。";
+"history_empty_title" = "まだ記録はありません";
+"history_empty_body" = "読み取った資料はここに残ります。";
+"onboarding_next" = "次へ";
+"settings_show_onboarding" = "使い方をもう一度見る";
+"settings_show_tips_again" = "操作のヒントをもう一度表示";
+"settings_tips_footer" = "撮影ボタンと範囲の角に、初回だけ出る吹き出しをもう一度表示します。";
+"ocr_finished_announcement" = "読み取りが完了しました";
+"onboarding_heading" = "くずし字を、\nその場で読む";
+"scan_document" = "書類スキャン";
+"tilt_hint" = "資料と平行に構えてください";
+"tilt_try_scanner" = "書類スキャンも使えます";
+"settings_show_tilt_guide" = "傾きの案内を表示";
+"crop_mode_rect" = "矩形";
+"crop_mode_quad" = "4点補正";
+
+"box_edit_enter" = "枠を直す";
+"box_edit_done" = "完了";
+"box_edit_undo" = "元に戻す";
+"box_edit_delete" = "枠を削除";
+"box_edit_reread" = "再認識";
+"box_edit_pending" = "再認識が必要";
+"box_edit_area" = "枠の編集エリア";
+"box_tool_select" = "選ぶ";
+"box_tool_add" = "追加";
+"box_tool_split" = "分割";
+"box_tool_merge" = "結合";
+"box_hint_select" = "枠をタップして選び、ドラッグで動かす。角で大きさを変える";
+"box_hint_add" = "画像をなぞって、新しい枠を描く";
+"box_hint_split" = "分けたい位置をタップ";
+"box_hint_merge" = "1つ選んでから、つなげる枠をタップ";
+
+"settings_sample_image_title" = "初回説明の写本画像";
+"onboarding_sample_credit" = "『源氏物語』（東京大学総合図書館所蔵）を改変";
+
+/* Sample pages */
+"home_try_sample" = "サンプルの頁で試す";
+"sample_sheet_title" = "サンプルで試す";
+"sample_sheet_lead" = "選ぶとすぐに読み取ります。結果は履歴にも残ります。";
+"sample_taketori_title" = "竹取物語";
+"sample_genji_title" = "源氏物語　桐壺";
+"sample_kikuchi_title" = "菊池武光 施行状（古文書）";
+"sample_kikuchi_credit" = "『古文書時代鑑』（国立国会図書館デジタルコレクション）";
+"sample_shibata_title" = "柴田太郎吉 明細書（斜めに撮った写真）";
+"sample_shibata_credit" = "写真: 柴田バネッサ（CC BY-SA 4.0）";
+"sample_modern_title" = "国立国会図書館スタッフ・マニュアル";
+"sample_ndl_credit" = "国立国会図書館デジタルコレクション";
+"settings_sample_pages_title" = "サンプルの頁";
+"settings_sample_pages_credit" = "『竹取物語』・『国立国会図書館スタッフ・マニュアル』（国立国会図書館デジタルコレクション）、『源氏物語』（東京大学総合図書館所蔵）を改変。菊池武光 施行状: 『古文書時代鑑』（国立国会図書館デジタルコレクション）。柴田太郎吉 明細書: 写真 柴田バネッサ、CC BY-SA 4.0（https://creativecommons.org/licenses/by-sa/4.0/）、Wikimedia Commons より";

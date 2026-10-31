@@ -1,11 +1,11 @@
 /* Onboarding */
-"onboarding_intro" = "OCR app for classical Japanese texts.\nJust take a photo to convert kuzushiji to text.";
+"onboarding_intro" = "OCR app for classical Japanese texts.\nTake a photo, or pick one from Photos, to convert kuzushiji to text.";
 "onboarding_camera_title" = "Camera Access";
 "onboarding_camera_description" = "Please allow camera access\nto recognize characters in classical texts.";
 "onboarding_allow_camera" = "Allow Camera";
 "onboarding_howto_title" = "How to Use";
 "onboarding_step1_title" = "Capture";
-"onboarding_step1_desc" = "Take a photo of a classical text page";
+"onboarding_step1_desc" = "Take a photo of a classical text page (or choose an image saved to Photos, e.g. from a computer)";
 "onboarding_step2_title" = "Recognize";
 "onboarding_step2_desc" = "AI automatically recognizes kuzushiji";
 "onboarding_step3_title" = "Copy";
@@ -133,13 +133,13 @@
 "history_translated_badge" = "Translated";
 
 /* Crop */
-"crop_title" = "Crop";
+"crop_title" = "Choose Area";
 "crop_apply" = "Crop";
 "crop_skip" = "Skip";
 "crop_rotate" = "Rotate";
 "confirm_crop_title" = "Confirm";
 "retrim" = "Re-crop";
-"run_ocr" = "Run OCR";
+"run_ocr" = "Read";
 
 /* Camera Settings */
 "settings_camera" = "Camera";
@@ -151,6 +151,7 @@
 "onboarding_camera_granted" = "Camera access is authorized";
 "onboarding_camera_denied" = "Camera access is not authorized";
 "settings_save_to_library" = "Save to Photo Library";
+"settings_auto_deskew" = "Auto-correct tilt";
 
 /* OCR Engine */
 "settings_ocr_engine" = "OCR Engine";
@@ -160,3 +161,91 @@
 "run_ocr_ndl" = "Modern OCR";
 "ocr_mode_koten_short" = "Kuzushiji";
 "ocr_mode_ndl_short" = "Printed / Handwritten";
+"home_take_photo" = "Take Photo";
+"home_choose_photo" = "Choose from Photos";
+"home_how_to" = "Capture → Select area → Read text";
+"home_button" = "Home";
+
+/* Fixes: history, errors, camera permission */
+"history_delete_item" = "Delete this item";
+"history_delete_item_title" = "Delete this history item?";
+"settings_provider" = "Translation Provider";
+"tipjar_unavailable" = "Products are currently unavailable.";
+"ocr_error_model" = "Failed to prepare text recognition. Please restart the app and try again.";
+"ocr_error_generic" = "Could not read the text. Please retake the image and try again.";
+"ocr_error_retake" = "Retake";
+"camera_permission_denied" = "Camera access is not allowed. Please allow camera access in Settings. You can also choose an image from your photo library.";
+"camera_capture_failed" = "Capture failed. Please try again.";
+"crop_reset_zoom" = "Reset zoom";
+
+/* Hybrid design (washi + glass) */
+"brand_tagline" = "Read kuzushiji, right where you are";
+"home_take_photo_sub" = "Photograph a book or document";
+"home_recent" = "Recent scans";
+"lines_count_format" = "%d lines";
+"camera_frame_hint" = "Fit the whole page inside the frame";
+"coach_shutter" = "Tap here to take the photo";
+"coach_crop_corner" = "Drag a corner\nto choose the area";
+"crop_tip" = "Move the red dots at the corners around the part you want to read";
+"ocr_mode_picker" = "Text type";
+"reading_in_progress" = "Reading…";
+"scan_title" = "Reading";
+"scan_preparing" = "Preparing…";
+"scan_finding_lines" = "Finding lines…";
+"scan_reading_text" = "Reading characters…";
+"scan_done_format" = "Read %d lines";
+"copied_toast" = "Copied";
+"no_lines_title" = "No text was found";
+"no_lines_tip_page" = "Fit the whole page in the photo";
+"no_lines_tip_light" = "Use good light and avoid shadows";
+"no_lines_tip_modern" = "For printed text, choose Modern";
+"camera_unavailable_title" = "Camera unavailable";
+"camera_unavailable_body" = "Turn on Camera for KotenOCR in the Settings app. Your photos never leave this device.";
+"history_empty_title" = "No scans yet";
+"history_empty_body" = "Documents you read will be kept here.";
+"onboarding_next" = "Next";
+"settings_show_onboarding" = "View Introduction Again";
+"settings_show_tips_again" = "Show Tips Again";
+"settings_tips_footer" = "Shows the one-time hints on the shutter button and the crop corner again.";
+"ocr_finished_announcement" = "Reading finished";
+"onboarding_heading" = "Read kuzushiji,\nright where you are";
+"scan_document" = "Scan document";
+"tilt_hint" = "Hold the phone parallel to the page";
+"tilt_try_scanner" = "Try Scan document";
+"settings_show_tilt_guide" = "Show tilt guide";
+"crop_mode_rect" = "Rectangle";
+"crop_mode_quad" = "4 corners";
+
+"box_edit_enter" = "Edit Boxes";
+"box_edit_done" = "Done";
+"box_edit_undo" = "Undo";
+"box_edit_delete" = "Delete box";
+"box_edit_reread" = "Re-read";
+"box_edit_pending" = "Needs re-reading";
+"box_edit_area" = "Box editing area";
+"box_tool_select" = "Select";
+"box_tool_add" = "Add";
+"box_tool_split" = "Split";
+"box_tool_merge" = "Merge";
+"box_hint_select" = "Tap a box to select it, drag to move, drag a corner to resize";
+"box_hint_add" = "Drag on the image to draw a new box";
+"box_hint_split" = "Tap where to cut the box";
+"box_hint_merge" = "Select one box, then tap the box to join";
+
+"settings_sample_image_title" = "Manuscript in the introduction";
+"onboarding_sample_credit" = "Image courtesy of the University of Tokyo General Library - The Tale of Genji / transformed";
+
+/* Sample pages */
+"home_try_sample" = "Try a sample page";
+"sample_sheet_title" = "Try a Sample";
+"sample_sheet_lead" = "Choose a page to read it right away. The result is also saved to History.";
+"sample_taketori_title" = "The Tale of the Bamboo Cutter";
+"sample_genji_title" = "The Tale of Genji: Kiritsubo";
+"sample_kikuchi_title" = "Order by Kikuchi Takemitsu (old document)";
+"sample_kikuchi_credit" = "Komonjo Jidai Kagami (NDL Digital Collections)";
+"sample_shibata_title" = "Statement by Shibata Tarōkichi (photo taken at an angle)";
+"sample_shibata_credit" = "Photo: Shibata Vanessa (CC BY-SA 4.0)";
+"sample_modern_title" = "NDL Staff Manual (1963)";
+"sample_ndl_credit" = "National Diet Library Digital Collections";
+"settings_sample_pages_title" = "Sample pages";
+"settings_sample_pages_credit" = "Taketori Monogatari and the NDL Staff Manual: National Diet Library Digital Collections. The Tale of Genji: image courtesy of the University of Tokyo General Library / transformed. Order by Kikuchi Takemitsu: Komonjo Jidai Kagami (National Diet Library Digital Collections). Statement by Shibata Tarōkichi: photo by Shibata Vanessa, CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/), via Wikimedia Commons";
