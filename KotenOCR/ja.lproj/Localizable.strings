@@ -215,6 +215,8 @@
 "settings_show_tilt_guide" = "傾きの案内を表示";
 "crop_mode_rect" = "矩形";
 "crop_mode_quad" = "4点補正";
+"crop_auto_correct" = "自動補正";
+"crop_undo_correct" = "元に戻す";
 
 "box_edit_enter" = "枠を直す";
 "box_edit_done" = "完了";

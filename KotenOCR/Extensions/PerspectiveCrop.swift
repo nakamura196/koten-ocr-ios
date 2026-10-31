@@ -116,19 +116,62 @@ enum PerspectiveCrop {
         current == seeded ? found : current
     }
 
+    enum DetectionMethod { case rectangles, documentSegmentation }
+
     /// Looks for a page-like rectangle. Returns a normalized quad (top-left origin) or nil.
     static func detectPage(in image: CGImage, minimumConfidence: Float = 0.7) -> Quad? {
-        let request = VNDetectRectanglesRequest()
-        request.minimumConfidence = minimumConfidence
-        request.minimumAspectRatio = 0.3
-        request.minimumSize = 0.3
-        request.quadratureTolerance = 30
-        request.maximumObservations = 1
+        detectPageWithConfidence(in: image, method: .rectangles, minimumConfidence: minimumConfidence)?.quad
+    }
+
+    /// Finds the page with the chosen Vision request. `.documentSegmentation` is the model behind
+    /// the system document scanner (iOS 15+); `.rectangles` is the older edge-based search.
+    static func detectPageWithConfidence(in image: CGImage, method: DetectionMethod,
+                                         minimumConfidence: Float = 0.7) -> (quad: Quad, confidence: Float)? {
+        let request: VNImageBasedRequest
+        switch method {
+        case .rectangles:
+            let r = VNDetectRectanglesRequest()
+            r.minimumConfidence = minimumConfidence
+            r.minimumAspectRatio = 0.3
+            r.minimumSize = 0.3
+            r.quadratureTolerance = 30
+            r.maximumObservations = 1
+            request = r
+        case .documentSegmentation:
+            request = VNDetectDocumentSegmentationRequest()
+        }
         let handler = VNImageRequestHandler(cgImage: image, options: [:])
         guard (try? handler.perform([request])) != nil,
-              let obs = request.results?.first, obs.confidence >= minimumConfidence else { return nil }
+              let obs = (request.results as? [VNRectangleObservation])?.first,
+              obs.confidence >= minimumConfidence else { return nil }
         // Vision is bottom-left origin; flip y.
         func f(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x, y: 1 - p.y) }
-        return Quad(normalizing: [f(obs.topLeft), f(obs.topRight), f(obs.bottomRight), f(obs.bottomLeft)])
+        guard let q = Quad(normalizing: [f(obs.topLeft), f(obs.topRight), f(obs.bottomRight), f(obs.bottomLeft)])
+        else { return nil }
+        return (q, obs.confidence)
+    }
+
+    /// True when the quad is (nearly) the whole frame, e.g. the outer edge of a scan. Rectifying it
+    /// gains nothing, so the crop screen should not switch to four-corner mode for it.
+    static func isNearlyFullFrame(_ q: Quad, tolerance: CGFloat = 0.03) -> Bool {
+        let u = Quad.unit
+        return zip(q.points, u.points).allSatisfy { abs($0.x - $1.x) <= tolerance && abs($0.y - $1.y) <= tolerance }
+    }
+
+    /// Whether a detected page is worth rectifying (a convex shape that is not just the frame).
+    static func isUsableDetection(_ q: Quad) -> Bool {
+        q.isConvex && !isNearlyFullFrame(q)
+    }
+
+    /// Detection behind the crop screen's 自動補正: the document-scanner model (it also finds a
+    /// tilted sheet photographed on a table, which the rectangle search misses).
+    /// The simulator runs that model differently and returns a bogus strip along the bottom edge,
+    /// so there it falls back to the rectangle search to keep screenshots and UI tests meaningful.
+    static func detectForCropScreen(in image: CGImage) -> Quad? {
+        #if targetEnvironment(simulator)
+        return detectPageWithConfidence(in: image, method: .rectangles)?.quad
+        #else
+        return detectPageWithConfidence(in: image, method: .documentSegmentation)?.quad
+        #endif
     }
 }
