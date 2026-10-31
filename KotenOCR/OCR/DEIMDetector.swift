@@ -188,7 +188,9 @@ class DEIMDetector: @unchecked Sendable {
 
         for i in 0..<numDetections {
             let score = scores[i]
-            if score < scoreThreshold { continue }
+            // NDLOCR-Lite keeps only scores > conf_threshold (0.25); its score_threshold is unused.
+            // Without this, a stray caption at 0.217 on the modern sample became an extra line.
+            if score < scoreThreshold || score <= confThreshold { continue }
 
             let label = Int(labels[i])
             // Python code: class_index = int(label) - 1

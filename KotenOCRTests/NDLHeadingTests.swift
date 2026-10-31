@@ -128,6 +128,14 @@ final class NDLHeadingTests: XCTestCase {
         XCTAssertTrue(counts.contains(2), "full lines should go to the 50-character model")
     }
 
+    /// NDLOCR-Lite drops detections at or below conf_threshold 0.25, not just below the 0.2 score threshold.
+    func testDetectionsAtOrBelowTheConfThresholdAreDropped() throws {
+        let dets = try postprocess(labels: [2, 2, 2],
+                                   boxes: [10, 10, 300, 30, 10, 40, 300, 60, 10, 70, 300, 90],
+                                   scores: [0.9, 0.25, 0.217])
+        XCTAssertEqual(dets.map(\.box), [[10, 10, 300, 30]])
+    }
+
     // MARK: - Malformed model output
 
     func testBoxesOutsideThePageAreDropped() throws {
