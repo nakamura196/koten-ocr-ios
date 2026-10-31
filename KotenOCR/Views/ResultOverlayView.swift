@@ -33,6 +33,9 @@ struct ResultOverlayView: View {
     @State private var translationError: String?
     @State private var showAPIKeyAlert = false
     @State private var selectedTab: ResultTab = .ocr
+    /// Display filter only: lines scoring below this are hidden. Nothing stored changes.
+    @State private var confidenceThreshold: Float = ConfidenceFilter.defaultThreshold
+    @State private var thresholdInitialised = false
 
     enum ResultTab {
         case ocr
@@ -54,8 +57,10 @@ struct ResultOverlayView: View {
                             let scaleX = image.width > 0 ? geometry.size.width / CGFloat(image.width) : 0
                             let scaleY = image.height > 0 ? geometry.size.height / CGFloat(image.height) : 0
 
-                            let rects = shownDetections.map { det in
-                                CGRect(
+                            let lines = visibleLines
+                            let rects: [CGRect] = lines.map { line in
+                                let det = line.detection
+                                return CGRect(
                                     x: CGFloat(det.box[0]) * scaleX,
                                     y: CGFloat(det.box[1]) * scaleY,
                                     width: CGFloat(det.box[2] - det.box[0]) * scaleX,
@@ -67,7 +72,7 @@ struct ResultOverlayView: View {
                                 // Divided by the zoom so lines keep their on-screen thickness when zoomed.
                                 let lineWidth = LineTagLayout.boxLineWidth(for: rects) / zoom
                                 ForEach(Array(rects.enumerated()), id: \.offset) { index, rect in
-                                    let isSelected = selectedIndex == index
+                                    let isSelected = selectedIndex == lines[index].index
                                     let color = boxColor(for: index)
                                     Rectangle()
                                         .stroke(color, lineWidth: isSelected ? lineWidth * 2 : lineWidth)
@@ -80,7 +85,7 @@ struct ResultOverlayView: View {
                                 // Tags of crowded lines may touch: a thin white rim keeps them apart and they let
                                 // the page show through a little; the selected line's tag is solid and on top.
                                 ForEach(Array(LineTagLayout.frames(for: rects, in: tagBounds).enumerated()), id: \.offset) { index, tag in
-                                    let isSelected = selectedIndex == index
+                                    let isSelected = selectedIndex == lines[index].index
                                     Text("\(index + 1)")
                                         .font(.system(size: tag.height * 0.75, weight: .bold))
                                         .monospacedDigit()
@@ -138,7 +143,7 @@ struct ResultOverlayView: View {
                                             guard showBoxes else { return }
                                             let scaleX = geometry.size.width / CGFloat(image.width)
                                             let scaleY = geometry.size.height / CGFloat(image.height)
-                                            for (index, det) in detections.enumerated() {
+                                            for (index, det) in visibleLines.map({ ($0.index, $0.detection) }) {
                                                 let rect = CGRect(
                                                     x: CGFloat(det.box[0]) * scaleX,
                                                     y: CGFloat(det.box[1]) * scaleY,
@@ -317,6 +322,10 @@ struct ResultOverlayView: View {
                 }
             }
 
+            if !edit.isActive {
+                confidenceControl
+            }
+
             // Tab picker
             if !edit.isActive {
             Picker("", selection: $selectedTab) {
@@ -351,7 +360,16 @@ struct ResultOverlayView: View {
                     .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
             }
         }
-        .onAppear(perform: playStampIfNeeded)
+        .onAppear {
+            playStampIfNeeded()
+            if !thresholdInitialised {
+                thresholdInitialised = true
+                confidenceThreshold = ConfidenceFilter.defaultThreshold
+                syncLineCount()
+            }
+        }
+        .onChange(of: confidenceThreshold) { _ in syncLineCount() }
+        .onChange(of: detections.count) { _ in syncLineCount() }
         .onChange(of: edit.editor?.items.count) { newValue in
             editingLineCount.wrappedValue = newValue
         }
@@ -374,6 +392,38 @@ struct ResultOverlayView: View {
         } message: {
             Text(String(localized: "translation_no_key_message", defaultValue: "設定画面でOpenAI互換APIキーを登録してください。"))
         }
+    }
+
+    // MARK: - Confidence filter
+
+    private var hiddenCount: Int { detections.count - visibleLines.count }
+
+    private var confidenceControl: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 10) {
+                Text(String(localized: "confidence_label", defaultValue: "確信度"))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(KotenColor.ink)
+                Slider(value: $confidenceThreshold, in: ConfidenceFilter.range, step: 0.05)
+                    .tint(KotenColor.shu)
+                    .accessibilityLabel(Text("confidence_label"))
+                    .accessibilityIdentifier("confidence_slider")
+                Text(ConfidenceFilter.percentText(confidenceThreshold))
+                    .font(.subheadline.weight(.semibold))
+                    .monospacedDigit()
+                    .foregroundColor(KotenColor.ink)
+                    .frame(minWidth: 44, alignment: .trailing)
+                    .accessibilityIdentifier("confidence_value")
+            }
+            Text(hiddenCount > 0
+                 ? String(format: String(localized: "confidence_hint_hidden", defaultValue: "上げると自信のない枠から隠れます（目安 50%%）。いま %d 行を隠しています"), hiddenCount)
+                 : String(localized: "confidence_hint", defaultValue: "上げると自信のない枠から隠れます（目安 50%）。表示だけの変更です"))
+                .font(.caption)
+                .foregroundColor(KotenColor.inkSecondary)
+                .accessibilityIdentifier("confidence_hint")
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 6)
     }
 
     // MARK: - Edit Sheet
@@ -403,6 +453,7 @@ struct ResultOverlayView: View {
                     Button(String(localized: "edit_save", defaultValue: "Save")) {
                         if let idx = editingIndex, idx < detections.count {
                             detections[idx].text = editText
+                            detections[idx].markReaderConfirmed()
                             if let id = historyItemID {
                                 HistoryManager.shared.updateDetections(id: id, detections: detections)
                             }
@@ -420,14 +471,16 @@ struct ResultOverlayView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 2) {
-                    ForEach(Array(shownDetections.enumerated()), id: \.offset) { index, det in
+                    ForEach(Array(visibleLines.enumerated()), id: \.offset) { position, line in
+                        let index = line.index
+                        let det = line.detection
                         let isSelected = selectedIndex == index
                         let needsReread = edit.editor?.items.indices.contains(index) == true && edit.editor?.items[index].needsReread == true
                         let color = boxColor(for: index)
 
                         HStack(alignment: .top, spacing: 4) {
                             HStack(alignment: .top, spacing: 8) {
-                                Text("\(index + 1)")
+                                Text("\(position + 1)")
                                     .font(.footnote.weight(.semibold))
                                     .monospacedDigit()
                                     .foregroundColor(KotenColor.shu)
@@ -455,7 +508,7 @@ struct ResultOverlayView: View {
                                 if !edit.isActive { startEditing(index) }
                             }
                             .accessibilityElement(children: .ignore)
-                            .accessibilityLabel(Text("\(index + 1): \(det.text)"))
+                            .accessibilityLabel(Text("\(position + 1): \(det.text)"))
                             .accessibilityAddTraits(.isButton)
                             .accessibilityIdentifier("detection_row_\(index)")
                             .accessibilityAction(named: Text("edit_text")) {
@@ -691,6 +744,20 @@ struct ResultOverlayView: View {
         edit.editor?.detections ?? detections
     }
 
+    /// The lines on screen with their index in the full list. While editing boxes every line shows
+    /// (the editor works on the whole list); otherwise lines below the confidence slider are left out.
+    private var visibleLines: [(index: Int, detection: Detection)] {
+        if edit.isActive { return shownDetections.enumerated().map { ($0.offset, $0.element) } }
+        return ConfidenceFilter.visible(detections, threshold: confidenceThreshold)
+    }
+
+    /// The header count follows what is on screen (nil = all lines, or the editor reports its own).
+    private func syncLineCount() {
+        guard !edit.isActive else { return }
+        let visible = ConfidenceFilter.visible(detections, threshold: confidenceThreshold).count
+        editingLineCount.wrappedValue = visible == detections.count ? nil : visible
+    }
+
     private func beginEditing() {
         showBoxes = true
         selectedTab = .ocr
@@ -701,6 +768,7 @@ struct ResultOverlayView: View {
 
     private func cancelEditing() {
         edit.cancel()
+        syncLineCount()
         selectedIndex = nil
     }
 
@@ -717,6 +785,7 @@ struct ResultOverlayView: View {
             }
             guard let edited = edit.finish() else { return }
             detections = edited
+            syncLineCount()
             selectedIndex = nil
             if let id = historyItemID {
                 HistoryManager.shared.updateDetections(id: id, detections: edited)
@@ -725,7 +794,7 @@ struct ResultOverlayView: View {
     }
 
     private var combinedText: String {
-        detections.map(\.text).filter { !$0.isEmpty }.joined(separator: "\n")
+        ConfidenceFilter.text(detections, threshold: confidenceThreshold)
     }
 
     private func copyCurrentTab() {
@@ -756,6 +825,12 @@ enum LineTagLayout {
     static let gap: CGFloat = 3
     /// Regular tag height; the font is three quarters of the tag height.
     static let regularHeight: CGFloat = 12
+    /// A tag on a thin line (傍書 and the like) is never smaller than this, so its number stays legible.
+    /// Lines of a uniformly dense page are not "thin" (they are all alike) and keep the small tags that
+    /// keep neighbours apart; the reader zooms in there.
+    static let minimumLegibleHeight: CGFloat = 9
+    /// A line is thin when it is under this share of the page's typical line thickness.
+    static let thinShare: CGFloat = 0.6
 
     static func regularSize(for number: Int) -> CGSize {
         CGSize(width: CGFloat(8 + 5 * String(number).count), height: regularHeight)
@@ -803,6 +878,31 @@ enum LineTagLayout {
                     break
                 }
             }
+        }
+        // Last resort for thin lines (傍書): a floor on the tag size, even where it touches neighbours.
+        // Their rim and slight transparency keep overlapping tags readable.
+        let thickness = rects.map { min($0.width, $0.height) }.sorted()
+        let typicalThickness = thickness[thickness.count / 2]
+        for (index, rect) in rects.enumerated() where tags[index].height < minimumLegibleHeight - 0.001 {
+            guard min(rect.width, rect.height) < typicalThickness * thinShare else { continue }
+            let regular = regularSize(for: index + 1)
+            let height = minimumLegibleHeight
+            let size = CGSize(width: regular.width * height / regular.height, height: height)
+            let base = place(size, at: rect, in: area)
+            // Step the tag further out along the line's direction (up for a vertical line, left for a
+            // horizontal one) while it would cover another box or tag; keep the first spot if none is clear.
+            let vertical = rect.height >= rect.width
+            var chosen = base
+            for step in 0..<3 {
+                let shift = CGFloat(step) * (height + 2)
+                let candidate = vertical ? base.offsetBy(dx: 0, dy: -shift) : base.offsetBy(dx: -shift, dy: 0)
+                guard area.contains(candidate) else { break }
+                let blocked = rects.indices.contains { other in
+                    other != index && (rects[other].intersects(candidate) || tags[other].intersects(candidate))
+                }
+                if !blocked { chosen = candidate; break }
+            }
+            tags[index] = chosen
         }
         return tags
     }

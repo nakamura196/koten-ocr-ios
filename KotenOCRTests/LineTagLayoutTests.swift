@@ -69,14 +69,16 @@ final class LineTagLayoutTests: XCTestCase {
         for i in 0..<5 { XCTAssertFalse(tags[5].intersects(tags[i]), "overlaps tag \(i + 1)") }
     }
 
-    /// A side note squeezed against a column keeps a tag no wider than the gap allows.
-    func testSideNoteTagStaysSmallWithoutRoom() {
+    /// A side note squeezed against a column gets the minimum legible tag, stepped up clear of the
+    /// column and its tag.
+    func testSideNoteTagStaysClearAndLegibleWithoutRoom() {
         let column = CGRect(x: 100, y: 40, width: 20, height: 220)
         let other = CGRect(x: 160, y: 40, width: 20, height: 220)
         let note = CGRect(x: 121, y: 48, width: 4, height: 60)   // touching the column, a larger tag would cover it
         let tags = LineTagLayout.frames(for: [column, other, note], in: page)
         XCTAssertFalse(tags[2].intersects(column))
         XCTAssertFalse(tags[2].intersects(tags[0]))
+        XCTAssertGreaterThanOrEqual(tags[2].height, LineTagLayout.minimumLegibleHeight - 0.001)
         XCTAssertLessThan(tags[2].height, tags[0].height)
     }
 
@@ -94,5 +96,33 @@ final class LineTagLayoutTests: XCTestCase {
         XCTAssertEqual(LineTagLayout.boxLineWidth(for: wide), 1.5)
         let tiny = [CGRect(x: 0, y: 0, width: 3, height: 50)]
         XCTAssertEqual(LineTagLayout.boxLineWidth(for: tiny), 0.5)
+    }
+}
+
+final class LineTagMinimumSizeTests: XCTestCase {
+    private let page = CGRect(x: 0, y: 0, width: 400, height: 300)
+
+    /// A thin side note (傍書) squeezed between regular columns keeps a legible tag.
+    func testThinLineAmongRegularOnesGetsAtLeastTheMinimumTag() {
+        var boxes = (0..<6).map { CGRect(x: 40 + CGFloat($0) * 30, y: 60, width: 26, height: 200) }
+        boxes.insert(CGRect(x: 55, y: 60, width: 3, height: 120), at: 1)   // thin, in the gap
+        let tags = LineTagLayout.frames(for: boxes, in: page)
+        XCTAssertGreaterThanOrEqual(tags[1].height, LineTagLayout.minimumLegibleHeight - 0.001)
+        XCTAssertLessThanOrEqual(tags[1].maxY, boxes[1].minY)
+    }
+
+    func testRegularLinesAreNotEnlarged() {
+        let boxes = (0..<6).map { CGRect(x: 40 + CGFloat($0) * 30, y: 60, width: 26, height: 200) }
+        for tag in LineTagLayout.frames(for: boxes, in: page) {
+            XCTAssertEqual(tag.height, LineTagLayout.regularHeight, accuracy: 0.001)
+        }
+    }
+
+    /// A page where every line is thin keeps the small tags (no thin-vs-typical contrast).
+    func testUniformlyDensePageKeepsSmallTags() {
+        let boxes = (0..<12).map { CGRect(x: 300 - CGFloat($0) * 8, y: 60, width: 7, height: 200) }
+        for tag in LineTagLayout.frames(for: boxes, in: page) {
+            XCTAssertLessThan(tag.height, LineTagLayout.minimumLegibleHeight)
+        }
     }
 }
