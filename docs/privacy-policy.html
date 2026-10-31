@@ -15,30 +15,52 @@
 <body>
 
 <h1>KotenOCR プライバシーポリシー</h1>
-<p class="date">最終更新日: 2026年3月5日</p>
+<p class="date">最終更新日: 2026年10月30日</p>
 
 <h2>1. はじめに</h2>
 <p>KotenOCR（以下「本アプリ」）は、古典籍・くずし字の文字認識を行うiOSアプリケーションです。本プライバシーポリシーは、本アプリにおける情報の取り扱いについて説明します。</p>
 
-<h2>2. データの収集について</h2>
-<p><strong>本アプリは、ユーザーの個人情報を一切収集・送信しません。</strong></p>
-<p>本アプリは以下のデバイス機能にアクセスしますが、すべての処理はデバイス上で完了し、外部サーバーへのデータ送信は行いません。</p>
+<h2>2. 収集する情報</h2>
+<p><strong>開発者は、ユーザーの個人情報を一切収集しません。</strong>開発者のサーバーはなく、ユーザーのデータは開発者には届きません。</p>
+<p>本アプリは以下のデバイス機能を使います。</p>
 <ul>
-  <li><strong>カメラ</strong>: 古典籍の撮影のためにカメラにアクセスします。撮影した画像はデバイス上でのみ処理されます。</li>
-  <li><strong>フォトライブラリ</strong>: 既存の画像を選択するためにフォトライブラリにアクセスします。選択した画像はデバイス上でのみ処理されます。</li>
+  <li><strong>カメラ</strong>: 古典籍の撮影のために使います。</li>
+  <li><strong>フォトライブラリ</strong>: 既存の画像を選ぶため、また、ユーザーが操作したときに画像を保存するために使います。</li>
 </ul>
 
-<h2>3. データの処理について</h2>
-<p>文字認識（OCR）処理はすべてデバイス上のAIモデルによって実行されます。画像データや認識結果がインターネット経由で外部に送信されることはありません。</p>
+<h2>3. 文字認識（OCR）</h2>
+<p>文字認識はすべてデバイス上のAIモデルで行います。画像も認識結果も、OCRのために外部へ送られることはありません。</p>
 
-<h2>4. データの保存について</h2>
-<p>本アプリは、撮影・選択した画像や認識結果をデバイスに永続的に保存しません。アプリを閉じると処理中のデータは破棄されます。初回起動の完了状態のみ、デバイスのローカルストレージに保存されます。</p>
+<h2>4. 現代語訳（翻訳）機能と外部への送信</h2>
+<p>現代語訳には、次の2つの方法があります。ユーザーが設定画面で選びます。</p>
+<ul>
+  <li><strong>ローカルAI（Apple）</strong>: iOS 26以降の対応デバイスで、AppleのオンデバイスAIを使います。テキストはデバイスの外に出ません。これが初期設定です。</li>
+  <li><strong>クラウドAPI</strong>: OpenAI、OpenRouter、またはユーザーが指定したOpenAI互換のサービスを使います。</li>
+</ul>
+<p>クラウドAPIを選び、ユーザーが翻訳を実行したときだけ、次の内容が選んだサービスに送られます。</p>
+<ul>
+  <li>認識したテキスト（5,000文字まで）</li>
+  <li>翻訳のための指示文（翻訳の対象言語と詳しさに応じた、定型の文）</li>
+  <li>モデル名と、ユーザーが入力したAPIキー（認証のため）</li>
+</ul>
+<p>画像は送りません。送られたテキストは、そのサービスの利用規約とプライバシーポリシーに従って扱われます。開発者はそれを受け取らず、保存もしません。送りたくないときは、ローカルAIを使うか、翻訳を実行しないでください。</p>
+<p>APIキーは、デバイスのキーチェーンに保存します。この設定は「このデバイスのみ」で、バックアップや別のデバイスへの移行には含まれません。</p>
 
-<h2>5. 第三者への提供</h2>
-<p>本アプリはユーザーデータを収集しないため、第三者への提供は一切ありません。</p>
+<h2>5. データの保存について</h2>
+<p>本アプリは、スキャンの履歴をデバイス内に保存します。保存するのは、撮影・選択した画像（JPEG）、認識結果のテキスト、翻訳した場合はその訳文です。保存場所は、アプリのドキュメント領域です。</p>
+<p>この履歴は、開発者や外部のサービスには送られません。ただし、iCloudバックアップやパソコンへのバックアップを有効にしている場合、それらのバックアップには履歴が含まれます。</p>
+<p>履歴は、履歴画面から1件ずつ、またはまとめて削除できます。アプリを削除すると、デバイス内の履歴も消えます。</p>
+<p>このほか、アプリの設定（翻訳の設定、初回起動の完了状態など）をデバイスに保存します。また、OSからの不具合・動作状況のレポートを、デバイスのドキュメント領域に保存します（次の項目を参照）。</p>
 
-<h2>6. 第三者サービス</h2>
-<p>本アプリは外部の分析ツール、広告SDK、トラッキングサービスを一切使用していません。</p>
+<h2>6. 第三者への提供と外部サービス</h2>
+<p>開発者は、ユーザーのデータを第三者に提供しません。本アプリは、広告SDK、アクセス解析、トラッキングを使っていません。</p>
+<p>本アプリが通信する相手は、次のとおりです。</p>
+<ul>
+  <li><strong>翻訳サービス</strong>: 第4項のとおり、ユーザーがクラウドAPIを選んで翻訳を実行したときだけです。</li>
+  <li><strong>App Store</strong>: 新しい版があるかを確かめるため、AppleのApp Storeの情報を問い合わせます（アプリの更新確認ライブラリ Siren を使っています）。送るのはアプリの識別子で、画像やテキストは含みません。通信にはユーザーのIPアドレスなど、通常の通信情報がAppleに伝わります。</li>
+  <li><strong>投げ銭（アプリ内課金）</strong>: Appleの決済の仕組み（StoreKit）を使います。決済の情報はAppleが扱い、開発者はカード情報などを受け取りません。</li>
+  <li><strong>不具合レポート</strong>: AppleのMetricKitが、クラッシュや動作の統計をOSの定期通知としてアプリに渡します。本アプリはそれをデバイス内に保存するだけで、開発者のサーバーなどには送りません。ユーザーがAppleに診断データを共有する設定にしている場合、その共有はAppleの仕組みで行われ、本アプリは関与しません。</li>
+</ul>
 
 <h2>7. お子様のプライバシー</h2>
 <p>本アプリは特定の年齢層を対象としたものではなく、意図的にお子様の個人情報を収集することはありません。</p>
@@ -48,7 +70,7 @@
 
 <h2>9. お問い合わせ</h2>
 <p>本プライバシーポリシーに関するご質問は、以下までご連絡ください。</p>
-<p>開発者: Satoru Nakamura<br>
+<p>開発者: 中村 覚（東京大学）<br>
 GitHub: <a href="https://github.com/nakamura196">https://github.com/nakamura196</a></p>
 
 <hr>
@@ -58,25 +80,47 @@ GitHub: <a href="https://github.com/nakamura196">https://github.com/nakamura196<
 <h2>1. Introduction</h2>
 <p>KotenOCR ("the App") is an iOS application for optical character recognition of classical Japanese texts (kuzushiji). This privacy policy explains how the App handles information.</p>
 
-<h2>2. Data Collection</h2>
-<p><strong>The App does not collect or transmit any personal information.</strong></p>
-<p>The App accesses the following device features, but all processing is performed entirely on-device with no data sent to external servers:</p>
+<h2>2. Information We Collect</h2>
+<p><strong>The developer does not collect any personal information.</strong> There is no developer server, and your data does not reach the developer.</p>
+<p>The App uses the following device features:</p>
 <ul>
-  <li><strong>Camera</strong>: Used to capture images of classical texts. Captured images are processed only on the device.</li>
-  <li><strong>Photo Library</strong>: Used to select existing images. Selected images are processed only on the device.</li>
+  <li><strong>Camera</strong>: Used to capture images of classical texts.</li>
+  <li><strong>Photo Library</strong>: Used to select existing images, and to save images when you ask the App to.</li>
 </ul>
 
-<h2>3. Data Processing</h2>
-<p>All OCR processing is performed by on-device AI models. No image data or recognition results are transmitted over the internet.</p>
+<h2>3. Text Recognition (OCR)</h2>
+<p>All OCR is performed by AI models on your device. Neither images nor recognition results are sent anywhere for OCR.</p>
 
-<h2>4. Data Storage</h2>
-<p>The App does not persistently store captured/selected images or recognition results on the device. Data is discarded when the app is closed. Only the onboarding completion state is saved in local storage.</p>
+<h2>4. Translation and Data Sent Outside the Device</h2>
+<p>There are two ways to translate. You choose in Settings.</p>
+<ul>
+  <li><strong>Local AI (Apple)</strong>: Uses Apple's on-device AI on supported devices with iOS 26 or later. The text does not leave your device. This is the default.</li>
+  <li><strong>Cloud API</strong>: Uses OpenAI, OpenRouter, or an OpenAI-compatible service whose URL you enter.</li>
+</ul>
+<p>Only when you choose a cloud API and run a translation, the following is sent to the service you chose:</p>
+<ul>
+  <li>The recognized text (up to 5,000 characters)</li>
+  <li>A fixed instruction prompt for the translation (depending on the target language and level you selected)</li>
+  <li>The model name and the API key you entered (for authentication)</li>
+</ul>
+<p>Images are not sent. The text is handled under that service's terms and privacy policy. The developer does not receive or store it. If you do not want to send text, use Local AI or do not run a translation.</p>
+<p>The API key is stored in the device Keychain as "this device only". It is not included in backups or transfers to another device.</p>
 
-<h2>5. Third-Party Sharing</h2>
-<p>Since the App does not collect user data, no data is shared with third parties.</p>
+<h2>5. Data Storage</h2>
+<p>The App stores your scan history on the device. It consists of the captured or selected image (JPEG), the recognized text, and the translation if you ran one. It is kept in the App's Documents area.</p>
+<p>This history is not sent to the developer or to any external service. However, if you use iCloud Backup or a computer backup, the history is included in those backups.</p>
+<p>You can delete history items one by one, or all at once, from the history screen. Deleting the App also removes the history on the device.</p>
+<p>The App also stores its settings (translation settings, onboarding state, etc.) on the device. It also saves OS-provided crash and performance reports in the Documents area (see below).</p>
 
-<h2>6. Third-Party Services</h2>
-<p>The App does not use any external analytics, advertising SDKs, or tracking services.</p>
+<h2>6. Third-Party Sharing and External Services</h2>
+<p>The developer does not share your data with third parties. The App does not use advertising SDKs, analytics, or tracking.</p>
+<p>The App communicates with the following:</p>
+<ul>
+  <li><strong>Translation services</strong>: Only when you choose a cloud API and run a translation, as described in section 4.</li>
+  <li><strong>App Store</strong>: To check whether a new version is available, the App queries Apple's App Store information (using the update-check library Siren). It sends the App's identifier, not your images or text. Apple receives ordinary connection information such as your IP address.</li>
+  <li><strong>Tip jar (in-app purchase)</strong>: Uses Apple's payment system (StoreKit). Apple handles payment information, and the developer does not receive card details.</li>
+  <li><strong>Crash reports</strong>: Apple's MetricKit delivers crash and performance statistics to the App through the OS. The App only saves them on the device and does not send them to any developer server. If you have chosen to share diagnostics with Apple, that sharing is done by Apple's own mechanism and the App is not involved.</li>
+</ul>
 
 <h2>7. Children's Privacy</h2>
 <p>The App is not directed at any specific age group and does not intentionally collect personal information from children.</p>
@@ -86,7 +130,7 @@ GitHub: <a href="https://github.com/nakamura196">https://github.com/nakamura196<
 
 <h2>9. Contact</h2>
 <p>For questions about this privacy policy, please contact:<br>
-Developer: Satoru Nakamura<br>
+Developer: Satoru Nakamura (The University of Tokyo)<br>
 GitHub: <a href="https://github.com/nakamura196">https://github.com/nakamura196</a></p>
 
 <p style="margin-top: 2em; text-align: center;"><a href="index.html">← トップページに戻る / Back to Top</a></p>
