@@ -3,10 +3,9 @@ import CoreGraphics
 import ImageIO
 @testable import KotenOCR
 
-/// Compares the two Vision page detectors. The museum image is read from a local path only
-/// (not in the repository) and the test is skipped when it is missing.
+/// Compares the two Vision page detectors. Extra local images (not in the repository) can be passed
+/// as PAGEDET_EXTRA (set TEST_RUNNER_PAGEDET_EXTRA for xcodebuild); they are skipped when missing.
 final class PageDetectionCompareTests: XCTestCase {
-    static let museumPath = "/private/tmp/claude-501/-Users-nakamura-git/e3dc171b-b4c1-4095-b0fd-4d402a9fc055/scratchpad/tilt/museum.png"
 
     private func load(_ path: String) throws -> CGImage {
         guard FileManager.default.fileExists(atPath: path) else { throw XCTSkip("missing \(path)") }
@@ -30,8 +29,8 @@ final class PageDetectionCompareTests: XCTestCase {
     func testCompareOnLocalImages() throws {
         let repo = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
         var any = false
-        for (name, path) in [
-            ("museum", Self.museumPath),
+        let extra = ProcessInfo.processInfo.environment["PAGEDET_EXTRA"].map { [("extra", $0)] } ?? []
+        for (name, path) in extra + [
             ("shibata", repo.appendingPathComponent("KotenOCR/Resources/sample_shibata.jpg").path),
             ("koten_sample", repo.appendingPathComponent("KotenOCRUITests/Resources/test_koten_sample.jpg").path),
             ("ndl_sample", repo.appendingPathComponent("KotenOCRUITests/Resources/test_ndl_sample.jpg").path),
