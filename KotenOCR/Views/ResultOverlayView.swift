@@ -416,8 +416,8 @@ struct ResultOverlayView: View {
                     .accessibilityIdentifier("confidence_value")
             }
             Text(hiddenCount > 0
-                 ? String(format: String(localized: "confidence_hint_hidden", defaultValue: "上げると自信のない枠から隠れます（目安 50%%）。いま %d 行を隠しています"), hiddenCount)
-                 : String(localized: "confidence_hint", defaultValue: "上げると自信のない枠から隠れます（目安 50%）。表示だけの変更です"))
+                 ? String(format: String(localized: "confidence_hint_hidden", defaultValue: "上げると自信のない枠から隠れます。いま %d 行を隠しています"), hiddenCount)
+                 : String(localized: "confidence_hint", defaultValue: "上げると自信のない枠から隠れます。表示だけの変更です"))
                 .font(.caption)
                 .foregroundColor(KotenColor.inkSecondary)
                 .accessibilityIdentifier("confidence_hint")
@@ -467,11 +467,20 @@ struct ResultOverlayView: View {
 
     // MARK: - OCR Text List
 
+    /// One row of the line list: the number shown (counted over visible lines, like the tags on the image),
+    /// the line's index in the full list, and the line.
+    private struct LineRow {
+        let number: Int
+        let index: Int
+        let detection: Detection
+    }
+
     private var ocrTextList: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 2) {
-                    ForEach(Array(visibleLines.enumerated()), id: \.offset) { position, line in
+                    ForEach(Array(visibleLines.enumerated()).map { LineRow(number: $0.offset + 1, index: $0.element.index, detection: $0.element.detection) }, id: \.index) { line in
+                        let position = line.number - 1
                         let index = line.index
                         let det = line.detection
                         let isSelected = selectedIndex == index
