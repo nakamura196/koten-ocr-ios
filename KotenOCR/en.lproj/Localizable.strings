@@ -215,6 +215,8 @@
 "settings_show_tilt_guide" = "Show tilt guide";
 "crop_mode_rect" = "Rectangle";
 "crop_mode_quad" = "4 corners";
+"crop_auto_correct" = "Auto-correct";
+"crop_undo_correct" = "Undo";
 
 "box_edit_enter" = "Edit Boxes";
 "box_edit_done" = "Done";

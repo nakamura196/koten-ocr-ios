@@ -18,10 +18,9 @@ struct CropView: View {
     // Four-corner mode (normalized image coordinates)
     @State private var isQuadMode = false
     @State private var quad: Quad = .unit
-    /// Set when the reader has chosen a mode or moved the frame; the background page detection then stays out.
-    @State private var modeTouched = false
-    /// Set while detection switches to four-corner mode itself, so the mode change keeps the found corners.
-    @State private var autoSwitching = false
+    /// The image before 自動補正 was applied, kept so 元に戻す can bring it back.
+    @State private var preCorrectionImage: CGImage?
+    @State private var isCorrecting = false
 
     // Zoom & Pan
     @State private var zoomScale: CGFloat = 1.0
@@ -227,12 +226,33 @@ struct CropView: View {
                     .padding(.horizontal, 26)
                     .padding(.top, 12)
 
-                CropModePicker(isQuad: $isQuadMode)
-                    .onChange(of: isQuadMode) { on in
-                        if autoSwitching { autoSwitching = false; return }
-                        modeTouched = true
-                        if on { prepareQuad() }
+                HStack(spacing: 10) {
+                    CropModePicker(isQuad: $isQuadMode)
+                        .onChange(of: isQuadMode) { on in if on { prepareQuad() } }
+                    if preCorrectionImage != nil {
+                        Button(action: undoCorrection) {
+                            Text(String(localized: "crop_undo_correct", defaultValue: "元に戻す"))
+                                .font(.subheadline.weight(.bold)).lineLimit(1)
+                                .padding(.horizontal, 12)
+                                .frame(minHeight: 36)
+                        }
+                        .buttonStyle(.kotenGlass)
+                        .accessibilityIdentifier("crop_undo_correct_button")
+                        .padding(.top, 10)
+                    } else {
+                        Button(action: autoCorrect) {
+                            Text(String(localized: "crop_auto_correct", defaultValue: "自動補正"))
+                                .font(.subheadline.weight(.bold)).lineLimit(1)
+                                .padding(.horizontal, 12)
+                                .frame(minHeight: 36)
+                        }
+                        .buttonStyle(.kotenGlass)
+                        .disabled(isCorrecting)
+                        .accessibilityIdentifier("crop_auto_correct_button")
+                        .padding(.top, 10)
                     }
+                }
+                .padding(.horizontal, 12)
 
                 // Bottom glass toolbar
                 HStack(spacing: 12) {
@@ -265,7 +285,6 @@ struct CropView: View {
         }
         .onAppear {
             currentImage = image
-            autoDetectPage()
             if !CoachMark.cropCorner.isShown && ProcessInfo.processInfo.environment["TEST_IMAGE_PATH"]?.isEmpty ?? true {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                     withAnimation(.easeOut(duration: 0.3)) { showCornerCoach = true }
@@ -399,8 +418,12 @@ struct CropView: View {
 
     private func rotateImage() {
         guard let rotated = displayImage.rotated90Clockwise() else { return }
-        currentImage = rotated
-        modeTouched = true
+        show(rotated)
+    }
+
+    /// Replaces the displayed image and lays out a fresh full-image rectangle for it.
+    private func show(_ newImage: CGImage) {
+        currentImage = newImage
         isQuadMode = false
         initializedCrop = false
         zoomScale = 1.0
@@ -553,22 +576,34 @@ struct CropView: View {
 
     // MARK: - Crop execution
 
-    /// Runs page detection in the background when the screen opens. If a page is found and the reader
-    /// has not touched anything yet, starts in four-corner mode with the corners on the page.
-    /// Otherwise nothing changes (rectangle mode as before).
-    private func autoDetectPage() {
-        let img = image
+    /// 自動補正: rectifies the image with the page the system finds, so the reader sees the result
+    /// and can undo it. Nothing runs on its own when the screen opens, because on images without a
+    /// visible page edge the detector still returns corners and rectifying would skew a straight page.
+    /// When no usable page is found, opens four-corner mode for setting the corners by hand.
+    private func autoCorrect() {
+        guard !isCorrecting else { return }
+        isCorrecting = true
+        let img = displayImage
         DispatchQueue.global(qos: .userInitiated).async {
-            let found = PerspectiveCrop.detectForCropScreen(in: img)
+            let rectified = PerspectiveCrop.detectForCropScreen(in: img)
+                .flatMap { PerspectiveCrop.isUsableDetection($0) ? PerspectiveCrop.rectify(img, normalizedQuad: $0) : nil }
             DispatchQueue.main.async {
-                guard let found, PerspectiveCrop.shouldStartInQuadMode(detected: found),
-                      !modeTouched, !isQuadMode, initializedCrop, displayImage === img,
-                      imageFrame.width > 0, cropRect.isNearly(imageFrame) else { return }
-                quad = found
-                autoSwitching = true
-                isQuadMode = true
+                isCorrecting = false
+                guard displayImage === img else { return }
+                if let rectified {
+                    preCorrectionImage = img
+                    show(rectified)
+                } else {
+                    isQuadMode = true
+                }
             }
         }
+    }
+
+    private func undoCorrection() {
+        guard let original = preCorrectionImage else { return }
+        preCorrectionImage = nil
+        show(original)
     }
 
     /// Seeds the corners from the current rectangle, then tries to snap them to a detected page.
@@ -651,14 +686,5 @@ private struct CropGridLines: View {
             }
             context.stroke(path, with: .color(.white.opacity(0.4)), lineWidth: 0.5)
         }
-    }
-}
-
-
-private extension CGRect {
-    /// True when the rectangle has not been moved from `other` (within a couple of points).
-    func isNearly(_ other: CGRect, tolerance: CGFloat = 2) -> Bool {
-        abs(minX - other.minX) <= tolerance && abs(minY - other.minY) <= tolerance
-            && abs(width - other.width) <= tolerance && abs(height - other.height) <= tolerance
     }
 }

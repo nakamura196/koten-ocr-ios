@@ -42,16 +42,15 @@ final class PageDetectionCompareTests: XCTestCase {
         if !any { throw XCTSkip("no images") }
     }
 
-    func testStartModeDecision() {
-        XCTAssertFalse(PerspectiveCrop.shouldStartInQuadMode(detected: nil))
-        XCTAssertFalse(PerspectiveCrop.shouldStartInQuadMode(detected: .unit))
-        XCTAssertFalse(PerspectiveCrop.shouldStartInQuadMode(detected: Quad(rect: CGRect(x: 0.01, y: 0.01, width: 0.98, height: 0.98))))
-        XCTAssertTrue(PerspectiveCrop.shouldStartInQuadMode(detected: Quad(rect: CGRect(x: 0.1, y: 0.1, width: 0.8, height: 0.8))))
+    func testUsableDetection() {
+        XCTAssertFalse(PerspectiveCrop.isUsableDetection(.unit))
+        XCTAssertFalse(PerspectiveCrop.isUsableDetection(Quad(rect: CGRect(x: 0.01, y: 0.01, width: 0.98, height: 0.98))))
+        XCTAssertTrue(PerspectiveCrop.isUsableDetection(Quad(rect: CGRect(x: 0.1, y: 0.1, width: 0.8, height: 0.8))))
         let tilted = Quad(topLeft: CGPoint(x: 0.1, y: 0.15), topRight: CGPoint(x: 0.9, y: 0.05),
                           bottomRight: CGPoint(x: 0.95, y: 0.9), bottomLeft: CGPoint(x: 0.05, y: 0.8))
-        XCTAssertTrue(PerspectiveCrop.shouldStartInQuadMode(detected: tilted))
+        XCTAssertTrue(PerspectiveCrop.isUsableDetection(tilted))
         let bowtie = Quad(topLeft: CGPoint(x: 0.1, y: 0.1), topRight: CGPoint(x: 0.9, y: 0.9),
                           bottomRight: CGPoint(x: 0.9, y: 0.1), bottomLeft: CGPoint(x: 0.1, y: 0.9))
-        XCTAssertFalse(PerspectiveCrop.shouldStartInQuadMode(detected: bowtie))
+        XCTAssertFalse(PerspectiveCrop.isUsableDetection(bowtie))
     }
 }

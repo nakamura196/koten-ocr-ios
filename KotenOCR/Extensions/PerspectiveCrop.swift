@@ -158,13 +158,12 @@ enum PerspectiveCrop {
         return zip(q.points, u.points).allSatisfy { abs($0.x - $1.x) <= tolerance && abs($0.y - $1.y) <= tolerance }
     }
 
-    /// Whether the crop screen should open in four-corner mode for the detection result.
-    static func shouldStartInQuadMode(detected: Quad?) -> Bool {
-        guard let q = detected, q.isConvex else { return false }
-        return !isNearlyFullFrame(q)
+    /// Whether a detected page is worth rectifying (a convex shape that is not just the frame).
+    static func isUsableDetection(_ q: Quad) -> Bool {
+        q.isConvex && !isNearlyFullFrame(q)
     }
 
-    /// Detection used when the crop screen opens: the document-scanner model (it also finds a
+    /// Detection behind the crop screen's 自動補正: the document-scanner model (it also finds a
     /// tilted sheet photographed on a table, which the rectangle search misses).
     /// The simulator runs that model differently and returns a bogus strip along the bottom edge,
     /// so there it falls back to the rectangle search to keep screenshots and UI tests meaningful.

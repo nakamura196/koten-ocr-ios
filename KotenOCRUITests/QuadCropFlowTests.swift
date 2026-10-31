@@ -45,6 +45,34 @@ final class QuadCropFlowTests: XCTestCase {
         save("quad_4_result")
     }
 
+    /// 自動補正 rectifies the image and offers 元に戻す; undoing brings the button back.
+    /// Nothing changes when the screen opens.
+    func testAutoCorrectCanBeUndone() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments += ["-hasCompletedOnboarding", "YES", "-ocrSuccessCount", "999",
+                                "-coachShutterShown", "YES", "-coachCropCornerShown", "YES",
+                                "-skipHome", "YES", "-AppleLanguages", "(ja)", "-AppleLocale", "ja_JP"]
+        app.launchEnvironment["TEST_IMAGE_PATH"] = sampleImage
+        app.launchEnvironment["TEST_SHOW_CROP"] = "YES"
+        app.launch()
+
+        let auto = app.buttons["crop_auto_correct_button"]
+        XCTAssertTrue(auto.waitForExistence(timeout: 120))
+        sleep(2)
+        XCTAssertFalse(app.descendants(matching: .any)["quad_handle_topLeft"].exists, "should open in rectangle mode")
+        save("auto_1_open")
+        auto.tap()
+        let undo = app.buttons["crop_undo_correct_button"]
+        XCTAssertTrue(undo.waitForExistence(timeout: 10))
+        sleep(1)
+        save("auto_2_corrected")
+        undo.tap()
+        XCTAssertTrue(auto.waitForExistence(timeout: 5))
+        sleep(1)
+        save("auto_3_undone")
+    }
+
     private func save(_ name: String) {
         let shot = XCUIScreen.main.screenshot()
         let attachment = XCTAttachment(screenshot: shot)
