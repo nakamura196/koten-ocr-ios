@@ -1,6 +1,11 @@
 # Changelog / 変更履歴
 
-## 2.0 (Unreleased)
+## 2.0.1 (Unreleased)
+
+- 最初の説明で、撮影のほかに写真から読み込めることを案内 / The first-run guide now mentions that you can also choose a photo, not only take one
+- 切り抜き画面の回転ボタンに「回転」と文字を表示 / The rotate button on the crop screen now shows a "Rotate" label
+
+## 2.0 (2026-10-30)
 
 - ホームに「サンプルの頁で試す」を追加。『竹取物語』・『源氏物語』（古典籍）と国立国会図書館の資料（近代）の 3 頁を選ぶとすぐに読み取る / Added "Try a sample page" on the home screen: three bundled pages (Taketori Monogatari and The Tale of Genji for Classical, an NDL document for Modern) that read straight away
 - 結果画面の行番号を枠の外（縦書きは上、横書きは左）に出し、行頭の文字を隠さないように。2 桁の番号も折り返さない / Line numbers on the result screen now sit outside the box (above vertical lines, left of horizontal ones) so they no longer hide the first characters; two-digit numbers no longer wrap
