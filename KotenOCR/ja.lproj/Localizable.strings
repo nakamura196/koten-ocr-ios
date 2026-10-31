@@ -253,5 +253,5 @@
 "settings_sample_pages_credit" = "『竹取物語』・『国立国会図書館スタッフ・マニュアル』（国立国会図書館デジタルコレクション）、『源氏物語』（東京大学総合図書館所蔵）を改変。菊池武光 施行状: 『古文書時代鑑』（国立国会図書館デジタルコレクション）。柴田太郎吉 明細書: 写真 柴田バネッサ、CC BY-SA 4.0（https://creativecommons.org/licenses/by-sa/4.0/）、Wikimedia Commons より";
 
 "confidence_label" = "確信度";
-"confidence_hint" = "上げると自信のない枠から隠れます（目安 50%）。表示だけの変更です";
-"confidence_hint_hidden" = "上げると自信のない枠から隠れます（目安 50%%）。いま %d 行を隠しています";
+"confidence_hint" = "上げると自信のない枠から隠れます。表示だけの変更です";
+"confidence_hint_hidden" = "上げると自信のない枠から隠れます。いま %d 行を隠しています";
