@@ -21,9 +21,11 @@ struct KotenOCRApp: App {
 
     private func configureSiren() {
         let siren = Siren.shared
+        // Never block the user: major updates are offered weekly with a "later" button,
+        // minor updates weekly with "skip this version".
         siren.rulesManager = RulesManager(
-            majorUpdateRules: .critical,
-            minorUpdateRules: .annoying,
+            majorUpdateRules: .hinting,
+            minorUpdateRules: .relaxed,
             patchUpdateRules: .default
         )
         siren.wail()
