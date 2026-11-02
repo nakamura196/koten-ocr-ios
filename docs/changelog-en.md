@@ -15,8 +15,16 @@ footer: "Contact: nakamura.satoru@mail.u-tokyo.ac.jp"
 > If automatic updates are off, update from the App Store's Updates list.
 {: .point }
 
-Dates are in Japan time. The latest version is 2.1 (1 November 2026).
+Dates are in Japan time. The latest version is 2.1.1 (3 November 2026).
 
+
+### 2.1.1 (3 November 2026)
+
+- Boxes are drawn in four alternating colours (vermilion, indigo, green, purple) so neighbouring lines are easy to tell apart, on the result screen and while editing boxes
+- While editing, a box now follows your finger without lagging
+- Added side grips so you can change just the width or height of a box; grips are easier to catch on thin lines
+- Touching a box that is not selected now selects it without moving it; touching a neighbouring line near the selected box selects that line
+- Double-tap now zooms in and back out while editing boxes, as on the result screen
 
 ### 2.1 (1 November 2026)
 
