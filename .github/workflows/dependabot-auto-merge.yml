@@ -1,0 +1,27 @@
+name: Dependabot auto-merge
+# Dependabot の PR のうち、security update（GHSA の ID が付いたもの）だけを自動マージ予約する。
+# 通常の版上げ（version update）は対象外。人が確かめてからマージする。
+# auto-merge は必須チェック（CI / Site）が通ってから行われる。リポジトリ設定で
+# 「Allow auto-merge」が無効なら、この workflow は失敗するだけで何もマージしない。
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  auto-merge:
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'nakamura196/koten-ocr-ios'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Fetch Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+      - name: Enable auto-merge for security updates only
+        if: steps.meta.outputs.ghsa-id != ''
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
