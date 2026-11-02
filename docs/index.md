@@ -6,6 +6,7 @@ description: 古典籍のくずし字や明治以降の活字を、iPhone・iPad
 alternate: { title: English, url: en.html, lang: en }
 nav:
   - { title: 更新履歴, url: changelog.html }
+  - { title: Android 版, url: android.html }
   - { title: GitHub, url: "https://github.com/nakamura196/koten-ocr-ios" }
 quick_links:
   - { title: App Store, text: 無料。iOS 16 以降, url: "https://apps.apple.com/jp/app/kotenocr/id6760045646", mark: "↓" }
@@ -15,7 +16,7 @@ quick_links:
 
 資料のページを撮ると、行ごとに枠を付けて文字を読み取ります。
 くずし字の古典籍と、明治以降の活字・手書きの資料の、2 つの読み方を選べます。
-画像はどこへも送りません。
+撮った画像を端末の外に送ることはありません。
 
 ![KotenOCR の画面](images/screenshot-ja.jpg)
 
@@ -25,6 +26,7 @@ quick_links:
 | | |
 | --- | --- |
 | iPhone・iPad | [App Store](https://apps.apple.com/jp/app/kotenocr/id6760045646)（無料。iOS 16 以降） |
+| Android | [テスター募集中・APK 版](android.html)（Android 8 以降。Google Play での公開を準備中） |
 
 最新版は 2.1（2026年11月1日）です。変更点は [更新履歴](changelog.html) にあります。
 
