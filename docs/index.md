@@ -26,7 +26,7 @@ quick_links:
 | | |
 | --- | --- |
 | iPhone・iPad | [App Store](https://apps.apple.com/jp/app/kotenocr/id6760045646)（無料。iOS 16 以降） |
-| Android | [テスター募集中・APK 版](android.html)（Android 8 以降。Google Play での公開を準備中） |
+| Android | [テスター募集中](android.html)（Android 8 以降。Google Play での公開を準備中） |
 
 最新版は 2.1（2026年11月1日）です。変更点は [更新履歴](changelog.html) にあります。
 
