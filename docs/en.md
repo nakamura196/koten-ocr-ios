@@ -9,6 +9,7 @@ description: Photograph classical Japanese (kuzushiji) or modern Japanese printe
 alternate: { title: 日本語, url: ./, lang: ja }
 nav:
   - { title: Changelog, url: changelog-en.html }
+  - { title: Android, url: android-en.html }
   - { title: GitHub, url: "https://github.com/nakamura196/koten-ocr-ios" }
 quick_links:
   - { title: App Store, text: Free. iOS 16 or later, url: "https://apps.apple.com/app/kotenocr/id6760045646", mark: "↓" }
@@ -19,7 +20,7 @@ footer: "Contact: nakamura.satoru@mail.u-tokyo.ac.jp"
 
 Take a photo of a page and KotenOCR draws a box around each line and reads it.
 Choose between two readers: Classical, for kuzushiji in pre-modern books and manuscripts, and Modern, for printed and handwritten documents from the Meiji era on.
-Images are never sent anywhere.
+Your photos never leave your device.
 
 ![KotenOCR screens](images/screenshot-en.jpg)
 
@@ -29,6 +30,7 @@ Images are never sent anywhere.
 | | |
 | --- | --- |
 | iPhone and iPad | [App Store](https://apps.apple.com/app/kotenocr/id6760045646) (free, iOS 16 or later) |
+| Android | [Testers wanted / APK](android-en.html) (Android 8 or later; Google Play release in preparation) |
 
 The latest version is 2.1 (1 November 2026). See the [changelog](changelog-en.html) for what changed.
 
