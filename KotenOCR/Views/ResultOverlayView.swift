@@ -25,6 +25,24 @@ struct ResultOverlayView: View {
     @State private var imageContainerSize: CGSize = .zero
     @State private var lastTouchLocation: CGPoint = .zero
     @State private var isPinching: Bool = false
+
+    /// Double tap: back to the whole page when zoomed, otherwise 3× around the tapped point.
+    /// Shared by the result screen and box editing (`location` is in the unscaled image area).
+    private func toggleZoom(at location: CGPoint) {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            if zoom > 1.0 {
+                zoom = 1.0; steadyZoom = 1.0
+                offset = .zero; steadyOffset = .zero
+            } else {
+                let newZoom: CGFloat = 3.0
+                let px = location.x - imageContainerSize.width / 2
+                let py = location.y - imageContainerSize.height / 2
+                offset = CGSize(width: px - px * newZoom, height: py - py * newZoom)
+                steadyOffset = offset
+                zoom = newZoom; steadyZoom = newZoom
+            }
+        }
+    }
     @State private var editingIndex: Int?
     @State private var editText: String = ""
     @State private var exportFileURL: URL?
@@ -123,22 +141,7 @@ struct ResultOverlayView: View {
                                     .onEnded { value in
                                         switch value {
                                         case .first(let doubleTap):
-                                            withAnimation(.easeInOut(duration: 0.3)) {
-                                                if zoom > 1.0 {
-                                                    zoom = 1.0; steadyZoom = 1.0
-                                                    offset = .zero; steadyOffset = .zero
-                                                } else {
-                                                    let newZoom: CGFloat = 3.0
-                                                    let px = doubleTap.location.x - imageContainerSize.width / 2
-                                                    let py = doubleTap.location.y - imageContainerSize.height / 2
-                                                    offset = CGSize(
-                                                        width: px - px * newZoom,
-                                                        height: py - py * newZoom
-                                                    )
-                                                    steadyOffset = offset
-                                                    zoom = newZoom; steadyZoom = newZoom
-                                                }
-                                            }
+                                            toggleZoom(at: doubleTap.location)
                                         case .second(let tap):
                                             guard showBoxes else { return }
                                             let scaleX = geometry.size.width / CGFloat(image.width)
@@ -175,7 +178,8 @@ struct ResultOverlayView: View {
                                         imageSize: CGSize(width: image.width, height: image.height),
                                         zoom: zoom, offset: $offset, steadyOffset: $steadyOffset,
                                         isPinching: isPinching,
-                                        onHaptic: { KotenHaptics.notify(.warning) })
+                                        onHaptic: { KotenHaptics.notify(.warning) },
+                                        onDoubleTap: { toggleZoom(at: $0) })
                 }
             }
             .clipped()
@@ -202,7 +206,7 @@ struct ResultOverlayView: View {
             .simultaneousGesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
-                        if !isPinching {
+                        if !isPinching && lastTouchLocation != value.startLocation {
                             lastTouchLocation = value.startLocation
                         }
                         // Pan when zoomed (single finger, not during pinch)
@@ -485,7 +489,7 @@ struct ResultOverlayView: View {
                         let det = line.detection
                         let isSelected = selectedIndex == index
                         let needsReread = edit.editor?.items.indices.contains(index) == true && edit.editor?.items[index].needsReread == true
-                        let color = boxColor(for: index)
+                        let color = boxColor(for: position)
 
                         HStack(alignment: .top, spacing: 4) {
                             HStack(alignment: .top, spacing: 8) {
@@ -818,7 +822,7 @@ struct ResultOverlayView: View {
     }
 
     private func boxColor(for index: Int) -> Color {
-        KotenColor.shu
+        KotenColor.box(index)
     }
 }
 

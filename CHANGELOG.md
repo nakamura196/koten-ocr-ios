@@ -1,5 +1,13 @@
 # Changelog / 変更履歴
 
+## 2.1.1 (Unreleased)
+
+- 枠を 4 色（朱・藍・萌黄・江戸紫）で塗り分け、隣り合う行の境目を見分けやすく（結果画面・枠の編集とも） / Boxes are drawn in four alternating colours (vermilion, indigo, green, purple) so neighbouring lines are easy to tell apart, on the result screen and while editing boxes
+- 枠の編集で、指の動きに枠が遅れずについてくるように / While editing, a box now follows your finger without lagging
+- 枠の辺のつまみを追加し、幅だけ・高さだけを変えられるように。細い行でもつまみをつかみやすく / Added side grips so you can change just the width or height of a box; grips are easier to catch on thin lines
+- 選んでいない枠に触れたときは、選ぶだけで動かさないように。選んだ枠の近くで隣の行に触れたときは、隣の行を選ぶように / Touching a box that is not selected now selects it without moving it; touching a neighbouring line near the selected box selects that line
+- 枠の編集中も、ダブルタップで拡大・全体表示を切り替えられるように / Double-tap now zooms in and back out while editing boxes, as on the result screen
+
 ## 2.1 (2026-11-01)
 
 - 切り抜き画面に「自動補正」を追加。ページの四隅を探して、斜めに撮った頁をまっすぐに直す。気に入らなければ「元に戻す」 / Added Auto-correct on the crop screen: finds the page corners and straightens a page photographed at an angle; Undo restores the original
