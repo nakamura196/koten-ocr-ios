@@ -1,6 +1,6 @@
 # Changelog / 変更履歴
 
-## 2.1.1 (Unreleased)
+## 2.1.1 (2026-11-03)
 
 - 枠を 4 色（朱・藍・萌黄・江戸紫）で塗り分け、隣り合う行の境目を見分けやすく（結果画面・枠の編集とも） / Boxes are drawn in four alternating colours (vermilion, indigo, green, purple) so neighbouring lines are easy to tell apart, on the result screen and while editing boxes
 - 枠の編集で、指の動きに枠が遅れずについてくるように / While editing, a box now follows your finger without lagging

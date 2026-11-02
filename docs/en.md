@@ -14,7 +14,7 @@ nav:
 quick_links:
   - { title: App Store, text: Free. iOS 16 or later, url: "https://apps.apple.com/app/kotenocr/id6760045646", mark: "↓" }
   - { title: Videos, text: Tutorial, standard and full, url: "#video", mark: "▶" }
-  - { title: Changelog, text: "Latest: 2.1 (1 November 2026)", url: changelog-en.html, mark: "↻" }
+  - { title: Changelog, text: "Latest: 2.1.1 (3 November 2026)", url: changelog-en.html, mark: "↻" }
 footer: "Contact: nakamura.satoru@mail.u-tokyo.ac.jp"
 ---
 
@@ -32,7 +32,7 @@ Your photos never leave your device.
 | iPhone and iPad | [App Store](https://apps.apple.com/app/kotenocr/id6760045646) (free, iOS 16 or later) |
 | Android | [Testers wanted](android-en.html) (Android 8 or later; Google Play release in preparation) |
 
-The latest version is 2.1 (1 November 2026). See the [changelog](changelog-en.html) for what changed.
+The latest version is 2.1.1 (3 November 2026). See the [changelog](changelog-en.html) for what changed.
 
 ### Videos
 {: #video }
