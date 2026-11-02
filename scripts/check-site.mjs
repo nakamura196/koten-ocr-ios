@@ -1,22 +1,27 @@
 #!/usr/bin/env node
 /**
- * 配信するファイル (docs/) の中の参照が、すべて実在するファイルを指しているか確かめる。
- * ビルドは無く docs/ がそのまま Vercel (Root Directory = docs) で配られるので、docs/ を直接見る。
+ * 配信するファイルの中の参照が、すべて実在するファイルを指しているか確かめる。
+ * docs/ は GitHub Pages (Jekyll、guide-theme) で組み立てて配る。組み立てた結果 (_site/) を見る。
  *
- * 使い方: npm run test:site (npm test にも含まれる)
+ * 使い方: 先に組み立ててから npm run test:site (npm test にも含まれる)。
+ *   組み立て先は環境変数 SITE_DIR (既定は _site/)。CI は actions/jekyll-build-pages で組み立てる。
  *
  * 見ること:
  *   1. HTML の href / src / content のうちサイト内を指すもの (相対参照・サイトの絶対 URL) が
  *      docs/ のファイルに解決できる
- *   2. / で始まる参照が無い (どのホストでも同じに動くよう、相対で書く)
+ *   2. / で始まる参照は、サイトの最上位から解決できる
  *   3. 旧ホスト (koten-ocr-ios.vercel.app, github.io/koten-ocr-ios) を指す文字列が残っていない
- *      (転送の条件に旧ホスト名を書く vercel.json は除く)
+ *      (vercel.json は組み立て結果に入らない)
  *   4. robots.txt の Sitemap と sitemap.xml の各 URL が実在するページを指す
  */
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
-import { join, relative, posix } from 'node:path';
+import { join, relative, posix, resolve } from 'node:path';
 
-const DOCS = new URL('../docs/', import.meta.url).pathname;
+const DOCS = resolve(process.env.SITE_DIR || new URL('../_site/', import.meta.url).pathname) + '/';
+if (!existsSync(DOCS)) {
+  console.error(`組み立てたサイトが無い: ${DOCS}（先に Jekyll で docs/ を組み立てる。README の「紹介サイト」参照）`);
+  process.exit(1);
+}
 const siteUrl = 'https://kotenocr.ldas.jp';
 const FORBIDDEN = ['koten-ocr-ios.vercel.app', 'nakamura196.github.io/koten-ocr-ios'];
 const FORBIDDEN_EXEMPT = new Set(['vercel.json']);
@@ -34,7 +39,7 @@ function walk(dir) {
   return files;
 }
 
-/** docs/ 内の配信パスがファイルに解決できるか。GitHub Pages と同じ規則。 */
+/** 組み立てたサイトの中の配信パスがファイルに解決できるか。GitHub Pages と同じ規則。 */
 function resolves(servedPath) {
   let p = decodeURIComponent(servedPath.split(/[?#]/)[0]);
   if (p === '' || p.endsWith('/')) p += 'index.html';
@@ -63,7 +68,7 @@ function checkRef(ref, file) {
   }
   checkedRefs++;
   if (ref.startsWith('/')) {
-    fail(`${where}: / で始まる参照 (相対で書く): ${ref}`);
+    if (!resolves(ref.slice(1))) fail(`${where}: / で始まる参照の先のファイルが無い: ${ref}`);
     return;
   }
   const fromDir = posix.dirname(relative(DOCS, file).split('\\').join('/'));

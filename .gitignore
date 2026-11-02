@@ -30,3 +30,7 @@ analytics/
 
 # ONNX models (download via setup.sh)
 KotenOCR/Models/*.onnx
+
+# 紹介サイトを手元で組み立てた結果
+_site/
+.jekyll-cache/

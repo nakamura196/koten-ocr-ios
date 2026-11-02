@@ -1,0 +1,161 @@
+{%- comment -%}
+guide-theme — アプリの利用者向けガイドのページの型。
+https://github.com/nakamura196/guide-theme
+
+使い方: このファイルを自分のサイトの _layouts/guide.html に置き、ページの
+先頭に layout: guide と書く。見た目のファイル（CSS / JS）は、下の版番号の
+ものを jsDelivr から読み込む。改ざん検知（integrity）の値は版ごとに決まっている。
+
+サイトの _config.yml（すべて省略可）:
+  guide_theme:
+    accent: "#2563eb"        # アクセント色
+    logo: /assets/icon.png   # 左上の小さな画像（無ければ頭文字）
+    image: /assets/ogp.png   # 共有したときに出る画像（1200×630 が目安）。ページの image で上書き
+    assets: /guide-theme     # 手元に置いた CSS / JS を使うとき（試験用）
+
+ページの先頭（すべて省略可。title 以外）:
+  title, lang, eyebrow, lead, description, image, og_type, app_name, home_url,
+  nav: [{title, url}], alternate: {title, url}, quick_links: [{title, text, url}],
+  footer
+{%- endcomment -%}
+{%- assign gt_version = "0.1.2" -%}
+{%- assign gt_css_sri = "sha384-P5EFoeFY/25UFdIe0C0Fcn/jRctJWRCiH+LBvwj8x5FaLigp2pXNFKWJm8Qx2VsK" -%}
+{%- assign gt_js_sri = "sha384-5mfkdeJ+ArSRDFcM0c2YuKU1qB2EWY4TXDzm9oOO/npgFRwLwNcRusP7iEG6d1cL" -%}
+{%- assign gt = site.guide_theme -%}
+{%- if gt.assets -%}
+  {%- assign gt_base = gt.assets | relative_url -%}
+  {%- assign gt_local = true -%}
+{%- else -%}
+  {%- assign gt_base = "https://cdn.jsdelivr.net/gh/nakamura196/guide-theme@v" | append: gt_version | append: "/assets" -%}
+{%- endif -%}
+{%- assign gt_lang = page.lang | default: site.lang | default: "en" -%}
+{%- assign gt_app = page.app_name | default: site.title -%}
+{%- assign gt_home = page.home_url | default: site.baseurl | default: "/" -%}
+<!DOCTYPE html>
+<html lang="{{ gt_lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {%- if page.title and page.title != gt_app %}
+    {%- capture gt_title %}{{ page.title }}{% if gt_app %} — {{ gt_app }}{% endif %}{% endcapture %}
+  {%- else %}
+    {%- assign gt_title = page.title | default: gt_app %}
+  {%- endif %}
+  <title>{{ gt_title }}</title>
+  {%- assign gt_desc = page.description | default: page.lead | default: site.description %}
+  {%- if gt_desc %}
+  <meta name="description" content="{{ gt_desc | strip_html | strip_newlines | escape }}">
+  {%- endif %}
+  {%- comment -%}
+    共有したときの表示（OGP）。画像はページの image、無ければ _config.yml の
+    guide_theme.image。URL は絶対にする（SNS は相対 URL を読まない）。
+  {%- endcomment -%}
+  {%- assign gt_url = page.url | replace: "/index.html", "/" | absolute_url %}
+  {%- assign gt_image = page.image | default: gt.image %}
+  <link rel="canonical" href="{{ gt_url }}">
+  <meta property="og:title" content="{{ gt_title | escape }}">
+  {%- if gt_desc %}
+  <meta property="og:description" content="{{ gt_desc | strip_html | strip_newlines | escape }}">
+  {%- endif %}
+  <meta property="og:url" content="{{ gt_url }}">
+  <meta property="og:type" content="{{ page.og_type | default: 'website' }}">
+  {%- if gt_app %}
+  <meta property="og:site_name" content="{{ gt_app | escape }}">
+  {%- endif %}
+  <meta property="og:locale" content="{% if gt_lang == 'ja' %}ja_JP{% else %}en_US{% endif %}">
+  {%- if gt_image %}
+  {%- assign gt_image_url = gt_image %}
+  {%- unless gt_image contains "://" %}{% assign gt_image_url = gt_image | absolute_url %}{% endunless %}
+  <meta property="og:image" content="{{ gt_image_url }}">
+  <meta name="twitter:card" content="summary_large_image">
+  {%- else %}
+  <meta name="twitter:card" content="summary">
+  {%- endif %}
+  {%- if page.alternate %}
+    {%- comment -%} alternate.url はページからの相対。絶対 URL に直す（hreflang は絶対 URL が決まり） {%- endcomment -%}
+    {%- assign gt_alt = page.alternate.url %}
+    {%- if gt_alt contains "://" %}
+      {%- assign gt_alt_url = gt_alt %}
+    {%- else %}
+      {%- assign gt_dir = page.url | split: "/" %}
+      {%- unless page.url contains ".html" %}{% assign gt_dir = gt_dir | push: "x" %}{% endunless %}
+      {%- assign gt_n = gt_dir.size | minus: 1 %}
+      {%- assign gt_dir = gt_dir | slice: 0, gt_n %}
+      {%- if gt_alt == "./" or gt_alt == "." %}{% assign gt_alt = "" %}{% endif %}
+      {%- assign gt_alt = gt_alt | remove_first: "./" %}
+      {%- for i in (1..5) %}
+        {%- if gt_alt contains "../" %}
+          {%- assign gt_alt = gt_alt | remove_first: "../" %}
+          {%- assign gt_n = gt_dir.size | minus: 1 %}
+          {%- assign gt_dir = gt_dir | slice: 0, gt_n %}
+        {%- endif %}
+      {%- endfor %}
+      {%- assign gt_alt_url = gt_dir | join: "/" | append: "/" | append: gt_alt | absolute_url %}
+    {%- endif %}
+  <link rel="alternate" hreflang="{{ gt_lang }}" href="{{ gt_url }}">
+  <link rel="alternate" hreflang="{{ page.alternate.lang }}" href="{{ gt_alt_url }}">
+  {%- endif %}
+  {%- if gt_local %}
+  <link rel="stylesheet" href="{{ gt_base }}/guide-theme.css">
+  <script defer src="{{ gt_base }}/guide-theme.js"></script>
+  {%- else %}
+  <link rel="stylesheet" href="{{ gt_base }}/guide-theme.css" integrity="{{ gt_css_sri }}" crossorigin="anonymous">
+  <script defer src="{{ gt_base }}/guide-theme.js" integrity="{{ gt_js_sri }}" crossorigin="anonymous"></script>
+  {%- endif %}
+  {%- if gt.accent %}
+  <style>:root { --gt-accent: {{ gt.accent }}; }</style>
+  {%- endif %}
+</head>
+<body class="gt">
+  <a class="gt-skip" href="#gt-main">{% if gt_lang == "ja" %}本文へ{% else %}Skip to content{% endif %}</a>
+
+  <header class="gt-top">
+    <div class="gt-top-inner">
+      <a class="gt-brand" href="{{ gt_home }}">
+        {%- if gt.logo %}<img src="{{ gt.logo | relative_url }}" alt="">{% else %}<span class="gt-brand-mark" aria-hidden="true">{{ gt_app | slice: 0 }}</span>{% endif -%}
+        <span>{{ gt_app }}</span>
+      </a>
+      <nav class="gt-nav">
+        {%- for item in page.nav %}
+        <a href="{{ item.url }}">{{ item.title }}</a>
+        {%- endfor %}
+        {%- if page.alternate %}
+        <a class="gt-lang" href="{{ page.alternate.url }}" hreflang="{{ page.alternate.lang }}" lang="{{ page.alternate.lang }}">{{ page.alternate.title }}</a>
+        {%- endif %}
+      </nav>
+    </div>
+  </header>
+
+  <div class="gt-hero">
+    <div class="gt-hero-inner">
+      {%- if page.eyebrow %}<p class="gt-eyebrow">{{ page.eyebrow }}</p>{% endif %}
+      <h1>{{ page.title }}</h1>
+      {%- if page.lead %}<p class="gt-lead">{{ page.lead }}</p>{% endif %}
+      {%- if page.quick_links %}
+      <nav class="gt-cards" aria-label="{% if gt_lang == 'ja' %}おもな内容{% else %}Main topics{% endif %}">
+        {%- for q in page.quick_links %}
+        <a class="gt-card" href="{{ q.url }}">
+          <span class="gt-card-num" aria-hidden="true">{{ q.mark | default: forloop.index }}</span>
+          <span><strong>{{ q.title }}</strong>{% if q.text %}<small>{{ q.text }}</small>{% endif %}</span>
+        </a>
+        {%- endfor %}
+      </nav>
+      {%- endif %}
+    </div>
+  </div>
+
+  <div class="gt-body">
+    <aside class="gt-toc"></aside>
+    <main class="gt-content" id="gt-main">
+{{ content }}
+    </main>
+  </div>
+
+  <footer class="gt-foot">
+    <div class="gt-foot-inner">
+      <span>{% if page.footer %}{{ page.footer }}{% else %}{{ gt_app }}{% endif %}</span>
+      <span><a href="https://github.com/nakamura196/guide-theme">guide-theme</a></span>
+    </div>
+  </footer>
+</body>
+</html>

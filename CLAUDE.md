@@ -274,7 +274,25 @@ https://iiif.dl.itc.u-tokyo.ac.jp/iiif/genji/TIFF/A00_6587/01/01_0004.tif/full/f
 - [ ] `xcodegen generate` でXcodeプロジェクトを再生成
 
 ### 2. ドキュメント更新
-- [ ] `docs/index.html` の更新履歴セクションに新バージョンを追加
+
+**紹介サイト https://kotenocr.ldas.jp は、App Store に出すたびに必ず直す（2026-11-01、本人の指示）。**
+2.0〜2.1 の間、サイトが 1.3.2 のまま放置されていた。リリース作業はサイトの公開まで済んで完了とする。
+サイトは `docs/` を GitHub Pages（Jekyll）が組み立てて配る。見た目は共通テンプレート
+guide-theme（`~/git/tools/guide-theme`、ap.ldas.jp・lo.ldas.jp と同じ）。main に入れば数分で反映される。
+
+- [ ] `CHANGELOG.md` の版の見出しを `## 2.x (Unreleased)` から、App Store に出た日付（日本時間）の `## 2.x (YYYY-MM-DD)` にする
+- [ ] `python3 scripts/docs/make_changelog.py` で `docs/changelog.md`・`changelog-en.md` を作り直す
+- [ ] `docs/index.md`・`docs/en.md` の「最新版は」「できること」、quick_links の版と日付を直す（機能が増えた・変わった場合は本文も）
+- [ ] 画面が変わったら `docs/images/screenshot-{ja,en}.jpg`（App Store 用の画像 3 枚を横に並べたもの）と OGP 画像（`python3 scripts/docs/make_ogp.py`）を作り直す
+- [ ] 使い方の動画を作り直したら、`docs/index.md`・`en.md` の YouTube の ID を替える（正本は `~/git/blog/kotenocr-ios/out/<lang>/youtube*.json`）
+- [ ] プライバシーポリシー（`docs/privacy-policy.md`）が実際の動作と合っているか確かめる
+- [ ] 手元で組み立てて検査する（`npm test` は組み立てた結果を見る）:
+  ```
+  docker run --rm --entrypoint sh -v "$PWD/docs":/src:ro -v "$PWD/_site":/out -e PAGES_REPO_NWO=nakamura196/koten-ocr-ios -e JEKYLL_GITHUB_TOKEN=$(gh auth token) ghcr.io/actions/jekyll-build-pages:v1.0.13 -c 'github-pages build --source /src --destination /out'
+  npm test
+  ```
+- [ ] main に入れたあと、https://kotenocr.ldas.jp/ と /changelog.html に新しい版が出ているかを開いて確かめる
+
 - [ ] `docs/appstore-metadata.md` の説明文・メタデータを更新（正としてここで管理）
 - [ ] App Store Connectの説明文をAPIで更新（説明文変更は審査が必要）
 - [ ] `README.md` の更新（機能追加がある場合）

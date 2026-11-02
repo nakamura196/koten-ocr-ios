@@ -2,10 +2,10 @@ name: Site
 on:
   pull_request:
     branches: [main]
-    paths: ["docs/**", "tests/**", "scripts/check-*.mjs", "package.json", ".github/workflows/site.yml"]
+    paths: ["docs/**", "CHANGELOG.md", "tests/**", "scripts/check-*.mjs", "package.json", ".github/workflows/site.yml"]
   push:
     branches: [main]
-    paths: ["docs/**", "tests/**", "scripts/check-*.mjs", "package.json", ".github/workflows/site.yml"]
+    paths: ["docs/**", "CHANGELOG.md", "tests/**", "scripts/check-*.mjs", "package.json", ".github/workflows/site.yml"]
   workflow_dispatch:
 permissions:
   contents: read
@@ -17,5 +17,10 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
-      # docs/ (紹介ページ) がそのまま Vercel で配られる。公開 URL と参照切れを検査する。
+      # docs/ (紹介サイト) は GitHub Pages が main の docs/ を Jekyll で組み立てて配る。
+      # 同じ道具で組み立て、公開 URL と参照切れを検査する。
+      - uses: actions/jekyll-build-pages@44a6e6beabd48582f863aeeb6cb2151cc1716697 # v1.0.13
+        with:
+          source: ./docs
+          destination: ./_site
       - run: npm test

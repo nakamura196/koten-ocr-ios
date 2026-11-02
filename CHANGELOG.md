@@ -1,6 +1,6 @@
 # Changelog / 変更履歴
 
-## 2.1 (Unreleased)
+## 2.1 (2026-11-01)
 
 - 切り抜き画面に「自動補正」を追加。ページの四隅を探して、斜めに撮った頁をまっすぐに直す。気に入らなければ「元に戻す」 / Added Auto-correct on the crop screen: finds the page corners and straightens a page photographed at an angle; Undo restores the original
 - 結果画面に「確信度」のスライダーを追加。上げると自信のない枠から隠れる（表示だけで、読み取り結果は変わらない） / Added a Confidence slider on the result screen: raising it hides the least certain lines (display only; the results themselves are kept)

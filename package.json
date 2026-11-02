@@ -2,7 +2,7 @@
   "name": "koten-ocr-ios-site",
   "private": true,
   "type": "module",
-  "description": "Checks for the KotenOCR landing page (docs/), served by Vercel at https://kotenocr.ldas.jp. The iOS app itself is built with Xcode.",
+  "description": "Checks for the KotenOCR landing page (docs/), built by GitHub Pages (Jekyll, guide-theme) and served at https://kotenocr.ldas.jp. The iOS app itself is built with Xcode.",
   "scripts": {
     "test": "node --test tests/*.test.mjs && node scripts/check-site.mjs",
     "test:site": "node scripts/check-site.mjs",

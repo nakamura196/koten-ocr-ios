@@ -1,26 +1,20 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KotenOCR プライバシーポリシー</title>
-<link rel="canonical" href="https://kotenocr.ldas.jp/privacy-policy.html">
-<style>
-  body { font-family: -apple-system, sans-serif; max-width: 720px; margin: 0 auto; padding: 20px; line-height: 1.8; color: #333; }
-  h1 { font-size: 1.5em; border-bottom: 1px solid #ccc; padding-bottom: 8px; }
-  h2 { font-size: 1.2em; margin-top: 1.5em; }
-  .date { color: #666; font-size: 0.9em; }
-</style>
-</head>
-<body>
+---
+title: プライバシーポリシー
+eyebrow: KotenOCR
+lead: "日本語のあとに英語版があります。 / English follows the Japanese."
+quick_links:
+  - { title: 日本語, url: "#ja" }
+  - { title: English, url: "#en" }
+---
 
-<h1>KotenOCR プライバシーポリシー</h1>
+<div markdown="0">
+<h2 id="ja">日本語</h2>
 <p class="date">最終更新日: 2026年10月30日（版 2.1 に合わせて改訂）</p>
 
-<h2>1. はじめに</h2>
+<h3>1. はじめに</h3>
 <p>KotenOCR（以下「本アプリ」）は、古典籍・くずし字の文字認識を行うiOSアプリケーションです。本プライバシーポリシーは、本アプリにおける情報の取り扱いについて説明します。</p>
 
-<h2>2. 開発者は利用者の情報を集めません</h2>
+<h3>2. 開発者は利用者の情報を集めません</h3>
 <p><strong>本アプリには、開発者のサーバーに情報を送る仕組みがありません。</strong>利用者のアカウントも作りません。外部の分析ツール・広告・トラッキングの仕組みも使っていません。</p>
 <p>本アプリは次の端末の機能を使います。</p>
 <ul>
@@ -28,10 +22,10 @@
   <li><strong>写真ライブラリ</strong>: 既存の画像を選ぶため、また、利用者が保存を選んだときに画像を保存するために使います。</li>
 </ul>
 
-<h2>3. 画像は端末の外に送りません</h2>
+<h3>3. 画像は端末の外に送りません</h3>
 <p>文字認識（OCR）は、すべて端末内のAIモデルで行います。<strong>撮影・選択した画像は、どの機能でも端末の外に送りません。</strong></p>
 
-<h2>4. 端末内に保存するもの（履歴）</h2>
+<h3>4. 端末内に保存するもの（履歴）</h3>
 <p>読み取った画像・認識結果・現代語訳は、「履歴」として端末内（本アプリの保存領域）に保存します。あとから見直し、書き出すためです。</p>
 <ul>
   <li>履歴は、履歴の画面で1件ずつ削除できます（左にスワイプ）。すべてをまとめて削除することもできます。</li>
@@ -41,7 +35,7 @@
   <li>本アプリが異常終了したときの診断情報（Appleが端末に渡すもの）は、端末内に保存するだけで、本アプリから送ることはありません。</li>
 </ul>
 
-<h2>5. 現代語訳でクラウドのAPIを選んだ場合</h2>
+<h3>5. 現代語訳でクラウドのAPIを選んだ場合</h3>
 <p>現代語訳の既定は、端末内の言語モデル（Apple、iOS 26以降）です。この場合、何も外部に送りません。</p>
 <p>利用者が設定でクラウドのAPI（OpenRouter・OpenAI・利用者が入力した任意のURL）を選んだ場合に限り、現代語訳を実行したときに、次のものが<strong>利用者の選んだ事業者</strong>に送られます。</p>
 <ul>
@@ -51,40 +45,40 @@
 </ul>
 <p>画像は送りません。送られた情報の扱いは、その事業者の規約とプライバシーポリシーに従います。APIキーは端末のキーチェーン（iOSの暗号化された保存領域）に保存し、開発者には届きません。版 2.1 以降は「この端末のみ」の設定で保存するため、バックアップや別の端末への移行にも含まれません。</p>
 
-<h2>6. そのほかの通信</h2>
+<h3>6. そのほかの通信</h3>
 <ul>
   <li><strong>更新の確認</strong>: 新しい版が出ているかを確かめるため、App Storeに本アプリの版の情報を問い合わせます。利用者の情報は送りません。</li>
   <li><strong>開発者への応援（チップ）</strong>: 購入はAppleのApp Storeを通して行われます。支払いの情報が開発者に届くことはありません。</li>
   <li><strong>評価のお願い</strong>: Appleの仕組みで、App Storeでの評価をお願いする表示を出すことがあります。</li>
 </ul>
 
-<h2>7. 意見を送る場合</h2>
+<h3>7. 意見を送る場合</h3>
 <p>設定の「フィードバックを送る」を選ぶと、端末のメールアプリが開きます。利用者が送信した場合に限り、本文に加えて、端末の種類・iOSの版・本アプリの版が開発者に届きます。送信元のメールアドレスも開発者に届きます。いただいた内容は、本アプリの改善とお返事のためだけに使います。</p>
 
-<h2>8. 第三者への提供</h2>
+<h3>8. 第三者への提供</h3>
 <p>開発者は利用者の情報を集めないため、第三者に提供することはありません。ただし、5. でクラウドのAPIを選んだ場合は、利用者の操作によって、利用者の選んだ事業者にテキストが送られます。</p>
 
-<h2>9. お子様のプライバシー</h2>
+<h3>9. お子様のプライバシー</h3>
 <p>本アプリは特定の年齢層を対象としたものではなく、意図的にお子様の個人情報を収集することはありません。</p>
 
-<h2>10. ポリシーの変更</h2>
+<h3>10. ポリシーの変更</h3>
 <p>本プライバシーポリシーは、必要に応じて更新することがあります。このページの最終更新日で示し、重要な変更はアプリの更新情報でもお知らせします。</p>
 
-<h2>11. お問い合わせ</h2>
+<h3>11. お問い合わせ</h3>
 <p>本プライバシーポリシーに関するご質問は、以下までご連絡ください。<br>
 開発者: 中村 覚（東京大学）<br>
 メール: <a href="mailto:nakamura.satoru@mail.u-tokyo.ac.jp">nakamura.satoru@mail.u-tokyo.ac.jp</a></p>
 
-<hr style="margin: 3em 0;">
+<hr>
 
-<h1 lang="en">KotenOCR Privacy Policy</h1>
+<h2 lang="en" id="en">KotenOCR Privacy Policy</h2>
 <div lang="en">
 <p class="date">Last updated: October 30, 2026 (revised for version 2.1)</p>
 
-<h2>1. Introduction</h2>
+<h3>1. Introduction</h3>
 <p>KotenOCR ("the App") is an iOS application for optical character recognition of classical Japanese texts (kuzushiji). This privacy policy explains how the App handles information.</p>
 
-<h2>2. The Developer Does Not Collect Your Information</h2>
+<h3>2. The Developer Does Not Collect Your Information</h3>
 <p><strong>The App has no mechanism for sending information to the developer's servers.</strong> It does not create user accounts, and it uses no external analytics, advertising, or tracking services.</p>
 <p>The App uses the following device features:</p>
 <ul>
@@ -92,10 +86,10 @@
   <li><strong>Photo Library</strong>: to select existing images, and to save an image when you choose to.</li>
 </ul>
 
-<h2>3. Images Never Leave Your Device</h2>
+<h3>3. Images Never Leave Your Device</h3>
 <p>All OCR is performed by AI models on the device. <strong>Images you capture or select are not sent off the device by any feature of the App.</strong></p>
 
-<h2>4. What Is Stored on Your Device (History)</h2>
+<h3>4. What Is Stored on Your Device (History)</h3>
 <p>Read images, recognition results, and translations are stored on the device (in the App's own storage) as History, so you can review and export them later.</p>
 <ul>
   <li>You can delete History items one at a time on the History screen (swipe left), or delete all of them at once.</li>
@@ -105,7 +99,7 @@
   <li>Crash diagnostics that Apple provides to the App on the device are kept on the device only; the App does not send them anywhere.</li>
 </ul>
 
-<h2>5. If You Choose a Cloud API for Translation</h2>
+<h3>5. If You Choose a Cloud API for Translation</h3>
 <p>By default, translation uses the on-device language model (Apple, iOS 26 or later), and nothing is sent off the device.</p>
 <p>Only if you choose a cloud API in Settings (OpenRouter, OpenAI, or a URL you enter), the following is sent <strong>to the provider you chose</strong> when you run a translation:</p>
 <ul>
@@ -115,32 +109,28 @@
 </ul>
 <p>Images are not sent. The provider handles what it receives under its own terms and privacy policy. Your API key is stored in the device Keychain (iOS's encrypted storage) and never reaches the developer. From version 2.1 it is stored as "this device only", so it is not included in backups or transferred to another device.</p>
 
-<h2>6. Other Network Access</h2>
+<h3>6. Other Network Access</h3>
 <ul>
   <li><strong>Update check</strong>: the App asks the App Store for the latest version information of the App. No information about you is sent.</li>
   <li><strong>Tips</strong>: purchases are made through Apple's App Store. The developer does not receive your payment information.</li>
   <li><strong>Rating request</strong>: Apple's system may occasionally ask you to rate the App on the App Store.</li>
 </ul>
 
-<h2>7. If You Send Feedback</h2>
+<h3>7. If You Send Feedback</h3>
 <p>Choosing "Send Feedback" in Settings opens your mail app. Only if you send the message, the developer receives your message, your device type, iOS version, and App version, as well as your sending email address. Feedback is used only to improve the App and to reply to you.</p>
 
-<h2>8. Third-Party Sharing</h2>
+<h3>8. Third-Party Sharing</h3>
 <p>Since the developer does not collect your information, none is shared with third parties. The only exception is described in section 5: if you choose a cloud API, text is sent, by your action, to the provider you chose.</p>
 
-<h2>9. Children's Privacy</h2>
+<h3>9. Children's Privacy</h3>
 <p>The App is not directed at any specific age group and does not intentionally collect personal information from children.</p>
 
-<h2>10. Changes to This Policy</h2>
+<h3>10. Changes to This Policy</h3>
 <p>This privacy policy may be updated as needed. Changes are indicated by the "Last updated" date on this page, and significant changes are also announced in the App's update notes.</p>
 
-<h2>11. Contact</h2>
+<h3>11. Contact</h3>
 <p>For questions about this privacy policy, please contact:<br>
 Developer: Satoru Nakamura (The University of Tokyo)<br>
 Email: <a href="mailto:nakamura.satoru@mail.u-tokyo.ac.jp">nakamura.satoru@mail.u-tokyo.ac.jp</a></p>
 </div>
-
-<p style="margin-top: 2em; text-align: center;"><a href="index.html">← トップページに戻る / Back to Top</a></p>
-
-</body>
-</html>
+</div>

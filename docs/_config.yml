@@ -1,0 +1,50 @@
+# GitHub Pages（このフォルダを公開サイトとして配信する）の設定。
+# guide-theme の site-template から作った（https://github.com/nakamura196/guide-theme）。
+# 見た目は ap.ldas.jp・lo.ldas.jp と同じ。_layouts/guide.html はテーマから写したもの。
+# 直すときはテーマ側で版を上げてから写す（zsh ~/git/tools/guide-theme/scripts/new-site.zsh を走らせ直すと最新になる）。
+#
+# 2026-11-01 まで、このフォルダは Vercel で配っていた（index.html を手書き）。
+# 旧ホスト koten-ocr-ios.vercel.app は Vercel に残し、vercel.json の転送でこちらへ送っている。
+# App Store に出すたびに、CLAUDE.md の「バージョンアップ時のTODOリスト」の 2. に従ってこのサイトも直す。
+#
+# 独自ドメイン https://kotenocr.ldas.jp で出す（docs/CNAME）。
+# DNS は kotenocr.ldas.jp → nakamura196.github.io の CNAME。Cloudflare なら「プロキシなし」にする
+# （プロキシを通すと GitHub が HTTPS の証明書を取れない）。
+# 旧 URL（nakamura196.github.io/koten-ocr-ios/…）は GitHub が新 URL へ転送する。
+# ストアの掲載情報などが旧 URL を指したままなら、CNAME を外すとその転送が止まって切れる。
+title: KotenOCR
+description: 古典籍のくずし字や明治以降の活字を、iPhone・iPad で撮るだけで文字にするアプリです。
+theme: jekyll-theme-minimal
+
+# 公開 URL を固定する。書かないと、Pages を有効にする前や手元のビルドで
+# baseurl が /koten-ocr-ios などに推測され、ロゴや canonical の URL がずれる。
+url: https://kotenocr.ldas.jp
+baseurl: ""
+
+# 左上のアイコンと、共有したときに出る画像（OGP）。
+# 英語のページは front matter の image で ogp-en.png に差し替える。
+# OGP 画像は scripts/docs/make_ogp.py で作る。
+guide_theme:
+  accent: "#b5452f"   # 朱（アプリの KotenColor.shu と同じ）
+  logo: /assets/icon.png
+  image: /assets/ogp/ogp-ja.png
+
+# すべてのページを guide-theme で出す。各ページの front matter で上書きできる。
+defaults:
+  - scope: { path: "" }
+    values:
+      layout: guide
+      lang: ja
+      footer: "お問い合わせ / Contact: nakamura.satoru@mail.u-tokyo.ac.jp"
+      nav:
+        - { title: トップ, url: ./ }
+        - { title: 更新履歴, url: changelog.html }
+        - { title: GitHub, url: "https://github.com/nakamura196/koten-ocr-ios" }
+
+# 公開しないもの（リポジトリの中の資料・旧サイトの素材）
+exclude:
+  - appstore-metadata.md
+  - model-conversion.md
+  - vercel.json
+  - videos
+  - marketing_combined.png

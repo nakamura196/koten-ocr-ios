@@ -111,11 +111,11 @@ https://kotenocr.ldas.jp
 
 ## プライバシーポリシーURL
 
-App Store 提出時に公開URLが必要。docs/ を Vercel で配っている (GitHub Pages は使っていない):
+App Store 提出時に公開URLが必要。docs/ を GitHub Pages（Jekyll、guide-theme）で配っている（2026-11-01 に Vercel から移した）:
 ```
 https://kotenocr.ldas.jp/privacy-policy.html
 ```
-2026-09 時点の App Store の登録は旧 `https://koten-ocr-ios.vercel.app/privacy-policy.html`。旧ホストは docs/vercel.json で同じパスへ 308 転送するので、そのままでも開ける。次の版の提出時に新 URL へ書き換える。
+2026-09 時点の App Store の登録は旧 `https://koten-ocr-ios.vercel.app/privacy-policy.html`。旧ホストは Vercel のプロジェクトを残してあり、docs/vercel.json（Vercel に最後に配った版）で同じパスへ 308 転送するので、そのままでも開ける。次の版の提出時に新 URL へ書き換える。
 
 ## App Storeプレビュー動画
 
