@@ -22,6 +22,20 @@ enum KotenColor {
     static let rule = Color("PaperRule")
     /// Background behind photos (crop box, camera fallback).
     static let docBackground = Color(red: 0.114, green: 0.106, blue: 0.098)
+
+    /// Line boxes on the page take these in turn, so neighbouring lines (which touch on a
+    /// crowded page) never share a colour: 朱, 藍, 萌黄 (deep), 江戸紫. All four stay readable
+    /// on cream paper and on dark photos.
+    static let boxPalette: [Color] = [
+        Color(red: 0.86, green: 0.27, blue: 0.16),
+        Color(red: 0.13, green: 0.38, blue: 0.75),
+        Color(red: 0.16, green: 0.56, blue: 0.27),
+        Color(red: 0.55, green: 0.27, blue: 0.62),
+    ]
+
+    static func box(_ index: Int) -> Color {
+        boxPalette[((index % boxPalette.count) + boxPalette.count) % boxPalette.count]
+    }
 }
 
 // MARK: - Type

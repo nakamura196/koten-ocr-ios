@@ -13,9 +13,21 @@ final class BoxEditModel: ObservableObject {
         var rect: CGRect
     }
 
+    /// Holds the box being dragged. Kept out of this model on purpose: the result screen observes
+    /// this model, and publishing every finger move here rebuilt the whole screen (image, tags,
+    /// line list) 60–120 times a second, so on an iPhone the box lagged behind the finger.
+    /// Only the edit canvas observes `drag`.
+    final class Drag: ObservableObject {
+        @Published var preview: Preview?
+    }
+
     @Published var editor: BoxEditor?
     @Published var tool: Tool = .select
-    @Published var preview: Preview?
+    let drag = Drag()
+    var preview: Preview? {
+        get { drag.preview }
+        set { if drag.preview != newValue { drag.preview = newValue } }
+    }
     @Published var isReading = false
     @Published var errorMessage: String?
 
@@ -74,55 +86,81 @@ final class BoxEditModel: ObservableObject {
 
 /// Boxes, handles and the box being drawn, in image-display coordinates.
 /// Handles and strokes are divided by `zoom` so they keep the same size on screen.
+/// Neighbouring boxes take different colours (as on the result screen) so their edges can be told
+/// apart; the selected box is drawn thick on top with grips on its corners and sides.
 struct BoxEditCanvas: View {
     @ObservedObject var model: BoxEditModel
     let imageSize: CGSize
     let zoom: CGFloat
 
     var body: some View {
-        GeometryReader { geo in
-            let s = imageSize.width > 0 ? geo.size.width / imageSize.width : 0
+        BoxEditCanvasDrawing(model: model, drag: model.drag, imageSize: imageSize, zoom: zoom)
+            .allowsHitTesting(false)
+    }
+}
+
+private struct BoxEditCanvasDrawing: View {
+    @ObservedObject var model: BoxEditModel
+    @ObservedObject var drag: BoxEditModel.Drag
+    let imageSize: CGSize
+    let zoom: CGFloat
+
+    var body: some View {
+        let editor = model.editor
+        let preview = drag.preview
+        let showGrips = model.tool == .select
+        Canvas { ctx, size in
+            guard let editor, imageSize.width > 0 else { return }
+            let s = size.width / imageSize.width
             let z = max(zoom, 0.01)
-            if let editor = model.editor {
-                ForEach(Array(editor.items.enumerated()), id: \.offset) { index, item in
-                    let rect = displayRect(index: index, item: item)
-                    let isSelected = editor.selected == index
-                    let screenRect = CGRect(x: rect.minX * s, y: rect.minY * s, width: rect.width * s, height: rect.height * s)
-                    Rectangle()
-                        .fill(KotenColor.shu.opacity(isSelected ? 0.28 : (item.needsReread ? 0.18 : 0.07)))
-                        .overlay(
-                            Rectangle().stroke(KotenColor.shu.opacity(isSelected ? 1 : 0.8),
-                                               style: StrokeStyle(lineWidth: (isSelected ? 3 : 1.5) / z,
-                                                                  dash: item.needsReread && !isSelected ? [6 / z, 3 / z] : []))
-                        )
-                        .frame(width: screenRect.width, height: screenRect.height)
-                        .position(x: screenRect.midX, y: screenRect.midY)
-                    if isSelected && model.tool == .select {
-                        ForEach(BoxEditGeometry.Corner.allCases, id: \.self) { corner in
-                            let p = BoxEditGeometry.point(of: corner, in: screenRect)
-                            Circle()
-                                .fill(KotenColor.shuFill)
-                                .overlay(Circle().stroke(Color.white, lineWidth: 2 / z))
-                                .frame(width: 18 / z, height: 18 / z)
-                                .position(p)
-                        }
+            func screen(_ r: CGRect) -> CGRect {
+                CGRect(x: r.minX * s, y: r.minY * s, width: r.width * s, height: r.height * s)
+            }
+            func rect(_ i: Int) -> CGRect {
+                if let p = preview, p.index == i { return p.rect }
+                return editor.items[i].detection.rect
+            }
+            for (i, item) in editor.items.enumerated() where i != editor.selected {
+                let r = screen(rect(i))
+                let color = KotenColor.box(i)
+                ctx.fill(Path(r), with: .color(color.opacity(item.needsReread ? 0.16 : 0.06)))
+                ctx.stroke(Path(r), with: .color(color.opacity(0.9)),
+                           style: StrokeStyle(lineWidth: 1.5 / z, dash: item.needsReread ? [6 / z, 3 / z] : []))
+            }
+            if let sel = editor.selected, editor.items.indices.contains(sel) {
+                let r = screen(rect(sel))
+                let color = KotenColor.box(sel)
+                ctx.fill(Path(r), with: .color(color.opacity(0.22)))
+                // White under-stroke keeps the selected edge visible on dark ink and on a same-colour neighbour.
+                ctx.stroke(Path(r), with: .color(.white.opacity(0.9)), lineWidth: 5 / z)
+                ctx.stroke(Path(r), with: .color(color), lineWidth: 3 / z)
+                if showGrips {
+                    for h in BoxEditGeometry.Handle.sides {
+                        let p = BoxEditGeometry.point(of: h, in: r)
+                        let horizontal = (h == .top || h == .bottom)
+                        let long: CGFloat = 22 / z, short: CGFloat = 7 / z
+                        let g = CGRect(x: p.x - (horizontal ? long : short) / 2, y: p.y - (horizontal ? short : long) / 2,
+                                       width: horizontal ? long : short, height: horizontal ? short : long)
+                        let pill = Path(roundedRect: g, cornerRadius: short / 2)
+                        ctx.fill(pill, with: .color(color))
+                        ctx.stroke(pill, with: .color(.white), lineWidth: 1.5 / z)
+                    }
+                    for h in BoxEditGeometry.Handle.corners {
+                        let p = BoxEditGeometry.point(of: h, in: r)
+                        let d: CGFloat = 16 / z
+                        let dot = Path(ellipseIn: CGRect(x: p.x - d / 2, y: p.y - d / 2, width: d, height: d))
+                        ctx.fill(dot, with: .color(color))
+                        ctx.stroke(dot, with: .color(.white), lineWidth: 2 / z)
                     }
                 }
-                if let p = model.preview, p.index == nil {
-                    Rectangle()
-                        .fill(KotenColor.shu.opacity(0.2))
-                        .overlay(Rectangle().stroke(KotenColor.shu, style: StrokeStyle(lineWidth: 2 / z, dash: [6 / z, 3 / z])))
-                        .frame(width: p.rect.width * s, height: p.rect.height * s)
-                        .position(x: p.rect.midX * s, y: p.rect.midY * s)
-                }
+            }
+            if let p = preview, p.index == nil {
+                let r = screen(p.rect)
+                let color = KotenColor.box(editor.items.count)
+                ctx.fill(Path(r), with: .color(color.opacity(0.2)))
+                ctx.stroke(Path(r), with: .color(color), style: StrokeStyle(lineWidth: 2 / z, dash: [6 / z, 3 / z]))
             }
         }
-        .allowsHitTesting(false)
-    }
-
-    private func displayRect(index: Int, item: BoxEditor.Item) -> CGRect {
-        if let p = model.preview, p.index == index { return p.rect }
-        return item.detection.rect
     }
 }
 
@@ -139,11 +177,19 @@ struct BoxEditGestureLayer: View {
     @Binding var steadyOffset: CGSize
     let isPinching: Bool
     var onHaptic: () -> Void = {}
+    /// Two quick taps with the Select tool zoom in at that point, or back out (as on the result screen).
+    var onDoubleTap: (CGPoint) -> Void = { _ in }
+
+    /// Where and when the last still touch ended, to recognise a double tap.
+    @State private var lastTap: (time: Date, location: CGPoint)?
+    private let doubleTapInterval: TimeInterval = 0.35
+    private let doubleTapReach: CGFloat = 30
 
     private enum Kind {
         case move(Int, CGRect)
-        case resize(Int, BoxEditGeometry.Corner, CGRect)
+        case resize(Int, BoxEditGeometry.Handle, CGRect)
         case draw(CGPoint)
+        /// Pans when zoomed; a touch that does not move selects the box under it (or clears the selection).
         case pan
         case tap
         case cancelled
@@ -154,8 +200,6 @@ struct BoxEditGestureLayer: View {
 
     /// A finger is at least this many points from where it landed before a tap becomes a drag.
     private let tapSlop: CGFloat = 6
-    /// Half of the 44 pt touch target around a corner handle.
-    private let handleRadius: CGFloat = 22
 
     var body: some View {
         GeometryReader { geo in
@@ -171,11 +215,12 @@ struct BoxEditGestureLayer: View {
         .allowsHitTesting(!model.isReading)
         .accessibilityElement()
         .accessibilityLabel(Text("box_edit_area"))
+        .accessibilityValue(Text(verbatim: zoom > 1 ? "zoomed" : "fit"))
         .accessibilityIdentifier("box_edit_stage")
     }
 
     private func changed(_ value: DragGesture.Value, stage: BoxEditGeometry.Stage) {
-        guard var editor = model.editor else { return }
+        guard let editor = model.editor else { return }
         if isPinching {
             kind = .cancelled
             model.preview = nil
@@ -183,8 +228,7 @@ struct BoxEditGestureLayer: View {
         }
         if kind == nil {
             moved = false
-            kind = begin(at: value.startLocation, stage: stage, editor: &editor)
-            model.editor = editor
+            kind = begin(at: value.startLocation, stage: stage, editor: editor)
         }
         guard let kind else { return }
         let distance = hypot(value.translation.width, value.translation.height)
@@ -215,11 +259,23 @@ struct BoxEditGestureLayer: View {
     private func ended(_ value: DragGesture.Value, stage: BoxEditGeometry.Stage) {
         defer { kind = nil; moved = false; model.preview = nil }
         guard var editor = model.editor, let kind else { return }
+        if isDoubleTap(kind, at: value.location) {
+            onDoubleTap(value.location)
+            return
+        }
         switch kind {
         case .move(let index, _), .resize(let index, _, _):
             if moved, let p = model.preview, p.index == index {
                 editor.setRect(index, p.rect)
                 model.editor = editor
+            } else if !moved {
+                // A grip reaches a little outside the selected box: a tap there means "choose the
+                // neighbour", not "resize". A tap inside the selected box keeps it selected.
+                let point = stage.toImage(value.startLocation)
+                if !(editor.selected.map { editor.items[$0].detection.rect.contains(point) } ?? false) {
+                    editor.selected = BoxEditGeometry.hitBox(at: point, in: editor.rects)
+                    model.editor = editor
+                }
             }
         case .draw(let origin):
             if moved, let r = BoxEditGeometry.drawn(from: origin, to: stage.toImage(value.location), within: editor.bounds) {
@@ -232,7 +288,7 @@ struct BoxEditGestureLayer: View {
         case .pan:
             steadyOffset = offset
             if !moved {
-                editor.selected = nil
+                editor.selected = BoxEditGeometry.hitBox(at: stage.toImage(value.startLocation), in: editor.rects)
                 model.editor = editor
             }
         case .tap:
@@ -243,8 +299,27 @@ struct BoxEditGestureLayer: View {
         }
     }
 
+    /// True for the second of two quick still touches with the Select tool. The first one has
+    /// already selected as usual, so a double tap never delays selection. Other tools are left
+    /// alone so that a double tap cannot split or merge twice.
+    private func isDoubleTap(_ kind: Kind, at location: CGPoint) -> Bool {
+        guard !moved, model.tool == .select else { lastTap = nil; return false }
+        switch kind {
+        case .draw, .cancelled: lastTap = nil; return false
+        case .move, .resize, .pan, .tap: break
+        }
+        let now = Date()
+        if let last = lastTap, now.timeIntervalSince(last.time) < doubleTapInterval,
+           hypot(location.x - last.location.x, location.y - last.location.y) < doubleTapReach {
+            lastTap = nil
+            return true
+        }
+        lastTap = (now, location)
+        return false
+    }
+
     /// Decides what a new touch is going to do.
-    private func begin(at location: CGPoint, stage: BoxEditGeometry.Stage, editor: inout BoxEditor) -> Kind {
+    private func begin(at location: CGPoint, stage: BoxEditGeometry.Stage, editor: BoxEditor) -> Kind {
         let imagePoint = stage.toImage(location)
         switch model.tool {
         case .add:
@@ -252,24 +327,11 @@ struct BoxEditGestureLayer: View {
         case .split, .merge:
             return .tap
         case .select:
-            if let sel = editor.selected, editor.items.indices.contains(sel) {
-                let rect = editor.items[sel].detection.rect
-                let screen = stage.toStage(rect)
-                let radius = min(handleRadius, max(10, min(screen.width, screen.height) / 3))
-                if let corner = BoxEditGeometry.hitCorner(at: location, of: screen, radius: radius) {
-                    return .resize(sel, corner, rect)
-                }
+            switch BoxEditGeometry.grab(at: location, stage: stage, rects: editor.rects, selected: editor.selected) {
+            case .resize(let i, let handle): return .resize(i, handle, editor.items[i].detection.rect)
+            case .move(let i): return .move(i, editor.items[i].detection.rect)
+            case .panOrSelect: return .pan
             }
-            // Prefer the selected box so overlapping neighbours do not steal the drag.
-            if let sel = editor.selected, editor.items.indices.contains(sel),
-               editor.items[sel].detection.rect.contains(imagePoint) {
-                return .move(sel, editor.items[sel].detection.rect)
-            }
-            if let hit = BoxEditGeometry.hitBox(at: imagePoint, in: editor.rects) {
-                editor.selected = hit
-                return .move(hit, editor.items[hit].detection.rect)
-            }
-            return .pan
         }
     }
 
@@ -458,7 +520,7 @@ struct BoxEditControls: View {
 
     private var hint: String {
         switch model.tool {
-        case .select: return String(localized: "box_hint_select", defaultValue: "枠をタップして選び、ドラッグで動かす。角で大きさを変える")
+        case .select: return String(localized: "box_hint_select", defaultValue: "枠をタップして選ぶ。辺や角を引いて大きさを、中を引いて位置を変える")
         case .add: return String(localized: "box_hint_add", defaultValue: "画像をなぞって、新しい枠を描く")
         case .split: return String(localized: "box_hint_split", defaultValue: "分けたい位置をタップ")
         case .merge: return String(localized: "box_hint_merge", defaultValue: "1つ選んでから、つなげる枠をタップ")

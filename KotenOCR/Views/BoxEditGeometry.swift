@@ -7,9 +7,21 @@ enum BoxEditGeometry {
     /// Smallest side of a box, in image pixels.
     static let minSide: CGFloat = 12
 
-    enum Corner: CaseIterable {
+    /// A grip on the selected box: four corners (change width and height) and four sides
+    /// (change only one of them).
+    enum Handle: CaseIterable {
         case topLeft, topRight, bottomLeft, bottomRight
+        case top, bottom, left, right
+
+        static let corners: [Handle] = [.topLeft, .topRight, .bottomLeft, .bottomRight]
+        static let sides: [Handle] = [.top, .bottom, .left, .right]
+
+        var movesMinX: Bool { self == .topLeft || self == .bottomLeft || self == .left }
+        var movesMaxX: Bool { self == .topRight || self == .bottomRight || self == .right }
+        var movesMinY: Bool { self == .topLeft || self == .topRight || self == .top }
+        var movesMaxY: Bool { self == .bottomLeft || self == .bottomRight || self == .bottom }
     }
+    typealias Corner = Handle
 
     static func imageBounds(_ size: CGSize) -> CGRect {
         CGRect(origin: .zero, size: size)
@@ -20,21 +32,22 @@ enum BoxEditGeometry {
         CropGeometry.moved(start, by: translation, within: bounds)
     }
 
-    /// Drags one corner of `start` by the cumulative `translation`. The opposite corner stays fixed,
-    /// the dragged corner is kept inside `bounds`, and the box never gets smaller than `minSide`.
-    static func resized(_ start: CGRect, corner: Corner, by translation: CGSize,
+    /// Drags one handle of `start` by the cumulative `translation`. The opposite side stays fixed,
+    /// a side handle changes only width or height, the dragged edge is kept inside `bounds`,
+    /// and the box never gets smaller than `minSide`.
+    static func resized(_ start: CGRect, corner handle: Handle, by translation: CGSize,
                         within bounds: CGRect, minSide: CGFloat = BoxEditGeometry.minSide) -> CGRect {
         var minX = start.minX, maxX = start.maxX, minY = start.minY, maxY = start.maxY
-        switch corner {
-        case .topLeft, .bottomLeft:
+        if handle.movesMinX {
             minX = min(max(start.minX + translation.width, bounds.minX), start.maxX - minSide)
-        case .topRight, .bottomRight:
+        }
+        if handle.movesMaxX {
             maxX = max(min(start.maxX + translation.width, bounds.maxX), start.minX + minSide)
         }
-        switch corner {
-        case .topLeft, .topRight:
+        if handle.movesMinY {
             minY = min(max(start.minY + translation.height, bounds.minY), start.maxY - minSide)
-        case .bottomLeft, .bottomRight:
+        }
+        if handle.movesMaxY {
             maxY = max(min(start.maxY + translation.height, bounds.maxY), start.minY + minSide)
         }
         return CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
@@ -79,21 +92,83 @@ enum BoxEditGeometry {
             .offset
     }
 
-    static func point(of corner: Corner, in rect: CGRect) -> CGPoint {
-        switch corner {
+    static func point(of handle: Handle, in rect: CGRect) -> CGPoint {
+        switch handle {
         case .topLeft: return CGPoint(x: rect.minX, y: rect.minY)
         case .topRight: return CGPoint(x: rect.maxX, y: rect.minY)
         case .bottomLeft: return CGPoint(x: rect.minX, y: rect.maxY)
         case .bottomRight: return CGPoint(x: rect.maxX, y: rect.maxY)
+        case .top: return CGPoint(x: rect.midX, y: rect.minY)
+        case .bottom: return CGPoint(x: rect.midX, y: rect.maxY)
+        case .left: return CGPoint(x: rect.minX, y: rect.midY)
+        case .right: return CGPoint(x: rect.maxX, y: rect.midY)
         }
     }
 
     /// The corner of `rect` nearest to `point` that lies within `radius`, or nil.
-    static func hitCorner(at point: CGPoint, of rect: CGRect, radius: CGFloat) -> Corner? {
-        Corner.allCases
+    static func hitCorner(at point: CGPoint, of rect: CGRect, radius: CGFloat) -> Handle? {
+        Handle.corners
             .map { ($0, hypot(self.point(of: $0, in: rect).x - point.x, self.point(of: $0, in: rect).y - point.y)) }
             .filter { $0.1 <= radius }
             .min { $0.1 < $1.1 }?.0
+    }
+
+    /// What a finger at `point` grabs on the selected box `rect` (screen points).
+    /// A corner counts within `cornerRadius` of it; a side counts anywhere along its length, from
+    /// `outside` points beyond it to a band inside it (at most a third of the box, so a thin line
+    /// can still be moved from its middle). The nearest grip wins, so on a thin line the top
+    /// side is not hidden by the two top corners. Returns nil for "move" or "missed".
+    static func hitHandle(at point: CGPoint, of rect: CGRect,
+                          cornerRadius: CGFloat = 22, outside: CGFloat = 18, inside: CGFloat = 14) -> Handle? {
+        var candidates: [(Handle, CGFloat)] = []
+        for c in Handle.corners {
+            let p = self.point(of: c, in: rect)
+            let d = hypot(p.x - point.x, p.y - point.y)
+            // A corner is preferred over a side the finger is equally close to.
+            if d <= cornerRadius { candidates.append((c, d - 6)) }
+        }
+        let inX = min(inside, rect.width / 3), inY = min(inside, rect.height / 3)
+        let withinRows = point.y >= rect.minY - outside && point.y <= rect.maxY + outside
+        let withinCols = point.x >= rect.minX - outside && point.x <= rect.maxX + outside
+        if withinRows {
+            if point.x >= rect.minX - outside && point.x <= rect.minX + inX { candidates.append((.left, abs(point.x - rect.minX))) }
+            if point.x <= rect.maxX + outside && point.x >= rect.maxX - inX { candidates.append((.right, abs(point.x - rect.maxX))) }
+        }
+        if withinCols {
+            if point.y >= rect.minY - outside && point.y <= rect.minY + inY { candidates.append((.top, abs(point.y - rect.minY))) }
+            if point.y <= rect.maxY + outside && point.y >= rect.maxY - inY { candidates.append((.bottom, abs(point.y - rect.maxY))) }
+        }
+        return candidates.min { $0.1 < $1.1 }?.0
+    }
+
+    /// What a touch that starts at `location` (stage points) does with the Select tool.
+    enum Grab: Equatable {
+        case resize(Int, Handle)
+        case move(Int)
+        /// Pan the page if zoomed; when the finger lifts without moving, select the box under it.
+        case panOrSelect
+    }
+
+    /// Decides what a touch grabs. Only the selected box can be resized or moved; touching any
+    /// other box never moves it (it is selected when the finger lifts), so brushing a neighbour
+    /// on a crowded page cannot drag it away.
+    static func grab(at location: CGPoint, stage: Stage, rects: [CGRect], selected: Int?) -> Grab {
+        guard let sel = selected, rects.indices.contains(sel) else { return .panOrSelect }
+        let rect = rects[sel]
+        let stageRect = stage.toStage(rect)
+        // Outside the selected box but inside a neighbour, a side reaches only a third of the
+        // neighbour into it, so a finger well inside the neighbour selects it instead of
+        // resizing the selected line (on a crowded page the 18 pt reach covers the whole neighbour).
+        var outside: CGFloat = 18
+        if !stageRect.contains(location) {
+            for (i, r) in rects.enumerated() where i != sel {
+                let other = stage.toStage(r)
+                if other.contains(location) { outside = min(outside, min(other.width, other.height) / 3) }
+            }
+        }
+        if let handle = hitHandle(at: location, of: stageRect, outside: outside) { return .resize(sel, handle) }
+        if rect.contains(stage.toImage(location)) { return .move(sel) }
+        return .panOrSelect
     }
 
     /// Maps between the screen "stage" (the unscaled area that holds the zoomed image)

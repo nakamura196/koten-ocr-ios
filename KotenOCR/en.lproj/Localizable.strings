@@ -229,7 +229,7 @@
 "box_tool_add" = "Add";
 "box_tool_split" = "Split";
 "box_tool_merge" = "Merge";
-"box_hint_select" = "Tap a box to select it, drag to move, drag a corner to resize";
+"box_hint_select" = "Tap a box to select it. Drag a side or corner to resize, drag inside to move";
 "box_hint_add" = "Drag on the image to draw a new box";
 "box_hint_split" = "Tap where to cut the box";
 "box_hint_merge" = "Select one box, then tap the box to join";

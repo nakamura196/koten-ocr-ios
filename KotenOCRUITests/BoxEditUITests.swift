@@ -106,4 +106,31 @@ final class BoxEditUITests: XCTestCase {
         app.buttons["box_edit_cancel"].tap()
         XCTAssertTrue(app.buttons["box_edit_enter"].waitForExistence(timeout: 5))
     }
+    /// Selects a line, drags inside it and pinches the page; screenshots show the colours,
+    /// the side and corner grips and the zoomed page (BOX_EDIT_SHOT_DIR).
+    func testSelectDragAndZoom() throws {
+        enterEditMode()
+        let stage = element("box_edit_stage")
+        XCTAssertTrue(stage.waitForExistence(timeout: 5))
+        shot("10_colours")
+        element("detection_row_0").tap()
+        XCTAssertTrue(app.buttons["box_edit_delete"].isEnabled)
+        shot("11_selected_grips")
+        XCTAssertEqual(stage.value as? String, "fit")
+        stage.pinch(withScale: 2.5, velocity: 2)
+        XCTAssertEqual(stage.value as? String, "zoomed")
+        shot("12_zoomed")
+        // Double tap while editing goes back to the whole page (it used to only select a line).
+        stage.doubleTap()
+        sleep(1)   // zoom animates for 0.3 s
+        XCTAssertEqual(stage.value as? String, "fit", "double tap should return to the whole page")
+        shot("13_zoom_reset")
+        // And zooms in again from the whole page.
+        stage.doubleTap()
+        sleep(1)
+        XCTAssertEqual(stage.value as? String, "zoomed")
+        shot("14_double_tap_zoom")
+        app.buttons["box_edit_cancel"].tap()
+        XCTAssertTrue(app.buttons["box_edit_enter"].waitForExistence(timeout: 5))
+    }
 }
