@@ -24,7 +24,7 @@ Google Play で一般に公開するには、12 人以上の方に、14 日間�
 ### テストに参加する
 {: #tester }
 
-1. Google グループ [KotenOCR Android テスター](https://groups.google.com/g/kotenocr-android-testers) を開き、「グループに参加」を押します。
+1. Google グループ [KotenOCR Android Testers](https://groups.google.com/g/kotenocr-android-testers) を開き、「グループに参加」を押します。
    Android の端末で使っている Google アカウントで参加してください。
 2. [Google Play のテスト参加ページ](https://play.google.com/apps/testing/com.nakamura196.koten_ocr) を開き、「テスターになる」を押します。
 3. [Google Play の KotenOCR](https://play.google.com/store/apps/details?id=com.nakamura196.koten_ocr) からインストールします。
