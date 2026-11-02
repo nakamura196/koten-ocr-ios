@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "KotenOCR (iOS)"
+abstract: "An iOS app that reads classical Japanese cursive script (kuzushiji) and modern printed text on-device, using the NDL Koten OCR-Lite and NDLOCR-Lite models."
+type: software
+authors:
+  - family-names: Nakamura
+    given-names: Satoru
+    affiliation: "The University of Tokyo"
+    orcid: "https://orcid.org/0000-0001-8245-7925"
+repository-code: "https://github.com/nakamura196/koten-ocr-ios"
+url: "https://apps.apple.com/jp/app/kotenocr/id6760045646"
+license: MIT
+keywords:
+  - OCR
+  - kuzushiji
+  - classical Japanese
+  - iOS
+  - on-device

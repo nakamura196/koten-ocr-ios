@@ -1,49 +1,49 @@
 # KotenOCR
 
-古典籍・くずし字と近代活字をAIで読み取るiOS OCRアプリ。
-An iOS OCR app that reads classical Japanese cursive script (kuzushiji) and modern printed text using AI.
+**English** | [日本語](README.ja.md)
 
-国立国会図書館の [NDL古典籍OCR-Lite](https://github.com/ndl-lab/ndlkotenocr-lite) および [NDLOCR-Lite](https://github.com/ndl-lab/ndlocr-lite) モデルを搭載し、すべての処理をデバイス上で完結します。インターネット接続は不要です。
-Powered by the National Diet Library's NDL Koten OCR-Lite and NDLOCR-Lite models. All processing runs entirely on-device — no internet connection required.
+An iOS OCR app that reads classical Japanese cursive script (kuzushiji) and modern printed text using AI.
+It runs the National Diet Library's NDL Koten OCR-Lite and NDLOCR-Lite models. All processing runs entirely on-device, so no internet connection is required.
 
 [![App Store](https://img.shields.io/badge/App%20Store-Download-blue?logo=apple&logoColor=white)](https://apps.apple.com/jp/app/kotenocr/id6760045646)
 
-### デモ / Demo
+An Android version is available at [nakamura196/koten-ocr-android](https://github.com/nakamura196/koten-ocr-android).
+
+### Demo
 
 ![Demo](screenshots/demo_v130.gif)
 
 ![App Store Screenshots](screenshots/marketing_combined.png)
 
-## 機能 / Features
+## Features
 
-- **2つのOCRモード / Dual OCR modes** — 古典籍（くずし字）と近代（活字・手書き）を切り替えて使用 / Switch between Classical (kuzushiji) and Modern (printed/handwritten) modes
-- **カメラ撮影 / フォトライブラリ / Camera & Photo Library** — 撮影または選択してOCR実行 / Capture or select images for OCR
-- **認識結果の閲覧・編集 / View & Edit Results** — 検出領域のボックス表示、テキスト手動修正 / Bounding box overlay, manual text correction
-- **エクスポート / Export** — テキスト共有 / TXT / PDF / Share text, TXT, or PDF
-- **スキャン履歴 / Scan History** — OCR結果を自動保存 / Auto-save OCR results
-- **現代語訳 / Modern Translation** — 古文を現代語に翻訳 / Translate classical Japanese to modern Japanese
-  - ローカルAI（Apple Foundation Models, iOS 26+） / Local AI (offline)
-  - クラウドAPI（OpenAI互換） / Cloud API (OpenAI-compatible)
-- **多言語対応 / Multilingual** — 日本語 / English
-- **応援（Tip Jar）** — StoreKit 2によるアプリ内課金 / In-app tips via StoreKit 2
+- **Dual OCR modes**: switch between Classical (kuzushiji) and Modern (printed/handwritten) modes
+- **Camera and Photo Library**: capture or select images for OCR
+- **View and edit results**: bounding box overlay and manual text correction
+- **Export**: share text, TXT, or PDF
+- **Scan history**: OCR results are saved automatically
+- **Modern translation**: translate classical Japanese into modern Japanese
+  - Local AI (offline; Apple Foundation Models, iOS 26+)
+  - Cloud API (OpenAI-compatible)
+- **Multilingual UI**: Japanese / English
+- **Tip Jar**: in-app tips via StoreKit 2
 
-## OCRモード / OCR Modes
+## OCR modes
 
-| モード / Mode | 対象 / Target | 検出 / Detection | 認識 / Recognition |
-|--------|------|-----------|-----------|
-| 古典籍 / Classical | くずし字 / Kuzushiji | RTMDet-S | PARSeq (1 model) |
-| 近代 / Modern | 活字・手書き / Printed & handwritten | DEIMv2-S | PARSeq cascade (3 models) |
+| Mode | Target | Detection | Recognition |
+|------|--------|-----------|-------------|
+| Classical | Kuzushiji | RTMDet-S | PARSeq (1 model) |
+| Modern | Printed and handwritten text | DEIMv2-S | PARSeq cascade (3 models) |
 
-認識処理は並列化されており、近代モードでは最大6.7倍の高速化を実現しています。
-Recognition is parallelized — up to 6.7x speedup in Modern mode.
+Recognition is parallelized, giving up to 6.7x speedup in Modern mode.
 
-## 要件 / Requirements
+## Requirements
 
 - iOS 16.0+
 - Xcode 15.0+
 - Swift 5.9
 
-## セットアップ / Setup
+## Setup
 
 ```bash
 git clone https://github.com/nakamura196/koten-ocr-ios.git
@@ -58,28 +58,27 @@ xcodegen generate
 open KotenOCR.xcodeproj
 ```
 
-### ONNXモデル / ONNX Models
+### ONNX models
 
-`KotenOCR/Models/` に配置（`.gitignore` で除外済み、`setup.sh` で自動ダウンロード）。
-Placed in `KotenOCR/Models/` (gitignored, auto-downloaded by `setup.sh`).
+Placed in `KotenOCR/Models/` (gitignored, downloaded automatically by `setup.sh`).
 
-#### 古典籍 / Classical (NDL Koten OCR-Lite)
+#### Classical (NDL Koten OCR-Lite)
 
-| モデル / Model | ファイル / File | サイズ / Size |
-|--------|-----------|--------|
-| テキスト検出 / Text detection (RTMDet-S) | `rtmdet-s-1280x1280.onnx` | ~40MB |
-| 文字認識 / Character recognition (PARSeq) | `parseq-ndl-32x384-tiny-10.onnx` | ~38MB |
+| Model | File | Size |
+|-------|------|------|
+| Text detection (RTMDet-S) | `rtmdet-s-1280x1280.onnx` | ~40MB |
+| Character recognition (PARSeq) | `parseq-ndl-32x384-tiny-10.onnx` | ~38MB |
 
-#### 近代 / Modern (NDLOCR-Lite)
+#### Modern (NDLOCR-Lite)
 
-| モデル / Model | ファイル / File | サイズ / Size |
-|--------|-----------|--------|
-| レイアウト検出 / Layout detection (DEIMv2-S) | `deim-s-1024x1024.onnx` | ~38MB |
-| 文字認識 30文字 / Recognition 30-char (PARSeq) | `parseq-ndl-16x256-30-...onnx` | ~34MB |
-| 文字認識 50文字 / Recognition 50-char (PARSeq) | `parseq-ndl-16x384-50-...onnx` | ~35MB |
-| 文字認識 100文字 / Recognition 100-char (PARSeq) | `parseq-ndl-16x768-100-...onnx` | ~39MB |
+| Model | File | Size |
+|-------|------|------|
+| Layout detection (DEIMv2-S) | `deim-s-1024x1024.onnx` | ~38MB |
+| Recognition, 30-char (PARSeq) | `parseq-ndl-16x256-30-...onnx` | ~34MB |
+| Recognition, 50-char (PARSeq) | `parseq-ndl-16x384-50-...onnx` | ~35MB |
+| Recognition, 100-char (PARSeq) | `parseq-ndl-16x768-100-...onnx` | ~39MB |
 
-## ビルド / Build
+## Build
 
 ```bash
 # Debug build
@@ -92,22 +91,33 @@ xcodebuild build \
 ./scripts/archive.sh
 ```
 
-## ライセンス / License
+## License
 
-このプロジェクトは [MIT License](LICENSE) のもとで公開されています。
 This project is released under the [MIT License](LICENSE).
 
-### OCRモデル / OCR Models
-- **NDL古典籍OCR-Lite** — [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) (National Diet Library / 国立国会図書館)
-- **NDLOCR-Lite** — [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/) (National Diet Library / 国立国会図書館)
+### OCR models (third-party)
 
-### 依存ライブラリ / Dependencies
-- **ONNX Runtime** — [MIT License](https://github.com/microsoft/onnxruntime/blob/main/LICENSE) (Microsoft)
+The models are not part of this repository's MIT license. They are downloaded by `setup.sh` from the upstream repositories and remain under their own licenses.
 
-### アイコンのフォント・画像 / Icon fonts and images
-- アプリアイコンの「典」は **Noto Serif JP**、背景の仮名は **Yuji Syuku** を使い、画像に変換して収録しています。どちらも [SIL Open Font License 1.1](https://openfontlicense.org)。フォントファイル自体はアプリに含みません（生成手順: `scripts/render_app_icon.py`）。
-  The 典 in the app icon uses **Noto Serif JP** and the background kana use **Yuji Syuku**, both under the [SIL Open Font License 1.1](https://openfontlicense.org). They are rendered into the icon images; the font files are not shipped (see `scripts/render_app_icon.py`).
-- 初回説明の写本画像は、東京大学総合図書館所蔵『源氏物語』（テスト用サンプルと同じ写本）の画像 01_0006 の右頁を切り出したものです。表示する枠と文字は、この画像にアプリの古典籍OCRを実際にかけた結果です（`scripts/make_onboarding_sample.py` と `KotenOCRTests/OnboardingSampleGenerator.swift` で再生成）。画像はパブリックドメインで、[総合図書館の利用条件](https://www.lib.u-tokyo.ac.jp/ja/library/general/reuse)に従い、アプリ内に「『源氏物語』（東京大学総合図書館所蔵）を改変」と表示しています。
-  The manuscript page in the first-run introduction is the right-hand page of image 01_0006 of the same Tale of Genji manuscript (University of Tokyo General Library) as the test sample. Its boxes and text are a real result of the app's Koten OCR, regenerated with `scripts/make_onboarding_sample.py` and `KotenOCRTests/OnboardingSampleGenerator.swift`. The image is in the public domain; following the library's [reuse terms](https://www.lib.u-tokyo.ac.jp/ja/library/general/reuse), the app shows "Image courtesy of the University of Tokyo General Library - The Tale of Genji / transformed".
-- ホーム画面の「サンプルの頁で試す」の 3 枚は、『竹取物語』（国立国会図書館デジタルコレクション 1287221、コマ 2 を切り出し）、『国立国会図書館スタッフ・マニュアル E-2』（同 2531162、コマ 24。[NDLOCR-Lite](https://github.com/ndl-lab/ndlocr-lite) 同梱の画像）、上と同じ東京大学総合図書館所蔵『源氏物語』01_0004 の左頁です。アプリ内では出典を「国立国会図書館デジタルコレクション」「『源氏物語』（東京大学総合図書館所蔵）を改変」と表示しています。
-  The three pages behind "Try a sample page" on the home screen are Taketori Monogatari (NDL Digital Collections 1287221, frame 2, cropped), the NDL Staff Manual E-2 (NDL Digital Collections 2531162, frame 24, as bundled with NDLOCR-Lite) and the left-hand page of image 01_0004 of the same Tale of Genji manuscript. The app credits them as "National Diet Library Digital Collections" and "Image courtesy of the University of Tokyo General Library / transformed".
+- **NDL Koten OCR-Lite** ([ndlkotenocr-lite](https://github.com/ndl-lab/ndlkotenocr-lite)): [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/), National Diet Library, Japan
+- **NDLOCR-Lite** ([ndlocr-lite](https://github.com/ndl-lab/ndlocr-lite)): [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/), National Diet Library, Japan
+
+### Dependencies
+
+- **ONNX Runtime**: [MIT License](https://github.com/microsoft/onnxruntime/blob/main/LICENSE) (Microsoft)
+
+### Icon fonts and images
+
+- The 典 in the app icon uses **Noto Serif JP** and the background kana use **Yuji Syuku**, both under the [SIL Open Font License 1.1](https://openfontlicense.org). They are rendered into the icon images; the font files are not shipped (see `scripts/render_app_icon.py`).
+- The manuscript page in the first-run introduction is the right-hand page of image 01_0006 of the Tale of Genji manuscript held by the University of Tokyo General Library (the same manuscript as the test sample). Its boxes and text are a real result of the app's Koten OCR, regenerated with `scripts/make_onboarding_sample.py` and `KotenOCRTests/OnboardingSampleGenerator.swift`. The image is in the public domain; following the library's [reuse terms](https://www.lib.u-tokyo.ac.jp/ja/library/general/reuse), the app shows "Image courtesy of the University of Tokyo General Library - The Tale of Genji / transformed".
+- The three pages behind "Try a sample page" on the home screen are Taketori Monogatari (NDL Digital Collections 1287221, frame 2, cropped), the NDL Staff Manual E-2 (NDL Digital Collections 2531162, frame 24, as bundled with NDLOCR-Lite) and the left-hand page of image 01_0004 of the same Tale of Genji manuscript. The app credits them as "National Diet Library Digital Collections" and "Image courtesy of the University of Tokyo General Library / transformed".
+
+## Citation
+
+If you use KotenOCR in your work, please cite it using [CITATION.cff](CITATION.cff) (GitHub shows a "Cite this repository" button). Please also cite the NDL models listed above.
+
+## Author
+
+Satoru Nakamura (The University of Tokyo)
+
+Support: [GitHub Sponsors](https://github.com/sponsors/nakamura196) / [Ko-fi](https://ko-fi.com/nakamura196) / [Buy Me a Coffee](https://buymeacoffee.com/nakamura196)
