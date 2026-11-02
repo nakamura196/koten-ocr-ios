@@ -45,7 +45,10 @@ https://github.com/nakamura196/guide-theme
   {%- assign gt_desc = page.description | default: page.lead | default: site.description %}
   {%- if gt_desc %}
   <meta name="description" content="{{ gt_desc | strip_html | strip_newlines | escape }}">
+  {%- if page.noindex %}<meta name="robots" content="noindex">{% endif %}
   {%- endif %}
+  <link rel="icon" href="/favicon.ico?v=2.1">
+  <link rel="apple-touch-icon" href="/assets/icon.png">
   {%- comment -%}
     共有したときの表示（OGP）。画像はページの image、無ければ _config.yml の
     guide_theme.image。URL は絶対にする（SNS は相対 URL を読まない）。
