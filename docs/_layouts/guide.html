@@ -18,9 +18,9 @@ https://github.com/nakamura196/guide-theme
   nav: [{title, url}], alternate: {title, url}, quick_links: [{title, text, url}],
   footer
 {%- endcomment -%}
-{%- assign gt_version = "0.1.2" -%}
-{%- assign gt_css_sri = "sha384-P5EFoeFY/25UFdIe0C0Fcn/jRctJWRCiH+LBvwj8x5FaLigp2pXNFKWJm8Qx2VsK" -%}
-{%- assign gt_js_sri = "sha384-5mfkdeJ+ArSRDFcM0c2YuKU1qB2EWY4TXDzm9oOO/npgFRwLwNcRusP7iEG6d1cL" -%}
+{%- assign gt_version = "0.1.4" -%}
+{%- assign gt_css_sri = "sha384-fiBds4769ICnZKGcdr+3qDBh3Mrg4SpCrvDo4bV8QmE++m/pV/BXkQQ9KfeILcgK" -%}
+{%- assign gt_js_sri = "sha384-gYdcEz2CMdEEBKlyCU3Y5xQvg1DR8SKY4HYm3BmUSvkvLaAZOlycitPaIoFMys0R" -%}
 {%- assign gt = site.guide_theme -%}
 {%- if gt.assets -%}
   {%- assign gt_base = gt.assets | relative_url -%}
@@ -144,8 +144,12 @@ https://github.com/nakamura196/guide-theme
     </div>
   </div>
 
-  <div class="gt-body">
+  {%- comment -%} 目次は大見出し（##）から作る。大見出しが無いページ、または toc: false のページは左の欄を作らない。{%- endcomment -%}
+  {%- if page.toc != false and content contains "<h2" -%}{%- assign gt_has_toc = true -%}{%- else -%}{%- assign gt_has_toc = false -%}{%- endif %}
+  <div class="gt-body{% unless gt_has_toc %} gt-body-wide{% endunless %}">
+    {%- if gt_has_toc %}
     <aside class="gt-toc"></aside>
+    {%- endif %}
     <main class="gt-content" id="gt-main">
 {{ content }}
     </main>
