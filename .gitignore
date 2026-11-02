@@ -34,3 +34,21 @@ KotenOCR/Models/*.onnx
 # 紹介サイトを手元で組み立てた結果
 _site/
 .jekyll-cache/
+
+# env / secret files
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.mobileprovision
+id_rsa
+id_ed25519
+*.kdbx
+credentials.json
+service-account*.json
+gha-creds-*.json
+.npmrc
+.vscode/settings.json
+.idea/
