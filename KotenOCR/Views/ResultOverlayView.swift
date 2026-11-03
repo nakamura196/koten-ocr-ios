@@ -11,6 +11,8 @@ struct ResultOverlayView: View {
     var playCompletionStamp: Binding<Bool> = .constant(false)
     /// While editing boxes, the current number of lines (nil when not editing). Lets the header count follow edits.
     var editingLineCount: Binding<Int?> = .constant(nil)
+    /// True while boxes are being edited, so ContentView can hide its header and give the page the room.
+    var isEditingBoxes: Binding<Bool> = .constant(false)
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @EnvironmentObject private var ocrEngine: OCREngine
     @StateObject private var edit = BoxEditModel()
@@ -18,11 +20,14 @@ struct ResultOverlayView: View {
     @State private var showBoxes = true
     @State private var showCopied = false
     @State private var showShareSheet = false
+    @State private var showConfidence = false
     @State private var zoom: CGFloat = 1.0
     @State private var steadyZoom: CGFloat = 1.0
     @State private var offset: CGSize = .zero
     @State private var steadyOffset: CGSize = .zero
     @State private var imageContainerSize: CGSize = .zero
+    /// Height of the whole result area; the page is capped at a share of it so the text gets room.
+    @State private var resultAreaHeight: CGFloat = 0
     @State private var lastTouchLocation: CGPoint = .zero
     @State private var isPinching: Bool = false
 
@@ -184,6 +189,8 @@ struct ResultOverlayView: View {
             }
             .clipped()
             .overlay(alignment: .topTrailing) { completionStamp }
+            // Outside box editing, keep the page to about 40% so the text below gets the room.
+            .frame(maxHeight: (edit.isActive || resultAreaHeight == 0) ? .infinity : resultAreaHeight * 0.4)
             .padding(6)
             .background(KotenColor.mount)
             .overlay(RoundedRectangle(cornerRadius: 4).stroke(KotenColor.rule, lineWidth: 1))
@@ -223,8 +230,11 @@ struct ResultOverlayView: View {
                         }
                     }
             )
-            // Pinch zoom anchored at touch location
-            .highPriorityGesture(
+            // Pinch zoom anchored at touch location.
+            // Simultaneous, not high priority: a high-priority pinch here made SwiftUI hold back every
+            // update of the box-editing drag until the finger lifted, so on an iPhone the box only
+            // jumped into place at the end (2.1.1). Pinch and drag already stay apart via `isPinching`.
+            .simultaneousGesture(
                 MagnificationGesture()
                     .onChanged { value in
                         isPinching = true
@@ -250,71 +260,11 @@ struct ResultOverlayView: View {
                     }
             )
 
-            // Controls (glass)
+            // While editing boxes: the chosen line's text, then the editing tools. The line list
+            // and the header are gone so the page gets the room (as on Android).
             if edit.isActive {
+                selectedLineBar
                 BoxEditControls(model: edit, onCancel: cancelEditing, onDone: finishEditing, onReread: startReread)
-            } else {
-            HStack(spacing: 10) {
-                Button {
-                    withAnimation(.easeInOut(duration: 0.2)) { showBoxes.toggle() }
-                } label: {
-                    Label(String(localized: "boxes_toggle", defaultValue: "Boxes"),
-                          systemImage: showBoxes ? "rectangle.dashed" : "rectangle.slash")
-                        .font(.subheadline.weight(.semibold))
-                        .padding(.horizontal, 14)
-                        .frame(minHeight: 40)
-                        .opacity(showBoxes ? 1 : 0.6)
-                }
-                .buttonStyle(.kotenGlass)
-                .accessibilityLabel(Text("boxes_toggle"))
-                .accessibilityAddTraits(showBoxes ? [.isSelected] : [])
-
-                Button(action: beginEditing) {
-                    Label(String(localized: "box_edit_enter", defaultValue: "枠を直す"),
-                          systemImage: "rectangle.and.pencil.and.ellipsis")
-                        .font(.subheadline.weight(.semibold))
-                        .padding(.horizontal, 14)
-                        .frame(minHeight: 40)
-                }
-                .buttonStyle(.kotenGlass)
-                .accessibilityLabel(Text("box_edit_enter"))
-                .accessibilityIdentifier("box_edit_enter")
-
-                Spacer()
-
-                // Export menu
-                Menu {
-                    Button {
-                        showShareSheet = true
-                    } label: {
-                        Label(String(localized: "share_text", defaultValue: "Share Text"), systemImage: "text.bubble")
-                    }
-                    Button {
-                        if let url = ExportManager.exportAsTXT(text: combinedText) {
-                            exportFileURL = url
-                            showExportShare = true
-                        }
-                    } label: {
-                        Label(String(localized: "export_txt", defaultValue: "Export TXT"), systemImage: "doc.text")
-                    }
-                    Button {
-                        if let url = ExportManager.exportAsPDF(text: combinedText, image: image) {
-                            exportFileURL = url
-                            showExportShare = true
-                        }
-                    } label: {
-                        Label(String(localized: "export_pdf", defaultValue: "Export PDF"), systemImage: "doc.richtext")
-                    }
-                } label: {
-                    KotenIconLabel(systemName: "square.and.arrow.up")
-                        .foregroundColor(KotenColor.ink)
-                        .kotenGlass(.regular, in: Circle(), interactive: true)
-                }
-                .accessibilityLabel(Text("share"))
-                .accessibilityIdentifier("share_menu")
-            }
-            .padding(.horizontal, 14)
-            .padding(.top, 10)
             }
             Color.clear.frame(height: 0)
                 .sheet(isPresented: $showShareSheet) {
@@ -325,38 +275,47 @@ struct ResultOverlayView: View {
                     ShareSheet(text: url.path, url: url)
                 }
             }
+            .sheet(isPresented: $showConfidence) {
+                confidenceSheet
+            }
 
             if !edit.isActive {
-                confidenceControl
-            }
-
-            // Tab picker
-            if !edit.isActive {
-            Picker("", selection: $selectedTab) {
-                Text(String(localized: "tab_ocr", defaultValue: "OCR結果"))
-                    .tag(ResultTab.ocr)
-                Text(String(localized: "tab_translation", defaultValue: "現代語訳"))
-                    .tag(ResultTab.translation)
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal, 20)
-            .padding(.vertical, 8)
-            .animation(KotenMotion.spring(0.28, reduceMotion: reduceMotion), value: selectedTab)
-            }
-
-            // Tab content
-            ZStack {
-                switch selectedTab {
-                case .ocr:
-                    ocrTextList.transition(.opacity)
-                case .translation:
-                    translationPanel.transition(.opacity)
+                // The one row that stays: which text, copy it, and everything else under "…".
+                HStack(spacing: 8) {
+                    Picker("", selection: $selectedTab) {
+                        Text(String(localized: "tab_ocr", defaultValue: "読み取り"))
+                            .tag(ResultTab.ocr)
+                        Text(String(localized: "tab_translation", defaultValue: "現代語訳"))
+                            .tag(ResultTab.translation)
+                    }
+                    .pickerStyle(.segmented)
+                    .animation(KotenMotion.spring(0.28, reduceMotion: reduceMotion), value: selectedTab)
+                    copyButton
+                    moreMenu
                 }
+                .padding(.horizontal, 14)
+                .padding(.top, 10)
+                .padding(.bottom, 4)
+
+                ZStack {
+                    switch selectedTab {
+                    case .ocr:
+                        ocrTextList.transition(.opacity)
+                    case .translation:
+                        translationPanel.transition(.opacity)
+                    }
+                }
+                .animation(.easeInOut(duration: 0.2), value: selectedTab)
+                .frame(maxHeight: .infinity)
             }
-            .animation(.easeInOut(duration: 0.2), value: selectedTab)
-            .frame(maxHeight: .infinity)
-            .overlay(alignment: .bottomTrailing) { if !edit.isActive { copyButton } }
         }
+        .background(
+            GeometryReader { geo in
+                Color.clear
+                    .onAppear { resultAreaHeight = geo.size.height }
+                    .onChange(of: geo.size.height) { resultAreaHeight = $0 }
+            }
+        )
         .overlay(alignment: .top) {
             if showCopied {
                 copiedToast
@@ -374,6 +333,8 @@ struct ResultOverlayView: View {
         }
         .onChange(of: confidenceThreshold) { _ in syncLineCount() }
         .onChange(of: detections.count) { _ in syncLineCount() }
+        .onChange(of: edit.isActive) { isEditingBoxes.wrappedValue = $0 }
+        .onDisappear { isEditingBoxes.wrappedValue = false }
         .onChange(of: edit.editor?.items.count) { newValue in
             editingLineCount.wrappedValue = newValue
         }
@@ -553,7 +514,7 @@ struct ResultOverlayView: View {
                 }
                 .padding(.horizontal, 8)
                 .padding(.top, 4)
-                .padding(.bottom, 96) // room for the floating Copy button
+                .padding(.bottom, 16)
             }
             .onChange(of: selectedIndex) { newValue in
                 if let idx = newValue {
@@ -634,27 +595,154 @@ struct ResultOverlayView: View {
                     .padding(.vertical, 40)
                 }
             }
-            .padding(.bottom, 96)
+            .padding(.bottom, 16)
             .animation(.easeInOut(duration: 0.2), value: isTranslating)
         }
     }
 
     // MARK: - Copy, toast, stamp
 
-    /// Floating 朱 Copy button. Copies the text of the visible tab.
+    /// 朱 Copy button beside the tabs. Copies the text of the visible tab.
     private var copyButton: some View {
         Button(action: copyCurrentTab) {
             Label(String(localized: "copy", defaultValue: "Copy"), systemImage: "doc.on.doc")
-                .font(.headline.weight(.heavy))
-                .padding(.horizontal, 22)
-                .frame(minHeight: 54)
+                .font(.subheadline.weight(.bold))
+                .lineLimit(1)
+                .padding(.horizontal, 14)
+                .frame(minHeight: 40)
         }
         .buttonStyle(.kotenProminent)
+        .fixedSize()
+        .disabled(selectedTab == .translation && (translatedText ?? "").isEmpty)
         .accessibilityLabel(Text("copy"))
         .accessibilityIdentifier("copy_button")
-        .padding(.trailing, 20)
-        .padding(.bottom, 16)
-        .opacity(selectedTab == .translation && (translatedText ?? "").isEmpty ? 0 : 1)
+    }
+
+    /// Everything that is not reading or copying: boxes on/off, fixing boxes, the confidence filter, export.
+    private var moreMenu: some View {
+        Menu {
+            Button(action: beginEditing) {
+                Label(String(localized: "box_edit_enter", defaultValue: "枠を直す"),
+                      systemImage: "rectangle.and.pencil.and.ellipsis")
+            }
+            .accessibilityIdentifier("box_edit_enter")
+            Toggle(isOn: Binding(get: { showBoxes },
+                                 set: { v in withAnimation(.easeInOut(duration: 0.2)) { showBoxes = v } })) {
+                Label(String(localized: "boxes_show", defaultValue: "枠を表示"), systemImage: "rectangle.dashed")
+            }
+            .accessibilityIdentifier("boxes_toggle")
+            Button { showConfidence = true } label: {
+                Label(hiddenCount > 0
+                      ? String(format: String(localized: "confidence_menu_hidden", defaultValue: "確信度（%d 行を隠し中）"), hiddenCount)
+                      : String(localized: "confidence_menu", defaultValue: "確信度…"),
+                      systemImage: "slider.horizontal.3")
+            }
+            .accessibilityIdentifier("confidence_menu")
+            Divider()
+            Button { showShareSheet = true } label: {
+                Label(String(localized: "share_text", defaultValue: "Share Text"), systemImage: "text.bubble")
+            }
+            Button {
+                if let url = ExportManager.exportAsTXT(text: combinedText) {
+                    exportFileURL = url
+                    showExportShare = true
+                }
+            } label: {
+                Label(String(localized: "export_txt", defaultValue: "Export TXT"), systemImage: "doc.text")
+            }
+            Button {
+                if let url = ExportManager.exportAsPDF(text: combinedText, image: image) {
+                    exportFileURL = url
+                    showExportShare = true
+                }
+            } label: {
+                Label(String(localized: "export_pdf", defaultValue: "Export PDF"), systemImage: "doc.richtext")
+            }
+        } label: {
+            KotenIconLabel(systemName: "ellipsis")
+                .foregroundColor(KotenColor.ink)
+                .kotenGlass(.regular, in: Circle(), interactive: true)
+                // A dot while the confidence filter hides lines, so the hidden state is not forgotten.
+                .overlay(alignment: .topTrailing) {
+                    if hiddenCount > 0 {
+                        Circle().fill(KotenColor.shuFill).frame(width: 10, height: 10)
+                    }
+                }
+        }
+        .accessibilityLabel(Text("result_more"))
+        .accessibilityIdentifier("result_more_menu")
+    }
+
+    /// The confidence slider in a short sheet, so the page with its boxes stays visible above it.
+    private var confidenceSheet: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Spacer()
+                Button(String(localized: "close", defaultValue: "閉じる")) { showConfidence = false }
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(KotenColor.shu)
+                    .accessibilityIdentifier("confidence_done")
+            }
+            .padding(.horizontal, 20)
+            confidenceControl
+            Spacer(minLength: 0)
+        }
+        .padding(.top, 14)
+        .presentationDetents([.height(170)])
+        .presentationDragIndicator(.visible)
+    }
+
+    /// While editing: the chosen line's number and text in one line, with ‹ › to step through lines
+    /// (handy for boxes too small to tap). Replaces the line list, which is hidden while editing.
+    private var selectedLineBar: some View {
+        let items = edit.editor?.detections ?? []
+        let sel = edit.editor?.selected
+        return HStack(spacing: 6) {
+            Button { stepSelection(-1, count: items.count) } label: {
+                Image(systemName: "chevron.left").frame(width: 36, height: 36)
+            }
+            .disabled(items.isEmpty)
+            .accessibilityLabel(Text("box_edit_prev"))
+            .accessibilityIdentifier("box_edit_prev")
+
+            Group {
+                if let sel, items.indices.contains(sel) {
+                    (Text("\(sel + 1)  ").foregroundColor(KotenColor.shu).font(.footnote.weight(.semibold).monospacedDigit())
+                     + Text(items[sel].text.isEmpty ? "---" : items[sel].text).font(.mincho(17, relativeTo: .body)))
+                        .accessibilityLabel(Text("\(sel + 1): \(items[sel].text)"))
+                } else {
+                    Text(String(format: String(localized: "box_edit_line_total", defaultValue: "%d 行"), items.count))
+                        .font(.mincho(15, relativeTo: .body))
+                        .foregroundColor(KotenColor.inkSecondary)
+                }
+            }
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .frame(maxWidth: .infinity)
+            .accessibilityElement(children: .combine)
+            .accessibilityValue(Text("\(items.count)"))   // number of lines, for the UI tests
+            .accessibilityIdentifier("box_edit_selected_line")
+
+            Button { stepSelection(1, count: items.count) } label: {
+                Image(systemName: "chevron.right").frame(width: 36, height: 36)
+            }
+            .disabled(items.isEmpty)
+            .accessibilityLabel(Text("box_edit_next"))
+            .accessibilityIdentifier("box_edit_next")
+        }
+        .font(.body.weight(.semibold))
+        .foregroundColor(KotenColor.ink)
+        .padding(.horizontal, 14)
+        .padding(.top, 8)
+        .disabled(edit.isReading)
+    }
+
+    private func stepSelection(_ step: Int, count: Int) {
+        guard count > 0 else { return }
+        let next: Int
+        if let cur = edit.editor?.selected { next = (cur + step + count) % count }
+        else { next = step > 0 ? 0 : count - 1 }
+        edit.editor?.selected = next
     }
 
     private var copiedToast: some View {

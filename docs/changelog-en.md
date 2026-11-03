@@ -15,8 +15,14 @@ footer: "Contact: nakamura.satoru@mail.u-tokyo.ac.jp"
 > If automatic updates are off, update from the App Store's Updates list.
 {: .point }
 
-Dates are in Japan time. The latest version is 2.1.1 (3 November 2026).
+Dates are in Japan time. The latest version is 2.1.2 (3 November 2026).
 
+
+### 2.1.2 (3 November 2026)
+
+- Cleaner result screen: the controls under the image are now one row, leaving more room for the text
+- The image is shown larger while you fix boxes
+- Boxes now follow your finger without lag when you move them
 
 ### 2.1.1 (3 November 2026)
 

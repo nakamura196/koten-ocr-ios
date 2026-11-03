@@ -49,6 +49,11 @@ final class ConfidenceSliderTests: XCTestCase {
         let back = app.buttons["back_button"]
         XCTAssertTrue(back.waitForExistence(timeout: 300), "the result should appear")
         sleep(5)
+        // The slider sits in a short sheet opened from the "…" menu.
+        app.buttons["result_more_menu"].tap()
+        let item = app.buttons["confidence_menu"]
+        XCTAssertTrue(item.waitForExistence(timeout: 5))
+        item.tap()
         let slider = app.sliders["confidence_slider"]
         XCTAssertTrue(slider.waitForExistence(timeout: 10), "the confidence slider should be on the result screen")
         let value = app.staticTexts["confidence_value"]
@@ -58,6 +63,8 @@ final class ConfidenceSliderTests: XCTestCase {
         slider.adjust(toNormalizedSliderPosition: 0.4)   // about 50%
         sleep(1)
         save("\(prefix)_2_raised")
+        app.buttons["confidence_done"].tap()
+        sleep(1)
     }
 
     private func save(_ name: String) {

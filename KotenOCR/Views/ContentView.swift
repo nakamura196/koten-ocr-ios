@@ -20,6 +20,8 @@ struct ContentView: View {
     @State private var ocrResult: OCRResult?
     @State private var editableDetections: [Detection] = []
     @State private var editingLineCount: Int?
+    /// Box editing hides the header so the page gets the room.
+    @State private var isEditingBoxes = false
     @State private var errorMessage: String?
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var selectedDetectionIndex: Int?
@@ -594,7 +596,8 @@ struct ContentView: View {
 
     private var resultView: some View {
         VStack(spacing: 0) {
-            // Top bar
+            // Top bar (hidden while editing boxes: Cancel / Done take its place)
+            if !isEditingBoxes {
             HStack(spacing: 10) {
                 Button(action: {
                     if cameFromHistory {
@@ -631,6 +634,7 @@ struct ContentView: View {
             .padding(.horizontal, 14)
             .padding(.top, 6)
             .padding(.bottom, 4)
+            }
 
             if let error = errorMessage {
                 errorPanel(error)
@@ -645,7 +649,8 @@ struct ContentView: View {
                     translatedText: $translatedText,
                     onOpenSettings: { showSettings = true },
                     playCompletionStamp: $playCompletionStamp,
-                    editingLineCount: $editingLineCount
+                    editingLineCount: $editingLineCount,
+                    isEditingBoxes: $isEditingBoxes
                 )
             }
         }

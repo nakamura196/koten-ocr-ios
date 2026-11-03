@@ -32,7 +32,11 @@ final class BoxEditUITests: XCTestCase {
         try? s.pngRepresentation.write(to: URL(fileURLWithPath: "\(shotDir)/\(name).png"))
     }
 
+    /// "Fix boxes" now lives in the result screen's "…" menu.
     private func enterEditMode() {
+        let more = app.buttons["result_more_menu"]
+        XCTAssertTrue(more.waitForExistence(timeout: 10))
+        more.tap()
         let enter = app.buttons["box_edit_enter"]
         XCTAssertTrue(enter.waitForExistence(timeout: 10))
         enter.tap()
@@ -48,30 +52,38 @@ final class BoxEditUITests: XCTestCase {
         enterEditMode()
         XCTAssertTrue(app.buttons["box_tool_select"].exists)
         XCTAssertFalse(app.buttons["box_edit_delete"].isEnabled, "nothing selected yet")
+        // While editing, the header and the line list make way for the page.
+        XCTAssertFalse(app.buttons["back_button"].exists, "header is hidden while editing")
+        XCTAssertFalse(row0.exists, "line list is hidden while editing")
+        let bar = element("box_edit_selected_line")
+        XCTAssertTrue(bar.exists)
+        let total = bar.value as? String
         shot("01_edit_mode")
 
-        // Select the first box through its row in the text list.
-        row0.tap()
+        // Select the first box with › ; the bar shows its text like the row did.
+        app.buttons["box_edit_next"].tap()
+        XCTAssertEqual(bar.label, original)
         let delete = app.buttons["box_edit_delete"]
         XCTAssertTrue(delete.isEnabled)
         shot("02_selected")
 
         delete.tap()
-        XCTAssertNotEqual(element("detection_row_0").label, original, "first line should be gone")
+        XCTAssertNotEqual(bar.value as? String, total, "one line fewer")
         let undo = app.buttons["box_edit_undo"]
         XCTAssertTrue(undo.isEnabled)
         shot("03_deleted")
 
         undo.tap()
-        XCTAssertEqual(element("detection_row_0").label, original)
+        XCTAssertEqual(bar.value as? String, total)
         XCTAssertFalse(undo.isEnabled, "undo stack is empty again")
 
         // Delete once more, then Cancel must restore the original.
-        element("detection_row_0").tap()
+        app.buttons["box_edit_next"].tap()
         delete.tap()
-        XCTAssertNotEqual(element("detection_row_0").label, original)
+        XCTAssertNotEqual(bar.value as? String, total)
         app.buttons["box_edit_cancel"].tap()
-        XCTAssertTrue(app.buttons["box_edit_enter"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["result_more_menu"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["back_button"].exists, "header is back")
         XCTAssertEqual(element("detection_row_0").label, original)
     }
 
@@ -104,7 +116,7 @@ final class BoxEditUITests: XCTestCase {
         app.buttons["box_tool_merge"].tap()
         shot("07_merge_tool")
         app.buttons["box_edit_cancel"].tap()
-        XCTAssertTrue(app.buttons["box_edit_enter"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["result_more_menu"].waitForExistence(timeout: 5))
     }
     /// Selects a line, drags inside it and pinches the page; screenshots show the colours,
     /// the side and corner grips and the zoomed page (BOX_EDIT_SHOT_DIR).
@@ -113,7 +125,7 @@ final class BoxEditUITests: XCTestCase {
         let stage = element("box_edit_stage")
         XCTAssertTrue(stage.waitForExistence(timeout: 5))
         shot("10_colours")
-        element("detection_row_0").tap()
+        app.buttons["box_edit_next"].tap()
         XCTAssertTrue(app.buttons["box_edit_delete"].isEnabled)
         shot("11_selected_grips")
         XCTAssertEqual(stage.value as? String, "fit")
@@ -131,6 +143,6 @@ final class BoxEditUITests: XCTestCase {
         XCTAssertEqual(stage.value as? String, "zoomed")
         shot("14_double_tap_zoom")
         app.buttons["box_edit_cancel"].tap()
-        XCTAssertTrue(app.buttons["box_edit_enter"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["result_more_menu"].waitForExistence(timeout: 5))
     }
 }

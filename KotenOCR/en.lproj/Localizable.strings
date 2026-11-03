@@ -109,7 +109,7 @@
 "translation_no_key_message" = "Please register an OpenAI-compatible API key in Settings.";
 "translation_open_settings" = "Open Settings";
 "translation_empty" = "No translation yet";
-"tab_ocr" = "OCR Result";
+"tab_ocr" = "Text";
 "tab_translation" = "Translation";
 
 /* Translation Settings */
@@ -255,3 +255,12 @@
 "confidence_label" = "Confidence";
 "confidence_hint" = "Raise it to hide the boxes the app is less sure about. Display only";
 "confidence_hint_hidden" = "Raise it to hide the boxes the app is less sure about. %d lines hidden now";
+
+/* Result screen layout (2.2) */
+"boxes_show" = "Show Boxes";
+"confidence_menu" = "Confidence…";
+"confidence_menu_hidden" = "Confidence (%d lines hidden)";
+"result_more" = "More";
+"box_edit_prev" = "Previous line";
+"box_edit_next" = "Next line";
+"box_edit_line_total" = "%d lines. Tap a box or use ‹ › to choose";
