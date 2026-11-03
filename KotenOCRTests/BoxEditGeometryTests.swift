@@ -236,4 +236,20 @@ final class BoxEditRegressionTests: XCTestCase {
         XCTAssertEqual(canvasRedraws, 30)
         a.cancel(); b.cancel()
     }
+
+    // MARK: Following the finger
+
+    /// On an iPhone, a pinch attached with `highPriorityGesture` above the editing layer held back
+    /// every drag update until the finger lifted (measured on an iPhone 16e: ~45 updates delivered in
+    /// the same millisecond, just before the drag ended). Simulators and UI tests do not show this,
+    /// so guard the source itself.
+    func testPinchDoesNotHoldBackTheBoxDrag() throws {
+        let source = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("KotenOCR/Views/ResultOverlayView.swift")
+        let text = try String(contentsOf: source, encoding: .utf8)
+        XCTAssertFalse(text.contains(".highPriorityGesture("),
+                       "a high-priority gesture above the box editor delays the drag until the finger lifts")
+        XCTAssertTrue(text.contains(".simultaneousGesture(\n                MagnificationGesture()"))
+    }
 }

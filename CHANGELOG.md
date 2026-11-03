@@ -1,5 +1,11 @@
 # Changelog / 変更履歴
 
+## 2.1.2 (2026-11-03)
+
+- 結果画面を見やすく。画像の下のボタンを 1 段にまとめ、本文を広く表示 / Cleaner result screen: the controls under the image are now one row, leaving more room for the text
+- 枠を直す間は、画像を大きく表示 / The image is shown larger while you fix boxes
+- 枠を動かすとき、指に遅れずについてくるように / Boxes now follow your finger without lag when you move them
+
 ## 2.1.1 (2026-11-03)
 
 - 枠を 4 色（朱・藍・萌黄・江戸紫）で塗り分け、隣り合う行の境目を見分けやすく（結果画面・枠の編集とも） / Boxes are drawn in four alternating colours (vermilion, indigo, green, purple) so neighbouring lines are easy to tell apart, on the result screen and while editing boxes

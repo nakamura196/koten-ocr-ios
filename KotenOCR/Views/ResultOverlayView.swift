@@ -230,8 +230,11 @@ struct ResultOverlayView: View {
                         }
                     }
             )
-            // Pinch zoom anchored at touch location
-            .highPriorityGesture(
+            // Pinch zoom anchored at touch location.
+            // Simultaneous, not high priority: a high-priority pinch here made SwiftUI hold back every
+            // update of the box-editing drag until the finger lifted, so on an iPhone the box only
+            // jumped into place at the end (2.1.1). Pinch and drag already stay apart via `isPinching`.
+            .simultaneousGesture(
                 MagnificationGesture()
                     .onChanged { value in
                         isPinching = true
