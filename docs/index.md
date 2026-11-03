@@ -11,7 +11,7 @@ nav:
 quick_links:
   - { title: App Store, text: 無料。iOS 16 以降, url: "https://apps.apple.com/jp/app/kotenocr/id6760045646", mark: "↓" }
   - { title: 動画で見る, text: 使い方の通常版と詳細版, url: "#video", mark: "▶" }
-  - { title: 更新履歴, text: "最新は 2.1.1（2026年11月3日）", url: changelog.html, mark: "↻" }
+  - { title: 更新履歴, text: "最新は 2.1.2（2026年11月3日）", url: changelog.html, mark: "↻" }
 ---
 
 資料のページを撮ると、行ごとに枠を付けて文字を読み取ります。
@@ -28,7 +28,7 @@ quick_links:
 | iPhone・iPad | [App Store](https://apps.apple.com/jp/app/kotenocr/id6760045646)（無料。iOS 16 以降） |
 | Android | [テスター募集中](android.html)（Android 8 以降。Google Play での公開を準備中） |
 
-最新版は 2.1.1（2026年11月3日）です。変更点は [更新履歴](changelog.html) にあります。
+最新版は 2.1.2（2026年11月3日）です。変更点は [更新履歴](changelog.html) にあります。
 
 ### 動画で見る
 {: #video }
