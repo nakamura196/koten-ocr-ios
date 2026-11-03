@@ -109,7 +109,7 @@
 "translation_no_key_message" = "設定画面でOpenAI互換APIキーを登録してください。";
 "translation_open_settings" = "設定を開く";
 "translation_empty" = "現代語訳がまだありません";
-"tab_ocr" = "OCR結果";
+"tab_ocr" = "読み取り";
 "tab_translation" = "現代語訳";
 
 /* Translation Settings */
@@ -255,3 +255,12 @@
 "confidence_label" = "確信度";
 "confidence_hint" = "上げると自信のない枠から隠れます。表示だけの変更です";
 "confidence_hint_hidden" = "上げると自信のない枠から隠れます。いま %d 行を隠しています";
+
+/* Result screen layout (2.2) */
+"boxes_show" = "枠を表示";
+"confidence_menu" = "確信度…";
+"confidence_menu_hidden" = "確信度（%d 行を隠し中）";
+"result_more" = "その他";
+"box_edit_prev" = "前の行";
+"box_edit_next" = "次の行";
+"box_edit_line_total" = "%d 行。枠をタップするか ‹ › で選びます";
